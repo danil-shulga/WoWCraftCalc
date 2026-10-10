@@ -6,9 +6,31 @@
   gap: 8px;
 }
 
+.items-content {
+  display: grid;
+  width: 100%;
+  gap: 14px;
+}
+
 .item-list {
   display: grid;
   gap: 12px;
+}
+
+.search-empty-state {
+  padding: 36px 24px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.search-empty-state strong {
+  color: var(--text);
+}
+
+.search-empty-state p {
+  margin: 8px 0 0;
 }
 
 @media (max-width: 720px) {

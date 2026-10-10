@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 import { ItemTree } from '../components/item-tree/ItemTree/ItemTree'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog/ConfirmDialog'
 import { Modal } from '../components/ui/Modal/Modal'
+import { SearchField } from '../components/ui/SearchField/SearchField'
 import { createCatalogCalculationSnapshot } from '../domain/calculations'
 import type { ItemId, ItemPriceField, ItemSection, Recipe } from '../domain/item.types'
 import { ItemForm } from '../features/item-editor/ItemForm'
@@ -50,6 +51,7 @@ export function ItemsPage({ section }: ItemsPageProps) {
   const [editingRecipeId, setEditingRecipeId] = useState<ItemId | null>(null)
   const [deletingItemId, setDeletingItemId] = useState<ItemId | null>(null)
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set())
+  const [searchQuery, setSearchQuery] = useState('')
   const [priceDrafts, setPriceDrafts] = useState<Record<ItemId, number | null> | null>(
     null,
   )
@@ -57,10 +59,21 @@ export function ItemsPage({ section }: ItemsPageProps) {
   const content = pageContent[section]
   const priceField: ItemPriceField =
     section === 'crafts' ? 'salePriceCopper' : 'purchasePriceCopper'
-  const visibleItems = useMemo(
+  const sectionItems = useMemo(
     () => selectItemsBySection(items, section),
     [items, section],
   )
+  const visibleItems = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLocaleLowerCase('ru-RU')
+
+    if (normalizedQuery.length === 0) {
+      return sectionItems
+    }
+
+    return sectionItems.filter((item) =>
+      item.name.toLocaleLowerCase('ru-RU').includes(normalizedQuery),
+    )
+  }, [searchQuery, sectionItems])
   const ownedProfessionSet = useMemo(() => new Set(ownedProfessions), [ownedProfessions])
   const calculationSnapshot = useMemo(
     () =>
@@ -102,7 +115,7 @@ export function ItemsPage({ section }: ItemsPageProps) {
   const startPriceEditing = () => {
     const drafts: Record<ItemId, number | null> = {}
 
-    for (const item of visibleItems) {
+    for (const item of sectionItems) {
       drafts[item.id] = item[priceField]
     }
 
@@ -131,7 +144,7 @@ export function ItemsPage({ section }: ItemsPageProps) {
         <div className="page__actions">
           {priceDrafts === null ? (
             <>
-              {visibleItems.length === 0 ? null : (
+              {sectionItems.length === 0 ? null : (
                 <button
                   className="button button--secondary"
                   type="button"
@@ -173,7 +186,7 @@ export function ItemsPage({ section }: ItemsPageProps) {
         </div>
       </header>
 
-      {visibleItems.length === 0 ? (
+      {sectionItems.length === 0 ? (
         <div className="empty-state">
           <strong>Здесь пока ничего нет</strong>
           <p>Создайте первый предмет, затем добавьте ему рецепт и цены.</p>
@@ -188,34 +201,45 @@ export function ItemsPage({ section }: ItemsPageProps) {
           </button>
         </div>
       ) : (
-        <div className="item-list">
-          {visibleItems.map((item) => (
-            <ItemTree
-              key={item.id}
-              rootItemId={item.id}
-              catalog={items}
-              calculationSnapshot={calculationSnapshot}
-              {...(priceDrafts === null
-                ? {}
-                : {
-                    quickPriceEdit: {
-                      field: priceField,
-                      value: priceDrafts[item.id] ?? null,
-                      onChange: (value: number | null) => {
-                        setPriceDrafts((current) =>
-                          current === null ? null : { ...current, [item.id]: value },
-                        )
-                      },
-                    },
-                  })}
-              expandedPaths={expandedPaths}
-              onToggleExpanded={toggleExpanded}
-              onEditItem={setEditingItemId}
-              onEditRecipe={setEditingRecipeId}
-              onDeleteItem={setDeletingItemId}
-              onSetAcquisition={setAcquisition}
-            />
-          ))}
+        <div className="items-content">
+          <SearchField value={searchQuery} onChange={setSearchQuery} />
+
+          {visibleItems.length === 0 ? (
+            <div className="search-empty-state">
+              <strong>Ничего не найдено</strong>
+              <p>Попробуйте изменить поисковый запрос.</p>
+            </div>
+          ) : (
+            <div className="item-list">
+              {visibleItems.map((item) => (
+                <ItemTree
+                  key={item.id}
+                  rootItemId={item.id}
+                  catalog={items}
+                  calculationSnapshot={calculationSnapshot}
+                  {...(priceDrafts === null
+                    ? {}
+                    : {
+                        quickPriceEdit: {
+                          field: priceField,
+                          value: priceDrafts[item.id] ?? null,
+                          onChange: (value: number | null) => {
+                            setPriceDrafts((current) =>
+                              current === null ? null : { ...current, [item.id]: value },
+                            )
+                          },
+                        },
+                      })}
+                  expandedPaths={expandedPaths}
+                  onToggleExpanded={toggleExpanded}
+                  onEditItem={setEditingItemId}
+                  onEditRecipe={setEditingRecipeId}
+                  onDeleteItem={setDeletingItemId}
+                  onSetAcquisition={setAcquisition}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
 
