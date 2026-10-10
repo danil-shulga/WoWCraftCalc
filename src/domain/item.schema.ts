@@ -25,6 +25,11 @@ export const itemSchema = z.object({
   id: z.string().min(1),
   name: z.string().trim().min(1, 'Введите название предмета'),
   iconUrl: z.union([z.literal(''), z.url('Введите корректный URL')]),
+  source: z
+    .object({
+      wowheadItemId: z.number().int().positive(),
+    })
+    .optional(),
   sections: z.array(z.enum(['crafts', 'reagents'])).min(1),
   purchasePriceCopper: nullableCopperSchema,
   salePriceCopper: nullableCopperSchema,

@@ -17,6 +17,26 @@ import { migratePersistedData, parseCurrentPersistedData } from './persistence'
 
 export type ItemInput = Omit<Item, 'id' | 'recipe'>
 
+export interface RecipeImportItem {
+  wowheadItemId: number
+  name: string
+  iconUrl: string
+}
+
+export interface RecipeImportData {
+  product: RecipeImportItem
+  reagents: (RecipeImportItem & { quantity: number })[]
+}
+
+export type RecipeImportResult =
+  | {
+      success: true
+      productItemId: ItemId
+      productCreated: boolean
+      reagentsCreated: number
+    }
+  | { success: false; error: string }
+
 interface CraftStore {
   items: ItemCatalog
   ownedProfessions: Profession[]
@@ -31,6 +51,7 @@ interface CraftStore {
     reagentItemId: ItemId,
     acquisition: AcquisitionMethod,
   ) => void
+  importRecipe: (data: RecipeImportData) => RecipeImportResult
   replaceData: (data: PersistedCraftData) => void
   setProfessionOwned: (profession: Profession, owned: boolean) => void
   setCurrencyDisplay: (mode: CurrencyDisplayMode) => void
@@ -47,6 +68,34 @@ export const usePersistenceStatusStore = create<PersistenceStatusStore>((set) =>
     set({ hydrationError })
   },
 }))
+
+function normalizeItemName(name: string): string {
+  return name.trim().replace(/\s+/g, ' ').toLocaleLowerCase('ru-RU')
+}
+
+function findImportedItem(
+  items: ItemCatalog,
+  importedItem: RecipeImportItem,
+  excludedIds: ReadonlySet<ItemId> = new Set(),
+): Item | undefined {
+  const sourceMatch = Object.values(items).find(
+    (item) =>
+      !excludedIds.has(item.id) &&
+      item.source?.wowheadItemId === importedItem.wowheadItemId,
+  )
+
+  if (sourceMatch !== undefined) {
+    return sourceMatch
+  }
+
+  const normalizedName = normalizeItemName(importedItem.name)
+  const nameMatches = Object.values(items).filter(
+    (item) =>
+      !excludedIds.has(item.id) && normalizeItemName(item.name) === normalizedName,
+  )
+
+  return nameMatches.length === 1 ? nameMatches[0] : undefined
+}
 
 export const useCraftStore = create<CraftStore>()(
   persist<CraftStore, [], [], PersistedCraftData>(
@@ -201,6 +250,93 @@ export const useCraftStore = create<CraftStore>()(
             },
           }
         })
+      },
+
+      importRecipe: (data) => {
+        const currentItems = get().items
+        const currentProduct = findImportedItem(currentItems, data.product)
+        const productItemId = currentProduct?.id ?? crypto.randomUUID()
+        const productCreated = currentProduct === undefined
+        const nextItems: ItemCatalog = { ...currentItems }
+        const productSections = currentProduct?.sections ?? []
+        const importedProduct: Item = {
+          id: productItemId,
+          name: data.product.name,
+          iconUrl:
+            data.product.iconUrl.length > 0
+              ? data.product.iconUrl
+              : (currentProduct?.iconUrl ?? ''),
+          source: { wowheadItemId: data.product.wowheadItemId },
+          sections: [...new Set([...productSections, 'crafts' as const])],
+          purchasePriceCopper: currentProduct?.purchasePriceCopper ?? null,
+          salePriceCopper: currentProduct?.salePriceCopper ?? null,
+          recipe: currentProduct?.recipe ?? null,
+        }
+        nextItems[productItemId] = importedProduct
+
+        const reagentLines: Recipe['reagents'] = []
+        let reagentsCreated = 0
+
+        for (const importedReagent of data.reagents) {
+          const reagent = findImportedItem(
+            nextItems,
+            importedReagent,
+            new Set([productItemId]),
+          )
+          const reagentItemId = reagent?.id ?? crypto.randomUUID()
+
+          if (reagent === undefined) {
+            reagentsCreated += 1
+          }
+
+          nextItems[reagentItemId] = {
+            id: reagentItemId,
+            name: importedReagent.name,
+            iconUrl:
+              importedReagent.iconUrl.length > 0
+                ? importedReagent.iconUrl
+                : (reagent?.iconUrl ?? ''),
+            source: { wowheadItemId: importedReagent.wowheadItemId },
+            sections: [...new Set([...(reagent?.sections ?? []), 'reagents' as const])],
+            purchasePriceCopper: reagent?.purchasePriceCopper ?? null,
+            salePriceCopper: reagent?.salePriceCopper ?? null,
+            recipe: reagent?.recipe ?? null,
+          }
+
+          const previousLine = currentProduct?.recipe?.reagents.find(
+            (line) => line.itemId === reagentItemId,
+          )
+          reagentLines.push({
+            itemId: reagentItemId,
+            quantity: importedReagent.quantity,
+            acquisition: previousLine?.acquisition ?? 'auto',
+          })
+        }
+
+        const recipe: Recipe = {
+          outputQuantity: currentProduct?.recipe?.outputQuantity ?? 1,
+          profession: currentProduct?.recipe?.profession ?? null,
+          reagents: reagentLines,
+        }
+        const validationError = getRecipeValidationError(
+          nextItems,
+          productItemId,
+          recipe.reagents,
+        )
+
+        if (validationError !== null) {
+          return { success: false, error: validationError }
+        }
+
+        nextItems[productItemId] = { ...importedProduct, recipe }
+        set({ items: nextItems })
+
+        return {
+          success: true,
+          productItemId,
+          productCreated,
+          reagentsCreated,
+        }
       },
 
       replaceData: (data) => {

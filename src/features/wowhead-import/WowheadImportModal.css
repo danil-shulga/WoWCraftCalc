@@ -1,0 +1,24 @@
+.wowhead-import {
+  min-width: min(520px, calc(100vw - 64px));
+}
+
+.wowhead-import > small {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.wowhead-import__success {
+  display: grid;
+  gap: 20px;
+  padding: 22px;
+}
+
+.wowhead-import__success p {
+  margin: 0;
+}
+
+@media (max-width: 560px) {
+  .wowhead-import {
+    min-width: 0;
+  }
+}

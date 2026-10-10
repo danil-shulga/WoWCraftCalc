@@ -8,6 +8,7 @@ import { createCatalogCalculationSnapshot } from '../domain/calculations'
 import type { ItemId, ItemPriceField, ItemSection, Recipe } from '../domain/item.types'
 import { ItemForm } from '../features/item-editor/ItemForm'
 import { RecipeEditor } from '../features/recipe-editor/RecipeEditor'
+import { WowheadImportModal } from '../features/wowhead-import/WowheadImportModal'
 import { selectItemsBySection } from '../store/craft.selectors'
 import { useCraftStore } from '../store/useCraftStore'
 import '../components/ui/Button.css'
@@ -45,8 +46,10 @@ export function ItemsPage({ section }: ItemsPageProps) {
   const removeItem = useCraftStore((state) => state.removeItem)
   const setRecipe = useCraftStore((state) => state.setRecipe)
   const setAcquisition = useCraftStore((state) => state.setAcquisition)
+  const importRecipe = useCraftStore((state) => state.importRecipe)
 
   const [isCreating, setIsCreating] = useState(false)
+  const [isWowheadImportOpen, setIsWowheadImportOpen] = useState(false)
   const [editingItemId, setEditingItemId] = useState<ItemId | null>(null)
   const [editingRecipeId, setEditingRecipeId] = useState<ItemId | null>(null)
   const [deletingItemId, setDeletingItemId] = useState<ItemId | null>(null)
@@ -153,6 +156,15 @@ export function ItemsPage({ section }: ItemsPageProps) {
                   Редактировать цены
                 </button>
               )}
+              <button
+                className="button button--secondary"
+                type="button"
+                onClick={() => {
+                  setIsWowheadImportOpen(true)
+                }}
+              >
+                Импорт из Wowhead
+              </button>
               <button
                 className="button button--primary"
                 type="button"
@@ -261,6 +273,15 @@ export function ItemsPage({ section }: ItemsPageProps) {
             }}
           />
         </Modal>
+      ) : null}
+
+      {isWowheadImportOpen ? (
+        <WowheadImportModal
+          onImport={importRecipe}
+          onClose={() => {
+            setIsWowheadImportOpen(false)
+          }}
+        />
       ) : null}
 
       {editingItem === undefined ? null : (
