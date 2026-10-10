@@ -1,8 +1,12 @@
+import type { ReactNode } from 'react'
+
 import './Checkbox.css'
 
 interface CheckboxProps {
-  label: string
+  label: ReactNode
   checked: boolean
+  controlType?: 'checkbox' | 'radio'
+  name?: string
   compact?: boolean
   disabled?: boolean
   hideLabel?: boolean
@@ -14,6 +18,8 @@ interface CheckboxProps {
 export function Checkbox({
   label,
   checked,
+  controlType = 'checkbox',
+  name,
   compact = false,
   disabled = false,
   hideLabel = false,
@@ -29,7 +35,8 @@ export function Checkbox({
     <label className={classes} title={title}>
       <input
         className="checkbox__input"
-        type="checkbox"
+        type={controlType}
+        name={name}
         checked={checked}
         disabled={disabled}
         onChange={(event) => {

@@ -28,8 +28,10 @@ const catalog: ItemCatalog = {
 
 describe('JSON data transfer', () => {
   it('восстанавливает экспортированный каталог', () => {
-    const result = parseImportedData(createExportJson(catalog))
+    const exportedJson = createExportJson(catalog)
+    const result = parseImportedData(exportedJson)
 
+    expect(exportedJson).toContain('"version": 2')
     expect(result.success).toBe(true)
 
     if (result.success) {
@@ -69,6 +71,22 @@ describe('JSON data transfer', () => {
 
     if (result.success) {
       expect(result.items.product?.recipe?.profession).toBeNull()
+    }
+  })
+
+  it('переводит способы получения из экспорта v1 в автоматический режим', () => {
+    const result = parseImportedData(
+      JSON.stringify({
+        version: 1,
+        exportedAt: '2026-01-01T00:00:00.000Z',
+        items: catalog,
+      }),
+    )
+
+    expect(result.success).toBe(true)
+
+    if (result.success) {
+      expect(result.items.bolt?.recipe?.reagents[0]?.acquisition).toBe('auto')
     }
   })
 

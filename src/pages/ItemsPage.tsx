@@ -35,6 +35,7 @@ const pageContent: Record<
 
 export function ItemsPage({ section }: ItemsPageProps) {
   const items = useCraftStore((state) => state.items)
+  const ownedProfessions = useCraftStore((state) => state.ownedProfessions)
   const createItem = useCraftStore((state) => state.createItem)
   const updateItem = useCraftStore((state) => state.updateItem)
   const setItemPrice = useCraftStore((state) => state.setItemPrice)
@@ -176,6 +177,7 @@ export function ItemsPage({ section }: ItemsPageProps) {
               key={item.id}
               rootItemId={item.id}
               catalog={items}
+              ownedProfessions={ownedProfessions}
               {...(priceDrafts === null
                 ? {}
                 : {
@@ -262,6 +264,7 @@ export function ItemsPage({ section }: ItemsPageProps) {
           <RecipeEditor
             item={recipeItem}
             catalog={items}
+            ownedProfessions={ownedProfessions}
             onCancel={() => {
               setEditingRecipeId(null)
             }}

@@ -1,0 +1,61 @@
+.currency-mark {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+}
+
+.currency-icon {
+  display: inline-block;
+  width: 0.72em;
+  height: 0.72em;
+  flex: 0 0 auto;
+  border: 1px solid;
+  border-radius: 50%;
+  vertical-align: -0.05em;
+}
+
+.currency-icon--gold {
+  border-color: #e5bd4d;
+  background: #bd9130;
+}
+
+.currency-icon--silver {
+  border-color: #aeb8c6;
+  background: #7f8a99;
+}
+
+.currency-icon--copper {
+  border-color: #cf8551;
+  background: #9f5935;
+}
+
+.currency-mark__text {
+  display: none;
+  color: var(--muted);
+  font-size: 0.85em;
+  line-height: 1;
+}
+
+[data-currency-display='text'] .currency-icon {
+  display: none;
+}
+
+[data-currency-display='text'] .currency-mark__text {
+  display: inline;
+}
+
+.currency-mark--icons .currency-icon {
+  display: inline-block;
+}
+
+.currency-mark--icons .currency-mark__text {
+  display: none;
+}
+
+.currency-mark--text .currency-icon {
+  display: none;
+}
+
+.currency-mark--text .currency-mark__text {
+  display: inline;
+}

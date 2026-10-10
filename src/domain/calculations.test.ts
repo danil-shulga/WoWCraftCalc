@@ -92,6 +92,125 @@ describe('craft calculations', () => {
     expect(getRecipeBatchCost(catalogWithPurchase, 'sword')).toBe(750)
   })
 
+  it('автоматически учитывает профессии во всей цепочке и сравнивает сценарии', () => {
+    const professionCatalog: ItemCatalog = {
+      ore: makeItem({
+        id: 'ore',
+        name: 'Руда',
+        purchasePriceCopper: 100,
+      }),
+      bar: makeItem({
+        id: 'bar',
+        name: 'Слиток',
+        purchasePriceCopper: 300,
+        recipe: {
+          outputQuantity: 2,
+          profession: 'mining',
+          reagents: [{ itemId: 'ore', quantity: 2, acquisition: 'auto' }],
+        },
+      }),
+      hide: makeItem({
+        id: 'hide',
+        name: 'Шкура',
+        purchasePriceCopper: 50,
+      }),
+      leather: makeItem({
+        id: 'leather',
+        name: 'Кожа',
+        purchasePriceCopper: 400,
+        recipe: {
+          outputQuantity: 1,
+          profession: 'leatherworking',
+          reagents: [{ itemId: 'hide', quantity: 1, acquisition: 'auto' }],
+        },
+      }),
+      device: makeItem({
+        id: 'device',
+        name: 'Устройство',
+        salePriceCopper: 2_000,
+        recipe: {
+          outputQuantity: 1,
+          profession: 'engineering',
+          reagents: [
+            { itemId: 'bar', quantity: 2, acquisition: 'auto' },
+            { itemId: 'leather', quantity: 1, acquisition: 'auto' },
+          ],
+        },
+      }),
+    }
+
+    expect(
+      getProfitPerCraft(professionCatalog, 'device', {
+        ownedProfessions: new Set(['mining']),
+      }),
+    ).toBe(1_400)
+    expect(
+      getProfitPerCraft(professionCatalog, 'device', {
+        scenario: 'all-professions',
+      }),
+    ).toBe(1_750)
+    expect(
+      getProfitPerCraft(professionCatalog, 'device', {
+        scenario: 'buy-reagents',
+      }),
+    ).toBe(1_000)
+  })
+
+  it('ручной выбор имеет приоритет, а рецепт без профессии автоматически покупается', () => {
+    const automaticCatalog: ItemCatalog = {
+      material: makeItem({
+        id: 'material',
+        name: 'Материал',
+        purchasePriceCopper: 100,
+      }),
+      component: makeItem({
+        id: 'component',
+        name: 'Компонент',
+        purchasePriceCopper: 500,
+        recipe: {
+          outputQuantity: 1,
+          profession: null,
+          reagents: [{ itemId: 'material', quantity: 1, acquisition: 'auto' }],
+        },
+      }),
+      product: makeItem({
+        id: 'product',
+        name: 'Изделие',
+        salePriceCopper: 1_000,
+        recipe: {
+          outputQuantity: 1,
+          profession: 'engineering',
+          reagents: [{ itemId: 'component', quantity: 1, acquisition: 'auto' }],
+        },
+      }),
+    }
+
+    expect(
+      getProfitPerCraft(automaticCatalog, 'product', {
+        ownedProfessions: new Set(['engineering']),
+      }),
+    ).toBe(500)
+
+    const product = automaticCatalog.product
+
+    if (product?.recipe === undefined || product.recipe === null) {
+      throw new Error('Test fixture is invalid')
+    }
+
+    const overriddenCatalog: ItemCatalog = {
+      ...automaticCatalog,
+      product: {
+        ...product,
+        recipe: {
+          ...product.recipe,
+          reagents: [{ itemId: 'component', quantity: 1, acquisition: 'craft' }],
+        },
+      },
+    }
+
+    expect(getProfitPerCraft(overriddenCatalog, 'product')).toBe(900)
+  })
+
   it('останавливает расчёт повреждённого циклического рецепта', () => {
     const cyclicCatalog: ItemCatalog = {
       first: makeItem({

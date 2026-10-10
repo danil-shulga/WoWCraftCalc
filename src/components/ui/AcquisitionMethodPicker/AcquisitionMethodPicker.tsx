@@ -1,11 +1,12 @@
 import type { AcquisitionMethod } from '../../../domain/item.types'
-import { formatMoney } from '../../../domain/money'
+import { MoneyDisplay } from '../MoneyDisplay/MoneyDisplay'
 import './AcquisitionMethodPicker.css'
 
 interface AcquisitionMethodPickerProps {
   value: AcquisitionMethod
   purchasePrice: number | null
   craftPrice: number | null
+  automaticMethod: Exclude<AcquisitionMethod, 'auto'>
   canBuy: boolean
   canCraft: boolean
   showLegend?: boolean
@@ -16,6 +17,7 @@ export function AcquisitionMethodPicker({
   value,
   purchasePrice,
   craftPrice,
+  automaticMethod,
   canBuy,
   canCraft,
   showLegend = false,
@@ -27,6 +29,16 @@ export function AcquisitionMethodPicker({
       <div className="acquisition-method-picker__options">
         <button
           type="button"
+          aria-pressed={value === 'auto'}
+          onClick={() => {
+            onChange('auto')
+          }}
+        >
+          <span>Авто</span>
+          <small>{automaticMethod === 'craft' ? 'Крафтить' : 'Купить'}</small>
+        </button>
+        <button
+          type="button"
           aria-pressed={value === 'buy'}
           disabled={!canBuy}
           onClick={() => {
@@ -34,7 +46,9 @@ export function AcquisitionMethodPicker({
           }}
         >
           <span>Купить</span>
-          <small>{formatMoney(purchasePrice)}</small>
+          <small>
+            <MoneyDisplay value={purchasePrice} />
+          </small>
         </button>
         <button
           type="button"
@@ -45,7 +59,9 @@ export function AcquisitionMethodPicker({
           }}
         >
           <span>Крафтить</span>
-          <small>{formatMoney(craftPrice)}</small>
+          <small>
+            <MoneyDisplay value={craftPrice} />
+          </small>
         </button>
       </div>
     </fieldset>

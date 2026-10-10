@@ -3,7 +3,10 @@ import { useMemo, useState, type SyntheticEvent } from 'react'
 import { AcquisitionMethodPicker } from '../../components/ui/AcquisitionMethodPicker/AcquisitionMethodPicker'
 import { NumberInput } from '../../components/ui/NumberInput/NumberInput'
 import { SearchableSelect } from '../../components/ui/SearchableSelect/SearchableSelect'
-import { getCraftUnitCost } from '../../domain/calculations'
+import {
+  getAutomaticAcquisitionMethod,
+  getCraftUnitCost,
+} from '../../domain/calculations'
 import type { Item, ItemCatalog, Recipe, RecipeLine } from '../../domain/item.types'
 import { PROFESSION_OPTIONS, type Profession } from '../../domain/professions'
 import { selectAvailableReagents } from '../../store/craft.selectors'
@@ -14,6 +17,7 @@ import './RecipeEditor.css'
 interface RecipeEditorProps {
   item: Item
   catalog: ItemCatalog
+  ownedProfessions: readonly Profession[]
   onSave: (recipe: Recipe) => string | null
   onRemove: () => void
   onCancel: () => void
@@ -22,6 +26,7 @@ interface RecipeEditorProps {
 export function RecipeEditor({
   item,
   catalog,
+  ownedProfessions,
   onSave,
   onRemove,
   onCancel,
@@ -35,6 +40,7 @@ export function RecipeEditor({
   )
   const [selectedItemId, setSelectedItemId] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const ownedProfessionSet = useMemo(() => new Set(ownedProfessions), [ownedProfessions])
 
   const selectedIds = useMemo(
     () => new Set(reagents.map((line) => line.itemId)),
@@ -65,10 +71,7 @@ export function RecipeEditor({
       {
         itemId: selectedItem.id,
         quantity: 1,
-        acquisition:
-          selectedItem.purchasePriceCopper === null && selectedItem.recipe !== null
-            ? 'craft'
-            : 'buy',
+        acquisition: 'auto',
       },
     ])
     setSelectedItemId('')
@@ -147,7 +150,17 @@ export function RecipeEditor({
                 return null
               }
 
-              const craftUnitCost = getCraftUnitCost(catalog, reagent.id)
+              const calculationOptions = { ownedProfessions: ownedProfessionSet }
+              const craftUnitCost = getCraftUnitCost(
+                catalog,
+                reagent.id,
+                calculationOptions,
+              )
+              const automaticMethod = getAutomaticAcquisitionMethod(
+                catalog,
+                reagent.id,
+                ownedProfessionSet,
+              )
 
               return (
                 <li key={line.itemId}>
@@ -170,6 +183,7 @@ export function RecipeEditor({
                     value={line.acquisition}
                     purchasePrice={reagent.purchasePriceCopper}
                     craftPrice={craftUnitCost}
+                    automaticMethod={automaticMethod}
                     canBuy={reagent.purchasePriceCopper !== null}
                     canCraft={reagent.recipe !== null}
                     showLegend

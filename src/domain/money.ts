@@ -29,25 +29,3 @@ export function combineMoney(parts: MoneyParts): number {
     Math.max(0, Math.floor(parts.copper))
   )
 }
-
-export function formatMoney(totalCopper: number | null): string {
-  if (totalCopper === null) {
-    return 'не указано'
-  }
-
-  const sign = totalCopper < 0 ? '−' : ''
-  const { gold, silver, copper } = splitCopper(Math.abs(totalCopper))
-  const parts: string[] = []
-
-  if (gold > 0) {
-    parts.push(`${gold.toString()} з`)
-  }
-
-  if (silver > 0 || gold > 0) {
-    parts.push(`${silver.toString()} с`)
-  }
-
-  parts.push(`${copper.toString()} м`)
-
-  return `${sign}${parts.join(' ')}`
-}

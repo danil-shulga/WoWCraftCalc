@@ -1,0 +1,26 @@
+.money-display {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  white-space: nowrap;
+}
+
+.money-display__part {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.18em;
+}
+
+.money-display__currency-name {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.money-display--unset {
+  color: inherit;
+}

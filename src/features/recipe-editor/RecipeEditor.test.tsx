@@ -52,6 +52,7 @@ describe('RecipeEditor', () => {
       <RecipeEditor
         item={catalog.craft}
         catalog={catalog}
+        ownedProfessions={[]}
         onSave={handleSave}
         onRemove={vi.fn()}
         onCancel={vi.fn()}

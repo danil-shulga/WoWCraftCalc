@@ -1,9 +1,9 @@
 import {
+  getAutomaticAcquisitionMethod,
   getCraftUnitCost,
   getProfitPerCraft,
   getSelectedUnitCost,
 } from '../../../domain/calculations'
-import { formatMoney } from '../../../domain/money'
 import type {
   AcquisitionMethod,
   ItemCatalog,
@@ -11,10 +11,9 @@ import type {
   ItemPriceField,
   RecipeLine,
 } from '../../../domain/item.types'
-import { AcquisitionMethodPicker } from '../../ui/AcquisitionMethodPicker/AcquisitionMethodPicker'
-import { InlineMoneyInput } from '../../ui/InlineMoneyInput/InlineMoneyInput'
-import { ItemIcon } from '../../ui/ItemIcon/ItemIcon'
-import '../../ui/IconButton.css'
+import type { Profession } from '../../../domain/professions'
+import { ReagentItemRow } from '../ReagentItemRow/ReagentItemRow'
+import { RootItemRow } from '../RootItemRow/RootItemRow'
 import './ItemTree.css'
 
 interface QuickPriceEdit {
@@ -26,6 +25,7 @@ interface QuickPriceEdit {
 interface ItemTreeProps {
   rootItemId: ItemId
   catalog: ItemCatalog
+  ownedProfessions: readonly Profession[]
   quickPriceEdit?: QuickPriceEdit
   expandedPaths: ReadonlySet<string>
   onToggleExpanded: (path: string) => void
@@ -55,6 +55,7 @@ function ItemTreeNode({
   parentItemId,
   recipeLine,
   catalog,
+  ownedProfessions,
   quickPriceEdit,
   expandedPaths,
   onToggleExpanded,
@@ -71,148 +72,68 @@ function ItemTreeNode({
     return null
   }
 
-  const craftUnitCost = getCraftUnitCost(catalog, itemId)
+  const ownedProfessionSet = new Set(ownedProfessions)
+  const calculationOptions = { ownedProfessions: ownedProfessionSet }
+  const craftUnitCost = getCraftUnitCost(catalog, itemId, calculationOptions)
   const hasRecipe = item.recipe !== null
   const isExpanded = expandedPaths.has(path)
   const hasCycle = visited.has(itemId)
   const selectedCost =
     recipeLine === null
       ? null
-      : getSelectedUnitCost(catalog, itemId, recipeLine.acquisition)
+      : getSelectedUnitCost(catalog, itemId, recipeLine.acquisition, calculationOptions)
+  const automaticMethod = getAutomaticAcquisitionMethod(
+    catalog,
+    itemId,
+    ownedProfessionSet,
+  )
+  const configuredProfit = getProfitPerCraft(catalog, itemId, calculationOptions)
+  const allProfessionsProfit = getProfitPerCraft(catalog, itemId, {
+    scenario: 'all-professions',
+  })
+  const boughtReagentsProfit = getProfitPerCraft(catalog, itemId, {
+    scenario: 'buy-reagents',
+  })
   const nextVisited = new Set(visited)
   nextVisited.add(itemId)
 
   return (
     <li className="item-tree__node">
-      <article className="item-row" data-depth={depth}>
-        <button
-          className="expand-button"
-          type="button"
-          aria-label={isExpanded ? 'Свернуть рецепт' : 'Развернуть рецепт'}
-          disabled={!hasRecipe || hasCycle}
-          onClick={() => {
+      {recipeLine === null ? (
+        <RootItemRow
+          item={item}
+          isExpanded={isExpanded}
+          hasCycle={hasCycle}
+          craftUnitCost={craftUnitCost}
+          configuredProfit={configuredProfit}
+          allProfessionsProfit={allProfessionsProfit}
+          boughtReagentsProfit={boughtReagentsProfit}
+          quickPriceEdit={quickPriceEdit}
+          onToggleExpanded={() => {
             onToggleExpanded(path)
           }}
-        >
-          {hasRecipe ? (isExpanded ? '▾' : '▸') : '·'}
-        </button>
-
-        <ItemIcon iconUrl={item.iconUrl} itemName={item.name} />
-
-        <div className="item-row__identity">
-          <strong>{item.name}</strong>
-          {recipeLine === null ? null : (
-            <span className="item-row__quantity">× {recipeLine.quantity}</span>
-          )}
-        </div>
-
-        <dl className="item-row__prices">
-          <div>
-            <dt>Покупка</dt>
-            {recipeLine === null && quickPriceEdit?.field === 'purchasePriceCopper' ? (
-              <dd className="item-row__price-editor">
-                <InlineMoneyInput
-                  label={`Цена покупки: ${item.name}`}
-                  value={quickPriceEdit.value}
-                  onChange={quickPriceEdit.onChange}
-                />
-              </dd>
-            ) : (
-              <dd>{formatMoney(item.purchasePriceCopper)}</dd>
-            )}
-          </div>
-          <div>
-            <dt>Крафт</dt>
-            <dd>{formatMoney(craftUnitCost)}</dd>
-          </div>
-          {recipeLine === null ? (
-            <>
-              <div>
-                <dt>Продажа</dt>
-                {quickPriceEdit?.field === 'salePriceCopper' ? (
-                  <dd className="item-row__price-editor">
-                    <InlineMoneyInput
-                      label={`Цена продажи: ${item.name}`}
-                      value={quickPriceEdit.value}
-                      onChange={quickPriceEdit.onChange}
-                    />
-                  </dd>
-                ) : (
-                  <dd>{formatMoney(item.salePriceCopper)}</dd>
-                )}
-              </div>
-              <div>
-                <dt>Прибыль за крафт</dt>
-                <dd
-                  className={
-                    (getProfitPerCraft(catalog, itemId) ?? 0) >= 0
-                      ? 'money-positive'
-                      : 'money-negative'
-                  }
-                >
-                  {formatMoney(getProfitPerCraft(catalog, itemId))}
-                </dd>
-              </div>
-            </>
-          ) : (
-            <div>
-              <dt>Выбрано</dt>
-              <dd>{formatMoney(selectedCost)}</dd>
-            </div>
-          )}
-        </dl>
-
-        {recipeLine === null || parentItemId === null ? null : (
-          <AcquisitionMethodPicker
-            value={recipeLine.acquisition}
-            purchasePrice={item.purchasePriceCopper}
-            craftPrice={craftUnitCost}
-            canBuy={item.purchasePriceCopper !== null}
-            canCraft={hasRecipe}
-            onChange={(acquisition) => {
-              onSetAcquisition(parentItemId, itemId, acquisition)
-            }}
-          />
-        )}
-
-        <div className="item-row__actions">
-          <button
-            className="icon-button"
-            type="button"
-            title="Редактировать предмет"
-            aria-label={`Редактировать ${item.name}`}
-            onClick={() => {
-              onEditItem(itemId)
-            }}
-          >
-            ✎
-          </button>
-          <button
-            className="icon-button"
-            type="button"
-            title="Редактировать рецепт"
-            aria-label={`Редактировать рецепт ${item.name}`}
-            onClick={() => {
-              onEditRecipe(itemId)
-            }}
-          >
-            ⚒
-          </button>
-          {depth === 0 ? (
-            <button
-              className="icon-button icon-button--danger"
-              type="button"
-              title="Удалить предмет"
-              aria-label={`Удалить ${item.name}`}
-              onClick={() => {
-                onDeleteItem(itemId)
-              }}
-            >
-              ×
-            </button>
-          ) : null}
-        </div>
-      </article>
+          onEditItem={onEditItem}
+          onEditRecipe={onEditRecipe}
+          onDeleteItem={onDeleteItem}
+        />
+      ) : parentItemId === null ? null : (
+        <ReagentItemRow
+          item={item}
+          parentItemId={parentItemId}
+          recipeLine={recipeLine}
+          isExpanded={isExpanded}
+          hasCycle={hasCycle}
+          craftUnitCost={craftUnitCost}
+          selectedCost={selectedCost}
+          automaticMethod={automaticMethod}
+          onToggleExpanded={() => {
+            onToggleExpanded(path)
+          }}
+          onEditItem={onEditItem}
+          onEditRecipe={onEditRecipe}
+          onSetAcquisition={onSetAcquisition}
+        />
+      )}
 
       {isExpanded && hasRecipe && !hasCycle ? (
         item.recipe?.reagents.length === 0 ? (
@@ -229,6 +150,7 @@ function ItemTreeNode({
                 parentItemId={itemId}
                 recipeLine={line}
                 catalog={catalog}
+                ownedProfessions={ownedProfessions}
                 expandedPaths={expandedPaths}
                 onToggleExpanded={onToggleExpanded}
                 onEditItem={onEditItem}

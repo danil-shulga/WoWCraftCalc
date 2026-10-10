@@ -12,8 +12,16 @@
 .utility-bar {
   display: flex;
   min-height: 38px;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
   margin-bottom: 12px;
+}
+
+.settings-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
 }
 
 @media (max-width: 720px) {
@@ -26,6 +34,7 @@
   }
 
   .utility-bar {
+    flex-wrap: wrap;
     margin-bottom: 20px;
   }
 }

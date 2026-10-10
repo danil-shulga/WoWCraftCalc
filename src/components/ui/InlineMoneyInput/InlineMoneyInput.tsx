@@ -1,6 +1,7 @@
 import { combineMoney, splitCopper } from '../../../domain/money'
 import type { MoneyParts } from '../../../domain/money'
 import { Checkbox } from '../Checkbox/Checkbox'
+import { CurrencyIcon } from '../CurrencyIcon/CurrencyIcon'
 import { NumberInput } from '../NumberInput/NumberInput'
 import './InlineMoneyInput.css'
 
@@ -46,7 +47,7 @@ export function InlineMoneyInput({ label, value, onChange }: InlineMoneyInputPro
             updatePart('gold', partValue)
           }}
         />
-        <span>з</span>
+        <CurrencyIcon currency="gold" />
       </div>
       <div className="inline-money-input__part">
         <NumberInput
@@ -60,7 +61,7 @@ export function InlineMoneyInput({ label, value, onChange }: InlineMoneyInputPro
             updatePart('silver', partValue)
           }}
         />
-        <span>с</span>
+        <CurrencyIcon currency="silver" />
       </div>
       <div className="inline-money-input__part">
         <NumberInput
@@ -74,7 +75,7 @@ export function InlineMoneyInput({ label, value, onChange }: InlineMoneyInputPro
             updatePart('copper', partValue)
           }}
         />
-        <span>м</span>
+        <CurrencyIcon currency="copper" />
       </div>
     </fieldset>
   )

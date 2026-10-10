@@ -4,11 +4,18 @@ import { itemSchema } from '../domain/item.schema'
 import { getRecipeValidationError } from '../domain/recipe-validation'
 import type { ItemCatalog } from '../domain/item.types'
 
-const exportSchema = z.object({
-  version: z.literal(1),
-  exportedAt: z.string(),
-  items: z.record(z.string(), itemSchema),
-})
+const exportSchema = z.discriminatedUnion('version', [
+  z.object({
+    version: z.literal(1),
+    exportedAt: z.string(),
+    items: z.record(z.string(), itemSchema),
+  }),
+  z.object({
+    version: z.literal(2),
+    exportedAt: z.string(),
+    items: z.record(z.string(), itemSchema),
+  }),
+])
 
 export type ImportResult =
   { success: true; items: ItemCatalog } | { success: false; error: string }
@@ -16,7 +23,7 @@ export type ImportResult =
 export function createExportJson(items: ItemCatalog): string {
   return JSON.stringify(
     {
-      version: 1,
+      version: 2,
       exportedAt: new Date().toISOString(),
       items,
     },
@@ -43,7 +50,28 @@ export function parseImportedData(rawJson: string): ImportResult {
     }
   }
 
-  for (const [catalogId, item] of Object.entries(parsed.data.items)) {
+  const items =
+    parsed.data.version === 1
+      ? Object.fromEntries(
+          Object.entries(parsed.data.items).map(([itemId, item]) => [
+            itemId,
+            item.recipe === null
+              ? item
+              : {
+                  ...item,
+                  recipe: {
+                    ...item.recipe,
+                    reagents: item.recipe.reagents.map((line) => ({
+                      ...line,
+                      acquisition: 'auto' as const,
+                    })),
+                  },
+                },
+          ]),
+        )
+      : parsed.data.items
+
+  for (const [catalogId, item] of Object.entries(items)) {
     if (catalogId !== item.id) {
       return {
         success: false,
@@ -52,7 +80,7 @@ export function parseImportedData(rawJson: string): ImportResult {
     }
 
     const validationError = getRecipeValidationError(
-      parsed.data.items,
+      items,
       item.id,
       item.recipe?.reagents ?? [],
     )
@@ -65,5 +93,5 @@ export function parseImportedData(rawJson: string): ImportResult {
     }
   }
 
-  return { success: true, items: parsed.data.items }
+  return { success: true, items }
 }

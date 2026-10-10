@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
+import { persistedCraftDataSchema } from '../domain/item.schema'
 import { getRecipeValidationError } from '../domain/recipe-validation'
 import type {
   AcquisitionMethod,
@@ -8,8 +9,11 @@ import type {
   ItemCatalog,
   ItemId,
   ItemPriceField,
+  PersistedCraftData,
   Recipe,
 } from '../domain/item.types'
+import type { Profession } from '../domain/professions'
+import type { CurrencyDisplayMode } from '../domain/user-settings'
 
 export type ItemInput = Omit<Item, 'id' | 'recipe'> & {
   recipe?: Recipe | null
@@ -17,6 +21,8 @@ export type ItemInput = Omit<Item, 'id' | 'recipe'> & {
 
 interface CraftStore {
   items: ItemCatalog
+  ownedProfessions: Profession[]
+  currencyDisplay: CurrencyDisplayMode
   createItem: (input: ItemInput) => ItemId
   updateItem: (itemId: ItemId, input: ItemInput) => void
   setItemPrice: (itemId: ItemId, field: ItemPriceField, value: number | null) => void
@@ -28,12 +34,16 @@ interface CraftStore {
     acquisition: AcquisitionMethod,
   ) => void
   replaceItems: (items: ItemCatalog) => void
+  setProfessionOwned: (profession: Profession, owned: boolean) => void
+  setCurrencyDisplay: (mode: CurrencyDisplayMode) => void
 }
 
 export const useCraftStore = create<CraftStore>()(
-  persist(
+  persist<CraftStore, [], [], PersistedCraftData>(
     (set, get) => ({
       items: {},
+      ownedProfessions: [],
+      currencyDisplay: 'icons',
 
       createItem: (input) => {
         const itemId = crypto.randomUUID()
@@ -176,10 +186,59 @@ export const useCraftStore = create<CraftStore>()(
       replaceItems: (items) => {
         set({ items })
       },
+
+      setProfessionOwned: (profession, owned) => {
+        set((state) => ({
+          ownedProfessions: owned
+            ? [...new Set([...state.ownedProfessions, profession])]
+            : state.ownedProfessions.filter((current) => current !== profession),
+        }))
+      },
+
+      setCurrencyDisplay: (currencyDisplay) => {
+        set({ currencyDisplay })
+      },
     }),
     {
       name: 'craft-calc-data',
-      version: 1,
+      version: 3,
+      partialize: (state) => ({
+        items: state.items,
+        ownedProfessions: state.ownedProfessions,
+        currencyDisplay: state.currencyDisplay,
+      }),
+      migrate: (persistedState, version) => {
+        const parsed = persistedCraftDataSchema.safeParse(persistedState)
+
+        if (!parsed.success) {
+          return { items: {}, ownedProfessions: [], currencyDisplay: 'icons' }
+        }
+
+        if (version >= 2) {
+          return parsed.data
+        }
+
+        return {
+          ...parsed.data,
+          items: Object.fromEntries(
+            Object.entries(parsed.data.items).map(([itemId, item]) => [
+              itemId,
+              item.recipe === null
+                ? item
+                : {
+                    ...item,
+                    recipe: {
+                      ...item.recipe,
+                      reagents: item.recipe.reagents.map((line) => ({
+                        ...line,
+                        acquisition: 'auto' as const,
+                      })),
+                    },
+                  },
+            ]),
+          ),
+        }
+      },
     },
   ),
 )

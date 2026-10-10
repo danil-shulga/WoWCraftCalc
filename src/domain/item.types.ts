@@ -1,10 +1,11 @@
 import type { Profession } from './professions'
+import type { CurrencyDisplayMode } from './user-settings'
 
 export type ItemId = string
 
 export type ItemSection = 'crafts' | 'reagents'
 
-export type AcquisitionMethod = 'buy' | 'craft'
+export type AcquisitionMethod = 'auto' | 'buy' | 'craft'
 
 export type ItemPriceField = 'purchasePriceCopper' | 'salePriceCopper'
 
@@ -34,4 +35,6 @@ export type ItemCatalog = Record<ItemId, Item>
 
 export interface PersistedCraftData {
   items: ItemCatalog
+  ownedProfessions: Profession[]
+  currencyDisplay: CurrencyDisplayMode
 }

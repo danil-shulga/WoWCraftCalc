@@ -14,28 +14,6 @@
   margin-top: 7px;
 }
 
-.item-row {
-  display: grid;
-  grid-template-columns: 28px 48px minmax(140px, 1.2fr) minmax(320px, 2fr) auto auto;
-  align-items: center;
-  gap: 10px;
-  min-height: 70px;
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: rgb(21 29 45 / 94%);
-  box-shadow: 0 5px 20px rgb(0 0 0 / 12%);
-}
-
-.item-row[data-depth='0'] {
-  border-color: #465773;
-  background: var(--panel-raised);
-}
-
-.item-row:hover {
-  border-color: var(--border-strong);
-}
-
 .expand-button {
   display: grid;
   width: 30px;
@@ -68,14 +46,8 @@
   white-space: nowrap;
 }
 
-.item-row__quantity {
-  color: var(--accent-strong);
-  font-weight: 700;
-}
-
 .item-row__prices {
   display: grid;
-  grid-template-columns: repeat(4, minmax(75px, 1fr));
   gap: 12px;
   margin: 0;
 }
@@ -97,10 +69,6 @@
   white-space: nowrap;
 }
 
-.item-row__prices > div:has(.item-row__price-editor) {
-  grid-column: span 2;
-}
-
 .item-row__price-editor {
   white-space: normal;
 }
@@ -111,6 +79,48 @@
 
 .money-negative {
   color: var(--danger);
+}
+
+.profit-value {
+  position: relative;
+  width: fit-content;
+  cursor: help;
+}
+
+.profit-value:focus-visible {
+  border-radius: 3px;
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.profit-tooltip {
+  position: absolute;
+  z-index: 2;
+  bottom: calc(100% + 8px);
+  left: 0;
+  display: none;
+  width: max-content;
+  max-width: min(300px, 75vw);
+  padding: 10px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  color: var(--text);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  white-space: normal;
+}
+
+.profit-tooltip > span {
+  display: block;
+}
+
+.profit-tooltip > span + span {
+  margin-top: 5px;
+}
+
+.profit-value:hover .profit-tooltip,
+.profit-value:focus-visible .profit-tooltip {
+  display: block;
 }
 
 .item-row__actions {
@@ -124,18 +134,9 @@
 }
 
 @media (max-width: 1050px) {
-  .item-row {
-    grid-template-columns: 28px 44px minmax(140px, 1fr) auto auto;
-  }
-
   .item-icon {
     width: 44px;
     height: 44px;
-  }
-
-  .item-row__prices {
-    grid-column: 3 / -1;
-    grid-row: 2;
   }
 }
 
@@ -145,29 +146,8 @@
     padding-left: 8px;
   }
 
-  .item-row {
-    grid-template-columns: 26px 40px minmax(110px, 1fr) auto;
-    gap: 7px;
-    padding: 9px;
-  }
-
   .item-icon {
     width: 40px;
     height: 40px;
-  }
-
-  .item-row__prices {
-    grid-column: 2 / -1;
-    grid-template-columns: repeat(2, minmax(90px, 1fr));
-    gap: 8px;
-  }
-
-  .item-row > .acquisition-method-picker {
-    grid-column: 2 / 4;
-  }
-
-  .item-row__actions {
-    grid-column: 4;
-    grid-row: 1;
   }
 }

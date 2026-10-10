@@ -1,0 +1,66 @@
+.reagent-item-row {
+  display: grid;
+  grid-template-columns: 28px 48px minmax(160px, 1fr) 300px auto auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 70px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgb(21 29 45 / 94%);
+  box-shadow: 0 5px 20px rgb(0 0 0 / 12%);
+}
+
+.reagent-item-row:hover {
+  border-color: var(--border-strong);
+}
+
+.reagent-item-row__quantity {
+  flex: 0 0 auto;
+  color: var(--accent-strong);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.reagent-item-row__prices {
+  grid-template-columns: repeat(3, minmax(75px, 1fr));
+}
+
+@media (max-width: 1050px) {
+  .reagent-item-row {
+    grid-template-columns: 28px 44px minmax(140px, 1fr) auto;
+  }
+
+  .reagent-item-row__prices {
+    grid-column: 3 / -1;
+    grid-row: 2;
+  }
+
+  .reagent-item-row > .acquisition-method-picker {
+    grid-column: 3 / -1;
+    grid-row: 3;
+  }
+
+  .reagent-item-row > .item-row__actions {
+    grid-column: 4;
+    grid-row: 1;
+  }
+}
+
+@media (max-width: 720px) {
+  .reagent-item-row {
+    grid-template-columns: 26px 40px minmax(110px, 1fr) auto;
+    gap: 7px;
+    padding: 9px;
+  }
+
+  .reagent-item-row__prices {
+    grid-column: 2 / -1;
+    grid-template-columns: repeat(2, minmax(90px, 1fr));
+    gap: 8px;
+  }
+
+  .reagent-item-row > .acquisition-method-picker {
+    grid-column: 2 / -1;
+  }
+}

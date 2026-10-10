@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import { PROFESSION_IDS } from './professions'
+import { CURRENCY_DISPLAY_MODES } from './user-settings'
 
 const nullableCopperSchema = z
   .number()
@@ -11,7 +12,7 @@ const nullableCopperSchema = z
 export const recipeLineSchema = z.object({
   itemId: z.string().min(1),
   quantity: z.number().int().positive(),
-  acquisition: z.enum(['buy', 'craft']),
+  acquisition: z.enum(['auto', 'buy', 'craft']),
 })
 
 export const recipeSchema = z.object({
@@ -32,4 +33,6 @@ export const itemSchema = z.object({
 
 export const persistedCraftDataSchema = z.object({
   items: z.record(z.string(), itemSchema),
+  ownedProfessions: z.array(z.enum(PROFESSION_IDS)).default([]),
+  currencyDisplay: z.enum(CURRENCY_DISPLAY_MODES).default('icons'),
 })

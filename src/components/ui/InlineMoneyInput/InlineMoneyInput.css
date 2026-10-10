@@ -27,7 +27,6 @@
   padding: 4px 5px;
 }
 
-.inline-money-input__part > span {
-  color: var(--muted);
-  font-size: 0.72rem;
+.inline-money-input__part > .currency-mark {
+  font-size: 0.8rem;
 }
