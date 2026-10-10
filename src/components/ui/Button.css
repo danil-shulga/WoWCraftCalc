@@ -1,0 +1,39 @@
+.button {
+  min-height: 38px;
+  padding: 8px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--panel-raised);
+  cursor: pointer;
+}
+
+.button:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+}
+
+.button--primary {
+  border-color: #d29b35;
+  color: var(--accent-ink);
+  background: linear-gradient(180deg, var(--accent-strong), var(--accent));
+  font-weight: 700;
+}
+
+.button--primary:hover {
+  filter: brightness(1.08);
+}
+
+.button--secondary:hover {
+  border-color: #70809c;
+  background: #243149;
+}
+
+.button--danger-text {
+  border-color: transparent;
+  color: var(--danger);
+  background: transparent;
+}
+
+.button--danger-text:hover {
+  background: rgb(242 119 119 / 10%);
+}

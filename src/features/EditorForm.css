@@ -1,0 +1,51 @@
+.editor-form {
+  display: grid;
+  gap: 20px;
+  padding: 22px;
+}
+
+.editor-form > label {
+  display: grid;
+  gap: 7px;
+}
+
+.editor-form label > span {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.editor-form input,
+.editor-form select {
+  min-width: 0;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  background: #101724;
+}
+
+.editor-form input:disabled {
+  opacity: 0.45;
+}
+
+.editor-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.actions-spacer {
+  flex: 1;
+}
+
+.form-error {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid rgb(242 119 119 / 35%);
+  border-radius: 8px;
+  color: #ffaaaa;
+  background: rgb(242 119 119 / 8%);
+}

@@ -1,0 +1,278 @@
+import { useState } from 'react'
+
+import { ItemTree } from '../components/item-tree/ItemTree/ItemTree'
+import { Modal } from '../components/ui/Modal/Modal'
+import type { ItemId, ItemPriceField, ItemSection, Recipe } from '../domain/item.types'
+import { ItemForm } from '../features/item-editor/ItemForm'
+import { RecipeEditor } from '../features/recipe-editor/RecipeEditor'
+import { selectItemsBySection } from '../store/craft.selectors'
+import { useCraftStore } from '../store/useCraftStore'
+import '../components/ui/Button.css'
+import './ItemsPage.css'
+import './PageLayout.css'
+
+interface ItemsPageProps {
+  section: ItemSection
+}
+
+const pageContent: Record<
+  ItemSection,
+  { title: string; description: string; addLabel: string }
+> = {
+  crafts: {
+    title: 'Крафты',
+    description:
+      'Добавляйте готовые предметы, задавайте цену продажи и составляйте рецепты.',
+    addLabel: 'Добавить крафт',
+  },
+  reagents: {
+    title: 'Реагенты',
+    description:
+      'Укажите цену покупки или добавьте рецепт, если реагент можно изготовить.',
+    addLabel: 'Добавить реагент',
+  },
+}
+
+export function ItemsPage({ section }: ItemsPageProps) {
+  const items = useCraftStore((state) => state.items)
+  const createItem = useCraftStore((state) => state.createItem)
+  const updateItem = useCraftStore((state) => state.updateItem)
+  const setItemPrice = useCraftStore((state) => state.setItemPrice)
+  const removeItem = useCraftStore((state) => state.removeItem)
+  const setRecipe = useCraftStore((state) => state.setRecipe)
+  const setAcquisition = useCraftStore((state) => state.setAcquisition)
+
+  const [isCreating, setIsCreating] = useState(false)
+  const [editingItemId, setEditingItemId] = useState<ItemId | null>(null)
+  const [editingRecipeId, setEditingRecipeId] = useState<ItemId | null>(null)
+  const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set())
+  const [priceDrafts, setPriceDrafts] = useState<Record<ItemId, number | null> | null>(
+    null,
+  )
+
+  const content = pageContent[section]
+  const priceField: ItemPriceField =
+    section === 'crafts' ? 'salePriceCopper' : 'purchasePriceCopper'
+  const visibleItems = selectItemsBySection(items, section)
+  const editingItem = editingItemId === null ? undefined : items[editingItemId]
+  const recipeItem = editingRecipeId === null ? undefined : items[editingRecipeId]
+
+  const toggleExpanded = (path: string) => {
+    setExpandedPaths((current) => {
+      const next = new Set(current)
+
+      if (next.has(path)) {
+        next.delete(path)
+      } else {
+        next.add(path)
+      }
+
+      return next
+    })
+  }
+
+  const saveRecipe = (itemId: ItemId, recipe: Recipe): string | null => {
+    const error = setRecipe(itemId, recipe)
+
+    if (error === null) {
+      setEditingRecipeId(null)
+    }
+
+    return error
+  }
+
+  const startPriceEditing = () => {
+    const drafts: Record<ItemId, number | null> = {}
+
+    for (const item of visibleItems) {
+      drafts[item.id] = item[priceField]
+    }
+
+    setPriceDrafts(drafts)
+  }
+
+  const savePriceDrafts = () => {
+    if (priceDrafts === null) {
+      return
+    }
+
+    for (const [itemId, value] of Object.entries(priceDrafts)) {
+      setItemPrice(itemId, priceField, value)
+    }
+
+    setPriceDrafts(null)
+  }
+
+  return (
+    <section className="page">
+      <header className="page__header">
+        <div>
+          <h1>{content.title}</h1>
+          <p>{content.description}</p>
+        </div>
+        <div className="page__actions">
+          {priceDrafts === null ? (
+            <>
+              {visibleItems.length === 0 ? null : (
+                <button
+                  className="button button--secondary"
+                  type="button"
+                  onClick={startPriceEditing}
+                >
+                  Редактировать цены
+                </button>
+              )}
+              <button
+                className="button button--primary"
+                type="button"
+                onClick={() => {
+                  setIsCreating(true)
+                }}
+              >
+                + {content.addLabel}
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                className="button button--secondary"
+                type="button"
+                onClick={() => {
+                  setPriceDrafts(null)
+                }}
+              >
+                Отмена
+              </button>
+              <button
+                className="button button--primary"
+                type="button"
+                onClick={savePriceDrafts}
+              >
+                Сохранить все
+              </button>
+            </>
+          )}
+        </div>
+      </header>
+
+      {visibleItems.length === 0 ? (
+        <div className="empty-state">
+          <strong>Здесь пока ничего нет</strong>
+          <p>Создайте первый предмет, затем добавьте ему рецепт и цены.</p>
+          <button
+            className="button button--primary"
+            type="button"
+            onClick={() => {
+              setIsCreating(true)
+            }}
+          >
+            {content.addLabel}
+          </button>
+        </div>
+      ) : (
+        <div className="item-list">
+          {visibleItems.map((item) => (
+            <ItemTree
+              key={item.id}
+              rootItemId={item.id}
+              catalog={items}
+              {...(priceDrafts === null
+                ? {}
+                : {
+                    quickPriceEdit: {
+                      field: priceField,
+                      value: priceDrafts[item.id] ?? null,
+                      onChange: (value: number | null) => {
+                        setPriceDrafts((current) =>
+                          current === null ? null : { ...current, [item.id]: value },
+                        )
+                      },
+                    },
+                  })}
+              expandedPaths={expandedPaths}
+              onToggleExpanded={toggleExpanded}
+              onEditItem={setEditingItemId}
+              onEditRecipe={setEditingRecipeId}
+              onDeleteItem={(itemId) => {
+                const itemToDelete = items[itemId]
+
+                if (
+                  itemToDelete !== undefined &&
+                  window.confirm(
+                    `Удалить «${itemToDelete.name}»? Он также исчезнет из всех рецептов.`,
+                  )
+                ) {
+                  removeItem(itemId)
+                }
+              }}
+              onSetAcquisition={setAcquisition}
+            />
+          ))}
+        </div>
+      )}
+
+      {isCreating ? (
+        <Modal
+          title={content.addLabel}
+          onClose={() => {
+            setIsCreating(false)
+          }}
+        >
+          <ItemForm
+            defaultSection={section}
+            onCancel={() => {
+              setIsCreating(false)
+            }}
+            onSave={(input) => {
+              createItem(input)
+              setIsCreating(false)
+            }}
+          />
+        </Modal>
+      ) : null}
+
+      {editingItem === undefined ? null : (
+        <Modal
+          title={`Редактировать: ${editingItem.name}`}
+          onClose={() => {
+            setEditingItemId(null)
+          }}
+        >
+          <ItemForm
+            initialItem={editingItem}
+            defaultSection={section}
+            onCancel={() => {
+              setEditingItemId(null)
+            }}
+            onSave={(input) => {
+              updateItem(editingItem.id, input)
+              setEditingItemId(null)
+            }}
+          />
+        </Modal>
+      )}
+
+      {recipeItem === undefined ? null : (
+        <Modal
+          title={`Рецепт: ${recipeItem.name}`}
+          onClose={() => {
+            setEditingRecipeId(null)
+          }}
+        >
+          <RecipeEditor
+            item={recipeItem}
+            catalog={items}
+            onCancel={() => {
+              setEditingRecipeId(null)
+            }}
+            onRemove={() => {
+              setRecipe(recipeItem.id, null)
+              setEditingRecipeId(null)
+            }}
+            onSave={(recipe) => saveRecipe(recipeItem.id, recipe)}
+          />
+        </Modal>
+      )}
+    </section>
+  )
+}

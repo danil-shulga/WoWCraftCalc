@@ -1,0 +1,14 @@
+.data-transfer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}
+
+.data-transfer__message {
+  width: 100%;
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-align: right;
+}

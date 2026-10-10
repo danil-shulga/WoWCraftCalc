@@ -1,0 +1,33 @@
+.inline-money-input {
+  display: grid;
+  grid-template-columns: auto repeat(3, minmax(42px, 1fr));
+  align-items: center;
+  gap: 5px;
+  min-width: 220px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.inline-money-input__part {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.inline-money-input .number-input {
+  width: 100%;
+  min-width: 0;
+  height: 32px;
+  min-height: 32px;
+  border-radius: 6px;
+}
+
+.inline-money-input .number-input > input {
+  padding: 4px 5px;
+}
+
+.inline-money-input__part > span {
+  color: var(--muted);
+  font-size: 0.72rem;
+}

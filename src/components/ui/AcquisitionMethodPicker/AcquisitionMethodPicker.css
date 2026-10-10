@@ -1,0 +1,53 @@
+.acquisition-method-picker {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.acquisition-method-picker legend {
+  margin-bottom: 4px;
+  padding: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.acquisition-method-picker__options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-width: 190px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #101724;
+}
+
+.acquisition-method-picker__options button {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  min-height: 46px;
+  padding: 5px 8px;
+  border: 0;
+  border-radius: 6px;
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+}
+
+.acquisition-method-picker__options button[aria-pressed='true'] {
+  color: var(--accent-ink);
+  background: var(--accent);
+}
+
+.acquisition-method-picker__options button:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.acquisition-method-picker__options small {
+  overflow: hidden;
+  font-size: 0.7rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

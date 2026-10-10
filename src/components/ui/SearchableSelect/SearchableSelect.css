@@ -1,0 +1,71 @@
+.searchable-select {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  gap: 7px;
+}
+
+.searchable-select > label {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.searchable-select > .searchable-select__label--hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.searchable-select__control {
+  position: relative;
+}
+
+.searchable-select__control input {
+  width: 100%;
+  padding-right: 34px;
+}
+
+.searchable-select__indicator {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  color: var(--muted);
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+
+.searchable-select__list {
+  position: fixed;
+  z-index: 20;
+  margin: 0;
+  padding: 5px;
+  overflow-y: auto;
+  list-style: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #101724;
+  box-shadow: 0 12px 30px rgb(0 0 0 / 35%);
+}
+
+.searchable-select__option,
+.searchable-select__empty {
+  padding: 9px 8px;
+  border-radius: 4px;
+}
+
+.searchable-select__option {
+  cursor: pointer;
+}
+
+.searchable-select__option[data-highlighted='true'] {
+  background: rgb(159 176 202 / 22%);
+}
+
+.searchable-select__empty {
+  color: var(--muted);
+}

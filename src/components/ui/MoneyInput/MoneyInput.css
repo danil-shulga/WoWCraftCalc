@@ -1,0 +1,33 @@
+.money-input {
+  margin: 0;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.money-input legend {
+  padding: 0 5px;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.money-input__enabled {
+  margin-bottom: 12px;
+  font-size: 0.85rem;
+}
+
+.money-input__fields {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.money-input__field {
+  display: grid;
+  gap: 5px;
+}
+
+.money-input__field > label {
+  color: var(--muted);
+  font-size: 0.7rem;
+}

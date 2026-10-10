@@ -1,0 +1,31 @@
+.app-shell {
+  display: grid;
+  grid-template-columns: 230px minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.main-content {
+  min-width: 0;
+  padding: 22px clamp(16px, 3vw, 44px) 52px;
+}
+
+.utility-bar {
+  display: flex;
+  min-height: 38px;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+@media (max-width: 720px) {
+  .app-shell {
+    display: block;
+  }
+
+  .main-content {
+    padding: 14px 12px 36px;
+  }
+
+  .utility-bar {
+    margin-bottom: 20px;
+  }
+}

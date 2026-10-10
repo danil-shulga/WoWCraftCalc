@@ -1,0 +1,8 @@
+.item-icon {
+  width: 48px;
+  height: 48px;
+  border: 1px solid #67748a;
+  border-radius: 9px;
+  background: #26324a;
+  object-fit: cover;
+}

@@ -1,0 +1,18 @@
+.page__actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.item-list {
+  display: grid;
+  gap: 12px;
+}
+
+@media (max-width: 720px) {
+  .page__actions {
+    justify-content: flex-start;
+  }
+}
