@@ -1,10 +1,16 @@
-import type { AcquisitionMethod, ItemCatalog, ItemId, RecipeLine } from './item.types'
+import type { AcquisitionMethod, ItemCatalog, ItemId } from './item.types'
 import type { Profession } from './professions'
 
-export interface ItemCostBreakdown {
-  purchaseUnitCost: number | null
+export interface ItemCalculationSnapshot {
   craftUnitCost: number | null
+  selectedUnitCosts: Record<AcquisitionMethod, number | null>
+  automaticMethod: Exclude<AcquisitionMethod, 'auto'>
+  configuredProfit: number | null
+  allProfessionsProfit: number | null
+  boughtReagentsProfit: number | null
 }
+
+export type CatalogCalculationSnapshot = Record<ItemId, ItemCalculationSnapshot>
 
 export type CalculationScenario = 'configured' | 'all-professions' | 'buy-reagents'
 
@@ -63,6 +69,7 @@ function getExactUnitCost(
   acquisition: AcquisitionMethod,
   options: CalculationOptions,
   path: ReadonlySet<ItemId>,
+  craftCostCache: Map<ItemId, number | null>,
 ): number | null {
   const item = catalog[itemId]
 
@@ -72,7 +79,7 @@ function getExactUnitCost(
 
   return resolveAcquisitionMethod(catalog, itemId, acquisition, options) === 'buy'
     ? item.purchasePriceCopper
-    : getExactCraftUnitCost(catalog, itemId, options, path)
+    : getExactCraftUnitCost(catalog, itemId, options, path, craftCostCache)
 }
 
 function getExactCraftUnitCost(
@@ -80,11 +87,21 @@ function getExactCraftUnitCost(
   itemId: ItemId,
   options: CalculationOptions,
   path: ReadonlySet<ItemId> = new Set(),
+  craftCostCache: Map<ItemId, number | null> = new Map<ItemId, number | null>(),
 ): number | null {
   const item = catalog[itemId]
 
-  if (item?.recipe === undefined || item.recipe === null || path.has(itemId)) {
+  if (
+    item?.recipe === undefined ||
+    item.recipe === null ||
+    item.recipe.reagents.length === 0 ||
+    path.has(itemId)
+  ) {
     return null
+  }
+
+  if (craftCostCache.has(itemId)) {
+    return craftCostCache.get(itemId) ?? null
   }
 
   const nextPath = new Set(path)
@@ -99,16 +116,21 @@ function getExactCraftUnitCost(
       line.acquisition,
       options,
       nextPath,
+      craftCostCache,
     )
 
     if (unitCost === null) {
+      craftCostCache.set(itemId, null)
       return null
     }
 
     batchCost += unitCost * line.quantity
   }
 
-  return batchCost / item.recipe.outputQuantity
+  const unitCost = batchCost / item.recipe.outputQuantity
+  craftCostCache.set(itemId, unitCost)
+
+  return unitCost
 }
 
 export function getCraftUnitCost(
@@ -127,25 +149,47 @@ export function getSelectedUnitCost(
   acquisition: AcquisitionMethod,
   options: CalculationOptions = {},
 ): number | null {
-  const exactCost = getExactUnitCost(catalog, itemId, acquisition, options, new Set())
+  const exactCost = getExactUnitCost(
+    catalog,
+    itemId,
+    acquisition,
+    options,
+    new Set(),
+    new Map(),
+  )
 
   return exactCost === null ? null : Math.round(exactCost)
 }
 
-export function getRecipeLineCost(
+function getProfitWithCache(
   catalog: ItemCatalog,
-  line: RecipeLine,
-  options: CalculationOptions = {},
+  itemId: ItemId,
+  options: CalculationOptions,
+  craftCostCache: Map<ItemId, number | null>,
 ): number | null {
-  const unitCost = getExactUnitCost(
+  const item = catalog[itemId]
+  const unitCost = getExactCraftUnitCost(
     catalog,
-    line.itemId,
-    line.acquisition,
+    itemId,
     options,
     new Set(),
+    craftCostCache,
   )
 
-  return unitCost === null ? null : Math.round(unitCost * line.quantity)
+  if (
+    item?.recipe === undefined ||
+    item.recipe === null ||
+    item.salePriceCopper === null
+  ) {
+    return null
+  }
+
+  const batchCost =
+    unitCost === null ? null : Math.round(unitCost * item.recipe.outputQuantity)
+
+  return batchCost === null
+    ? null
+    : item.salePriceCopper * item.recipe.outputQuantity - batchCost
 }
 
 export function getRecipeBatchCost(
@@ -183,13 +227,68 @@ export function getProfitPerCraft(
   return item.salePriceCopper * item.recipe.outputQuantity - batchCost
 }
 
-export function getItemCostBreakdown(
+export function createCatalogCalculationSnapshot(
   catalog: ItemCatalog,
-  itemId: ItemId,
-  options: CalculationOptions = {},
-): ItemCostBreakdown {
-  return {
-    purchaseUnitCost: catalog[itemId]?.purchasePriceCopper ?? null,
-    craftUnitCost: getCraftUnitCost(catalog, itemId, options),
-  }
+  ownedProfessions: ReadonlySet<Profession>,
+  profitItemIds: ReadonlySet<ItemId>,
+): CatalogCalculationSnapshot {
+  const configuredOptions = { ownedProfessions }
+  const allProfessionsOptions = { scenario: 'all-professions' as const }
+  const buyReagentsOptions = { scenario: 'buy-reagents' as const }
+  const configuredCache = new Map<ItemId, number | null>()
+  const allProfessionsCache = new Map<ItemId, number | null>()
+  const buyReagentsCache = new Map<ItemId, number | null>()
+
+  return Object.fromEntries(
+    Object.keys(catalog).map((itemId) => {
+      const automaticMethod = getAutomaticAcquisitionMethod(
+        catalog,
+        itemId,
+        ownedProfessions,
+      )
+      const exactCraftCost = getExactCraftUnitCost(
+        catalog,
+        itemId,
+        configuredOptions,
+        new Set(),
+        configuredCache,
+      )
+      const exactAutomaticCost = getExactUnitCost(
+        catalog,
+        itemId,
+        'auto',
+        configuredOptions,
+        new Set(),
+        configuredCache,
+      )
+      const craftUnitCost = exactCraftCost === null ? null : Math.round(exactCraftCost)
+
+      return [
+        itemId,
+        {
+          craftUnitCost,
+          selectedUnitCosts: {
+            auto: exactAutomaticCost === null ? null : Math.round(exactAutomaticCost),
+            buy: catalog[itemId]?.purchasePriceCopper ?? null,
+            craft: craftUnitCost,
+          },
+          automaticMethod,
+          configuredProfit: profitItemIds.has(itemId)
+            ? getProfitWithCache(catalog, itemId, configuredOptions, configuredCache)
+            : null,
+          allProfessionsProfit: profitItemIds.has(itemId)
+            ? getProfitWithCache(
+                catalog,
+                itemId,
+                allProfessionsOptions,
+                allProfessionsCache,
+              )
+            : null,
+          boughtReagentsProfit: profitItemIds.has(itemId)
+            ? getProfitWithCache(catalog, itemId, buyReagentsOptions, buyReagentsCache)
+            : null,
+        },
+      ]
+    }),
+  )
 }

@@ -18,7 +18,7 @@ export const recipeLineSchema = z.object({
 export const recipeSchema = z.object({
   outputQuantity: z.number().int().positive(),
   profession: z.enum(PROFESSION_IDS).nullable().default(null),
-  reagents: z.array(recipeLineSchema),
+  reagents: z.array(recipeLineSchema).min(1, 'Добавьте хотя бы один реагент'),
 })
 
 export const itemSchema = z.object({

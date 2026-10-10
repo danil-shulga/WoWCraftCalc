@@ -40,6 +40,10 @@ export function getRecipeValidationError(
   ownerItemId: ItemId,
   reagents: readonly RecipeLine[],
 ): string | null {
+  if (reagents.length === 0) {
+    return 'Добавьте хотя бы один реагент'
+  }
+
   const reagentIds = new Set<ItemId>()
 
   for (const line of reagents) {
@@ -61,8 +65,22 @@ export function getRecipeValidationError(
   return null
 }
 
-export function catalogHasCycles(catalog: ItemCatalog): boolean {
-  return Object.values(catalog).some((item) =>
-    recipeWouldCreateCycle(catalog, item.id, item.recipe?.reagents ?? []),
-  )
+export function getCatalogValidationError(catalog: ItemCatalog): string | null {
+  for (const [catalogId, item] of Object.entries(catalog)) {
+    if (catalogId !== item.id) {
+      return `Идентификатор предмета «${item.name}» повреждён`
+    }
+
+    if (item.recipe === null) {
+      continue
+    }
+
+    const recipeError = getRecipeValidationError(catalog, item.id, item.recipe.reagents)
+
+    if (recipeError !== null) {
+      return `Ошибка в рецепте «${item.name}»: ${recipeError}`
+    }
+  }
+
+  return null
 }

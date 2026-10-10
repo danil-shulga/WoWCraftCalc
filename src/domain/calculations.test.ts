@@ -1,4 +1,9 @@
-import { getCraftUnitCost, getProfitPerCraft, getRecipeBatchCost } from './calculations'
+import {
+  createCatalogCalculationSnapshot,
+  getCraftUnitCost,
+  getProfitPerCraft,
+  getRecipeBatchCost,
+} from './calculations'
 import { recipeWouldCreateCycle } from './recipe-validation'
 import type { Item, ItemCatalog } from './item.types'
 
@@ -234,6 +239,48 @@ describe('craft calculations', () => {
     }
 
     expect(getCraftUnitCost(cyclicCatalog, 'first')).toBeNull()
+  })
+
+  it('не считает пустой повреждённый рецепт бесплатным', () => {
+    const emptyRecipeCatalog: ItemCatalog = {
+      product: makeItem({
+        id: 'product',
+        name: 'Изделие',
+        salePriceCopper: 100,
+        recipe: {
+          outputQuantity: 1,
+          profession: null,
+          reagents: [],
+        },
+      }),
+    }
+
+    expect(getCraftUnitCost(emptyRecipeCatalog, 'product')).toBeNull()
+    expect(getProfitPerCraft(emptyRecipeCatalog, 'product')).toBeNull()
+  })
+
+  it('строит единый снимок для стоимости и сценариев прибыли', () => {
+    const snapshot = createCatalogCalculationSnapshot(
+      catalog,
+      new Set(),
+      new Set(['sword']),
+    )
+
+    expect(snapshot.bar).toMatchObject({
+      craftUnitCost: 100,
+      selectedUnitCosts: {
+        auto: 250,
+        buy: 250,
+        craft: 100,
+      },
+      automaticMethod: 'buy',
+    })
+    expect(snapshot.sword).toMatchObject({
+      configuredProfit: 700,
+      allProfessionsProfit: 250,
+      boughtReagentsProfit: 250,
+    })
+    expect(snapshot.bar?.configuredProfit).toBeNull()
   })
 })
 

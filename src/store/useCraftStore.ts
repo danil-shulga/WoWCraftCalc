@@ -1,7 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-import { persistedCraftDataSchema } from '../domain/item.schema'
 import { getRecipeValidationError } from '../domain/recipe-validation'
 import type {
   AcquisitionMethod,
@@ -14,10 +13,9 @@ import type {
 } from '../domain/item.types'
 import type { Profession } from '../domain/professions'
 import type { CurrencyDisplayMode } from '../domain/user-settings'
+import { migratePersistedData, parseCurrentPersistedData } from './persistence'
 
-export type ItemInput = Omit<Item, 'id' | 'recipe'> & {
-  recipe?: Recipe | null
-}
+export type ItemInput = Omit<Item, 'id' | 'recipe'>
 
 interface CraftStore {
   items: ItemCatalog
@@ -33,10 +31,22 @@ interface CraftStore {
     reagentItemId: ItemId,
     acquisition: AcquisitionMethod,
   ) => void
-  replaceItems: (items: ItemCatalog) => void
+  replaceData: (data: PersistedCraftData) => void
   setProfessionOwned: (profession: Profession, owned: boolean) => void
   setCurrencyDisplay: (mode: CurrencyDisplayMode) => void
 }
+
+interface PersistenceStatusStore {
+  hydrationError: string | null
+  setHydrationError: (error: string | null) => void
+}
+
+export const usePersistenceStatusStore = create<PersistenceStatusStore>((set) => ({
+  hydrationError: null,
+  setHydrationError: (hydrationError) => {
+    set({ hydrationError })
+  },
+}))
 
 export const useCraftStore = create<CraftStore>()(
   persist<CraftStore, [], [], PersistedCraftData>(
@@ -47,10 +57,10 @@ export const useCraftStore = create<CraftStore>()(
 
       createItem: (input) => {
         const itemId = crypto.randomUUID()
-        const item: Item = {
+        const item = {
           ...input,
           id: itemId,
-          recipe: input.recipe ?? null,
+          recipe: null,
         }
 
         set((state) => ({
@@ -78,7 +88,7 @@ export const useCraftStore = create<CraftStore>()(
                 ...currentItem,
                 ...input,
                 id: itemId,
-                recipe: input.recipe ?? currentItem.recipe,
+                recipe: currentItem.recipe,
               },
             },
           }
@@ -114,15 +124,17 @@ export const useCraftStore = create<CraftStore>()(
                 id,
                 item.recipe === null
                   ? item
-                  : {
-                      ...item,
-                      recipe: {
-                        ...item.recipe,
-                        reagents: item.recipe.reagents.filter(
-                          (line) => line.itemId !== itemId,
-                        ),
-                      },
-                    },
+                  : (() => {
+                      const reagents = item.recipe.reagents.filter(
+                        (line) => line.itemId !== itemId,
+                      )
+
+                      return {
+                        ...item,
+                        recipe:
+                          reagents.length === 0 ? null : { ...item.recipe, reagents },
+                      }
+                    })(),
               ]),
           )
 
@@ -145,15 +157,23 @@ export const useCraftStore = create<CraftStore>()(
           }
         }
 
-        set((state) => ({
-          items: {
-            ...state.items,
-            [itemId]: {
-              ...state.items[itemId],
-              recipe,
-            } as Item,
-          },
-        }))
+        set((state) => {
+          const item = state.items[itemId]
+
+          if (item === undefined) {
+            return state
+          }
+
+          return {
+            items: {
+              ...state.items,
+              [itemId]: {
+                ...item,
+                recipe,
+              },
+            },
+          }
+        })
 
         return null
       },
@@ -183,8 +203,8 @@ export const useCraftStore = create<CraftStore>()(
         })
       },
 
-      replaceItems: (items) => {
-        set({ items })
+      replaceData: (data) => {
+        set(data)
       },
 
       setProfessionOwned: (profession, owned) => {
@@ -201,43 +221,27 @@ export const useCraftStore = create<CraftStore>()(
     }),
     {
       name: 'craft-calc-data',
-      version: 3,
+      version: 4,
       partialize: (state) => ({
         items: state.items,
         ownedProfessions: state.ownedProfessions,
         currencyDisplay: state.currencyDisplay,
       }),
-      migrate: (persistedState, version) => {
-        const parsed = persistedCraftDataSchema.safeParse(persistedState)
-
-        if (!parsed.success) {
-          return { items: {}, ownedProfessions: [], currencyDisplay: 'icons' }
-        }
-
-        if (version >= 2) {
-          return parsed.data
-        }
-
-        return {
-          ...parsed.data,
-          items: Object.fromEntries(
-            Object.entries(parsed.data.items).map(([itemId, item]) => [
-              itemId,
-              item.recipe === null
-                ? item
-                : {
-                    ...item,
-                    recipe: {
-                      ...item.recipe,
-                      reagents: item.recipe.reagents.map((line) => ({
-                        ...line,
-                        acquisition: 'auto' as const,
-                      })),
-                    },
-                  },
-            ]),
-          ),
-        }
+      migrate: migratePersistedData,
+      merge: (persistedState, currentState) => ({
+        ...currentState,
+        ...parseCurrentPersistedData(persistedState),
+      }),
+      onRehydrateStorage: () => (_state, error) => {
+        usePersistenceStatusStore
+          .getState()
+          .setHydrationError(
+            error instanceof Error
+              ? error.message
+              : error === undefined
+                ? null
+                : 'Не удалось загрузить сохранённые данные CraftCalc',
+          )
       },
     },
   ),

@@ -1,21 +1,21 @@
 import { useRef, useState, type ChangeEvent } from 'react'
 
-import type { ItemCatalog } from '../../domain/item.types'
+import type { PersistedCraftData } from '../../domain/item.types'
 import { createExportJson, parseImportedData } from '../../store/persistence'
 import '../../components/ui/Button.css'
 import './DataTransferControls.css'
 
 interface DataTransferControlsProps {
-  items: ItemCatalog
-  onImport: (items: ItemCatalog) => void
+  data: PersistedCraftData
+  onImport: (data: PersistedCraftData) => void
 }
 
-export function DataTransferControls({ items, onImport }: DataTransferControlsProps) {
+export function DataTransferControls({ data, onImport }: DataTransferControlsProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [message, setMessage] = useState<string | null>(null)
 
   const exportData = () => {
-    const blob = new Blob([createExportJson(items)], {
+    const blob = new Blob([createExportJson(data)], {
       type: 'application/json;charset=utf-8',
     })
     const url = URL.createObjectURL(blob)
@@ -46,7 +46,7 @@ export function DataTransferControls({ items, onImport }: DataTransferControlsPr
       return
     }
 
-    onImport(result.items)
+    onImport(result.data)
     setMessage('Данные успешно импортированы')
   }
 

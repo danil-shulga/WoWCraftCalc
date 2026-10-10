@@ -5,7 +5,7 @@ import { DataTransferControls } from '../features/data-transfer/DataTransferCont
 import { UserSettingsModal } from '../features/user-settings/UserSettingsModal'
 import { ItemsPage } from '../pages/ItemsPage'
 import { PlaceholderPage } from '../pages/PlaceholderPage'
-import { useCraftStore } from '../store/useCraftStore'
+import { useCraftStore, usePersistenceStatusStore } from '../store/useCraftStore'
 import '../components/ui/Button.css'
 import './App.css'
 
@@ -28,14 +28,21 @@ export function App() {
   const items = useCraftStore((state) => state.items)
   const ownedProfessions = useCraftStore((state) => state.ownedProfessions)
   const currencyDisplay = useCraftStore((state) => state.currencyDisplay)
-  const replaceItems = useCraftStore((state) => state.replaceItems)
+  const replaceData = useCraftStore((state) => state.replaceData)
   const setProfessionOwned = useCraftStore((state) => state.setProfessionOwned)
   const setCurrencyDisplay = useCraftStore((state) => state.setCurrencyDisplay)
+  const hydrationError = usePersistenceStatusStore((state) => state.hydrationError)
 
   return (
     <div className="app-shell" data-currency-display={currencyDisplay}>
       <Sidebar activeTab={activeTab} onChange={setActiveTab} />
       <main className="main-content">
+        {hydrationError === null ? null : (
+          <div className="persistence-error" role="alert">
+            <strong>Не удалось загрузить сохранённые данные.</strong>
+            <span>{hydrationError}. Исходная запись в браузере не изменена.</span>
+          </div>
+        )}
         <div className="utility-bar">
           <button
             className="button button--secondary settings-button"
@@ -47,7 +54,10 @@ export function App() {
             <span aria-hidden="true">⚙</span>
             Настройки
           </button>
-          <DataTransferControls items={items} onImport={replaceItems} />
+          <DataTransferControls
+            data={{ items, ownedProfessions, currencyDisplay }}
+            onImport={replaceData}
+          />
         </div>
         <CurrentPage activeTab={activeTab} />
       </main>

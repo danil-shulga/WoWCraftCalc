@@ -127,12 +127,6 @@
   display: flex;
 }
 
-.empty-recipe {
-  margin: 8px 0 8px 46px;
-  color: var(--muted);
-  font-size: 0.85rem;
-}
-
 @media (max-width: 1050px) {
   .item-icon {
     width: 44px;

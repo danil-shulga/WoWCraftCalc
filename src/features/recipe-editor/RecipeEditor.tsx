@@ -96,6 +96,11 @@ export function RecipeEditor({
       return
     }
 
+    if (reagents.length === 0) {
+      setError('Добавьте хотя бы один реагент')
+      return
+    }
+
     const saveError = onSave({
       outputQuantity,
       profession: profession === '' ? null : profession,
@@ -230,7 +235,11 @@ export function RecipeEditor({
         </button>
       </div>
 
-      {error === null ? null : <p className="form-error">{error}</p>}
+      {error === null ? null : (
+        <p className="form-error" role="alert">
+          {error}
+        </p>
+      )}
 
       <footer className="editor-form__actions">
         {item.recipe === null ? null : (

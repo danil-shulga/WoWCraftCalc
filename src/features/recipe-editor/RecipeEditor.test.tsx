@@ -73,6 +73,7 @@ describe('RecipeEditor', () => {
 
     expect(reagentField).toHaveValue('Адамантитовая руда')
     expect(screen.getByRole('button', { name: 'Добавить реагент' })).toBeEnabled()
+    await user.click(screen.getByRole('button', { name: 'Добавить реагент' }))
 
     const professionField = screen.getByRole('combobox', { name: 'Профессия' })
 
@@ -83,7 +84,28 @@ describe('RecipeEditor', () => {
     expect(handleSave).toHaveBeenCalledWith({
       outputQuantity: 1,
       profession: 'mining',
-      reagents: [],
+      reagents: [{ itemId: 'adamantite', quantity: 1, acquisition: 'auto' }],
     })
+  })
+
+  it('не сохраняет рецепт без реагентов', async () => {
+    const user = userEvent.setup()
+    const handleSave = vi.fn(() => null)
+
+    render(
+      <RecipeEditor
+        item={catalog.craft}
+        catalog={catalog}
+        ownedProfessions={[]}
+        onSave={handleSave}
+        onRemove={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Сохранить рецепт' }))
+
+    expect(handleSave).not.toHaveBeenCalled()
+    expect(screen.getByRole('alert')).toHaveTextContent('Добавьте хотя бы один реагент')
   })
 })

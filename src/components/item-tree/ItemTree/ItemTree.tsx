@@ -1,9 +1,4 @@
-import {
-  getAutomaticAcquisitionMethod,
-  getCraftUnitCost,
-  getProfitPerCraft,
-  getSelectedUnitCost,
-} from '../../../domain/calculations'
+import type { CatalogCalculationSnapshot } from '../../../domain/calculations'
 import type {
   AcquisitionMethod,
   ItemCatalog,
@@ -11,7 +6,6 @@ import type {
   ItemPriceField,
   RecipeLine,
 } from '../../../domain/item.types'
-import type { Profession } from '../../../domain/professions'
 import { ReagentItemRow } from '../ReagentItemRow/ReagentItemRow'
 import { RootItemRow } from '../RootItemRow/RootItemRow'
 import './ItemTree.css'
@@ -25,7 +19,7 @@ interface QuickPriceEdit {
 interface ItemTreeProps {
   rootItemId: ItemId
   catalog: ItemCatalog
-  ownedProfessions: readonly Profession[]
+  calculationSnapshot: CatalogCalculationSnapshot
   quickPriceEdit?: QuickPriceEdit
   expandedPaths: ReadonlySet<string>
   onToggleExpanded: (path: string) => void
@@ -42,7 +36,6 @@ interface ItemTreeProps {
 interface ItemTreeNodeProps extends ItemTreeProps {
   itemId: ItemId
   path: string
-  depth: number
   parentItemId: ItemId | null
   recipeLine: RecipeLine | null
   visited: ReadonlySet<ItemId>
@@ -51,11 +44,10 @@ interface ItemTreeNodeProps extends ItemTreeProps {
 function ItemTreeNode({
   itemId,
   path,
-  depth,
   parentItemId,
   recipeLine,
   catalog,
-  ownedProfessions,
+  calculationSnapshot,
   quickPriceEdit,
   expandedPaths,
   onToggleExpanded,
@@ -67,33 +59,17 @@ function ItemTreeNode({
   rootItemId,
 }: ItemTreeNodeProps) {
   const item = catalog[itemId]
+  const calculation = calculationSnapshot[itemId]
 
-  if (item === undefined) {
+  if (item === undefined || calculation === undefined) {
     return null
   }
 
-  const ownedProfessionSet = new Set(ownedProfessions)
-  const calculationOptions = { ownedProfessions: ownedProfessionSet }
-  const craftUnitCost = getCraftUnitCost(catalog, itemId, calculationOptions)
   const hasRecipe = item.recipe !== null
   const isExpanded = expandedPaths.has(path)
   const hasCycle = visited.has(itemId)
   const selectedCost =
-    recipeLine === null
-      ? null
-      : getSelectedUnitCost(catalog, itemId, recipeLine.acquisition, calculationOptions)
-  const automaticMethod = getAutomaticAcquisitionMethod(
-    catalog,
-    itemId,
-    ownedProfessionSet,
-  )
-  const configuredProfit = getProfitPerCraft(catalog, itemId, calculationOptions)
-  const allProfessionsProfit = getProfitPerCraft(catalog, itemId, {
-    scenario: 'all-professions',
-  })
-  const boughtReagentsProfit = getProfitPerCraft(catalog, itemId, {
-    scenario: 'buy-reagents',
-  })
+    recipeLine === null ? null : calculation.selectedUnitCosts[recipeLine.acquisition]
   const nextVisited = new Set(visited)
   nextVisited.add(itemId)
 
@@ -104,10 +80,10 @@ function ItemTreeNode({
           item={item}
           isExpanded={isExpanded}
           hasCycle={hasCycle}
-          craftUnitCost={craftUnitCost}
-          configuredProfit={configuredProfit}
-          allProfessionsProfit={allProfessionsProfit}
-          boughtReagentsProfit={boughtReagentsProfit}
+          craftUnitCost={calculation.craftUnitCost}
+          configuredProfit={calculation.configuredProfit}
+          allProfessionsProfit={calculation.allProfessionsProfit}
+          boughtReagentsProfit={calculation.boughtReagentsProfit}
           quickPriceEdit={quickPriceEdit}
           onToggleExpanded={() => {
             onToggleExpanded(path)
@@ -123,9 +99,9 @@ function ItemTreeNode({
           recipeLine={recipeLine}
           isExpanded={isExpanded}
           hasCycle={hasCycle}
-          craftUnitCost={craftUnitCost}
+          craftUnitCost={calculation.craftUnitCost}
           selectedCost={selectedCost}
-          automaticMethod={automaticMethod}
+          automaticMethod={calculation.automaticMethod}
           onToggleExpanded={() => {
             onToggleExpanded(path)
           }}
@@ -136,32 +112,27 @@ function ItemTreeNode({
       )}
 
       {isExpanded && hasRecipe && !hasCycle ? (
-        item.recipe?.reagents.length === 0 ? (
-          <p className="empty-recipe">В рецепте пока нет реагентов.</p>
-        ) : (
-          <ul className="item-tree item-tree--nested">
-            {item.recipe?.reagents.map((line) => (
-              <ItemTreeNode
-                key={line.itemId}
-                rootItemId={rootItemId}
-                itemId={line.itemId}
-                path={`${path}/${line.itemId}`}
-                depth={depth + 1}
-                parentItemId={itemId}
-                recipeLine={line}
-                catalog={catalog}
-                ownedProfessions={ownedProfessions}
-                expandedPaths={expandedPaths}
-                onToggleExpanded={onToggleExpanded}
-                onEditItem={onEditItem}
-                onEditRecipe={onEditRecipe}
-                onDeleteItem={onDeleteItem}
-                onSetAcquisition={onSetAcquisition}
-                visited={nextVisited}
-              />
-            ))}
-          </ul>
-        )
+        <ul className="item-tree item-tree--nested">
+          {item.recipe?.reagents.map((line) => (
+            <ItemTreeNode
+              key={line.itemId}
+              rootItemId={rootItemId}
+              itemId={line.itemId}
+              path={`${path}/${line.itemId}`}
+              parentItemId={itemId}
+              recipeLine={line}
+              catalog={catalog}
+              calculationSnapshot={calculationSnapshot}
+              expandedPaths={expandedPaths}
+              onToggleExpanded={onToggleExpanded}
+              onEditItem={onEditItem}
+              onEditRecipe={onEditRecipe}
+              onDeleteItem={onDeleteItem}
+              onSetAcquisition={onSetAcquisition}
+              visited={nextVisited}
+            />
+          ))}
+        </ul>
       ) : null}
     </li>
   )
@@ -174,7 +145,6 @@ export function ItemTree(props: ItemTreeProps) {
         {...props}
         itemId={props.rootItemId}
         path={props.rootItemId}
-        depth={0}
         parentItemId={null}
         recipeLine={null}
         visited={new Set()}

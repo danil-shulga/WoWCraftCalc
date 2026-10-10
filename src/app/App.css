@@ -9,6 +9,17 @@
   padding: 22px clamp(16px, 3vw, 44px) 52px;
 }
 
+.persistence-error {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--danger);
+  border-radius: 8px;
+  color: var(--danger);
+  background: var(--panel-raised);
+}
+
 .utility-bar {
   display: flex;
   min-height: 38px;

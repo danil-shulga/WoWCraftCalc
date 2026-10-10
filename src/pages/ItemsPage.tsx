@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 
 import { ItemTree } from '../components/item-tree/ItemTree/ItemTree'
 import { Modal } from '../components/ui/Modal/Modal'
+import { createCatalogCalculationSnapshot } from '../domain/calculations'
 import type { ItemId, ItemPriceField, ItemSection, Recipe } from '../domain/item.types'
 import { ItemForm } from '../features/item-editor/ItemForm'
 import { RecipeEditor } from '../features/recipe-editor/RecipeEditor'
@@ -54,7 +55,20 @@ export function ItemsPage({ section }: ItemsPageProps) {
   const content = pageContent[section]
   const priceField: ItemPriceField =
     section === 'crafts' ? 'salePriceCopper' : 'purchasePriceCopper'
-  const visibleItems = selectItemsBySection(items, section)
+  const visibleItems = useMemo(
+    () => selectItemsBySection(items, section),
+    [items, section],
+  )
+  const ownedProfessionSet = useMemo(() => new Set(ownedProfessions), [ownedProfessions])
+  const calculationSnapshot = useMemo(
+    () =>
+      createCatalogCalculationSnapshot(
+        items,
+        ownedProfessionSet,
+        new Set(visibleItems.map((item) => item.id)),
+      ),
+    [items, ownedProfessionSet, visibleItems],
+  )
   const editingItem = editingItemId === null ? undefined : items[editingItemId]
   const recipeItem = editingRecipeId === null ? undefined : items[editingRecipeId]
 
@@ -177,7 +191,7 @@ export function ItemsPage({ section }: ItemsPageProps) {
               key={item.id}
               rootItemId={item.id}
               catalog={items}
-              ownedProfessions={ownedProfessions}
+              calculationSnapshot={calculationSnapshot}
               {...(priceDrafts === null
                 ? {}
                 : {

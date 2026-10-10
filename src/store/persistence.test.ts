@@ -1,5 +1,10 @@
-import type { ItemCatalog } from '../domain/item.types'
-import { createExportJson, parseImportedData } from './persistence'
+import type { ItemCatalog, PersistedCraftData } from '../domain/item.types'
+import {
+  createExportJson,
+  migratePersistedData,
+  parseCurrentPersistedData,
+  parseImportedData,
+} from './persistence'
 
 const catalog: ItemCatalog = {
   cloth: {
@@ -27,15 +32,21 @@ const catalog: ItemCatalog = {
 }
 
 describe('JSON data transfer', () => {
-  it('восстанавливает экспортированный каталог', () => {
-    const exportedJson = createExportJson(catalog)
+  const persistedData: PersistedCraftData = {
+    items: catalog,
+    ownedProfessions: ['tailoring'],
+    currencyDisplay: 'text',
+  }
+
+  it('восстанавливает каталог и настройки из полной резервной копии', () => {
+    const exportedJson = createExportJson(persistedData)
     const result = parseImportedData(exportedJson)
 
-    expect(exportedJson).toContain('"version": 2')
+    expect(exportedJson).toContain('"version": 3')
     expect(result.success).toBe(true)
 
     if (result.success) {
-      expect(result.items).toEqual(catalog)
+      expect(result.data).toEqual(persistedData)
     }
   })
 
@@ -45,7 +56,7 @@ describe('JSON data transfer', () => {
     expect(result.success).toBe(false)
   })
 
-  it('добавляет пустую профессию рецептам из старого экспорта', () => {
+  it('преобразует пустой рецепт из старого экспорта в отсутствие рецепта', () => {
     const oldExport = JSON.stringify({
       version: 1,
       exportedAt: '2026-01-01T00:00:00.000Z',
@@ -70,7 +81,9 @@ describe('JSON data transfer', () => {
     expect(result.success).toBe(true)
 
     if (result.success) {
-      expect(result.items.product?.recipe?.profession).toBeNull()
+      expect(result.data.items.product?.recipe).toBeNull()
+      expect(result.data.ownedProfessions).toEqual([])
+      expect(result.data.currencyDisplay).toBe('icons')
     }
   })
 
@@ -86,7 +99,7 @@ describe('JSON data transfer', () => {
     expect(result.success).toBe(true)
 
     if (result.success) {
-      expect(result.items.bolt?.recipe?.reagents[0]?.acquisition).toBe('auto')
+      expect(result.data.items.bolt?.recipe?.reagents[0]?.acquisition).toBe('auto')
     }
   })
 
@@ -107,8 +120,65 @@ describe('JSON data transfer', () => {
       },
     }
 
-    const result = parseImportedData(createExportJson(invalidCatalog))
+    const result = parseImportedData(
+      createExportJson({ ...persistedData, items: invalidCatalog }),
+    )
 
     expect(result.success).toBe(false)
+  })
+})
+
+describe('persist migrations', () => {
+  it('преобразует состояние v3 и сохраняет пользовательские настройки', () => {
+    const migrated = migratePersistedData(
+      {
+        items: {
+          draft: {
+            id: 'draft',
+            name: 'Черновик',
+            iconUrl: '',
+            sections: ['crafts'],
+            purchasePriceCopper: null,
+            salePriceCopper: null,
+            recipe: {
+              outputQuantity: 1,
+              profession: null,
+              reagents: [],
+            },
+          },
+        },
+        ownedProfessions: ['mining'],
+        currencyDisplay: 'text',
+      },
+      3,
+    )
+
+    expect(migrated.items.draft?.recipe).toBeNull()
+    expect(migrated.ownedProfessions).toEqual(['mining'])
+    expect(migrated.currencyDisplay).toBe('text')
+  })
+
+  it('отклоняет повреждённый граф при обычной hydration', () => {
+    expect(() =>
+      parseCurrentPersistedData({
+        items: {
+          product: {
+            id: 'product',
+            name: 'Предмет',
+            iconUrl: '',
+            sections: ['crafts'],
+            purchasePriceCopper: null,
+            salePriceCopper: null,
+            recipe: {
+              outputQuantity: 1,
+              profession: null,
+              reagents: [{ itemId: 'missing', quantity: 1, acquisition: 'buy' }],
+            },
+          },
+        },
+        ownedProfessions: [],
+        currencyDisplay: 'icons',
+      }),
+    ).toThrow('Один из реагентов отсутствует в каталоге')
   })
 })
