@@ -66,7 +66,7 @@ export function WowheadImportModal({ onImport, onClose }: WowheadImportModalProp
           }}
         >
           <label>
-            <span>Ссылка на рецепт Wowhead Classic</span>
+            <span>Ссылка на рецепт Wowhead Classic, TBC или Forever</span>
             <input
               autoFocus
               required
@@ -74,7 +74,7 @@ export function WowheadImportModal({ onImport, onClose }: WowheadImportModalProp
               inputMode="url"
               autoCapitalize="none"
               spellCheck={false}
-              placeholder="https://www.wowhead.com/classic/ru/spell=..."
+              placeholder="https://www.wowhead.com/classic/ru/spell=…"
               value={url}
               disabled={isLoading}
               onChange={(event) => {

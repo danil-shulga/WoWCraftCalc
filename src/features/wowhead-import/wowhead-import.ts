@@ -3,9 +3,15 @@ import { z } from 'zod'
 import { resolveIconUrl } from '../item-editor/icon-url'
 
 const WOWHEAD_HOSTS = new Set(['wowhead.com', 'www.wowhead.com'])
-const SPELL_PATH_PATTERN = /\/classic\/(?:[a-z]{2}\/)?spell=(\d+)(?:\/|$)/i
+const SPELL_PATH_PATTERN = /\/(classic|tbc|forever)\/(?:[a-z]{2}\/)?spell=(\d+)(?:\/|$)/i
 const ITEM_PATH_PATTERN = /\/item=(\d+)(?:\/|$)/i
-const WOWHEAD_TOOLTIP_BASE_URL = 'https://nether.wowhead.com/classic/ru/tooltip'
+
+type WowheadVersion = 'classic' | 'tbc' | 'forever'
+
+interface WowheadSpellReference {
+  version: WowheadVersion
+  spellId: number
+}
 
 const tooltipResponseSchema = z.object({
   name: z.string().trim().min(1),
@@ -48,7 +54,7 @@ function getIconUrl(iconName: string): string {
   return resolveIconUrl(iconName) ?? ''
 }
 
-export function parseWowheadSpellUrl(value: string): number | null {
+function parseWowheadSpellReference(value: string): WowheadSpellReference | null {
   let url: URL
 
   try {
@@ -62,7 +68,41 @@ export function parseWowheadSpellUrl(value: string): number | null {
   }
 
   const match = SPELL_PATH_PATTERN.exec(url.pathname)
-  return match?.[1] === undefined ? null : parsePositiveId(match[1])
+  const version = match?.[1]?.toLowerCase()
+  const spellId = match?.[2] === undefined ? null : parsePositiveId(match[2])
+
+  if (
+    (version !== 'classic' && version !== 'tbc' && version !== 'forever') ||
+    spellId === null
+  ) {
+    return null
+  }
+
+  return { version, spellId }
+}
+
+function getTooltipBaseUrl(version: WowheadVersion): string {
+  return `https://nether.wowhead.com/${version}/ru/tooltip`
+}
+
+function getSectionTitle(container: Element): string {
+  let sibling = container.previousSibling
+
+  while (sibling !== null) {
+    const text = sibling.textContent?.trim() ?? ''
+
+    if (sibling.nodeName !== 'BR' && text.length > 0) {
+      return text
+    }
+
+    sibling = sibling.previousSibling
+  }
+
+  return ''
+}
+
+export function parseWowheadSpellUrl(value: string): number | null {
+  return parseWowheadSpellReference(value)?.spellId ?? null
 }
 
 export function parseWowheadSpellTooltip(response: unknown): ParsedSpellTooltip {
@@ -76,18 +116,23 @@ export function parseWowheadSpellTooltip(response: unknown): ParsedSpellTooltip 
     parsedResponse.data.tooltip,
     'text/html',
   )
-  const reagentContainer = document.querySelector('.indent')
+  const reagentContainers = [...document.querySelectorAll<HTMLElement>('.indent')]
 
-  if (reagentContainer === null) {
+  const reagentContainer = reagentContainers.find(
+    (container) => getSectionTitle(container) === 'Ингредиенты:',
+  )
+
+  if (reagentContainer === undefined) {
     throw new Error('В данных Wowhead не найден состав рецепта')
   }
 
-  const reagents = [...reagentContainer.querySelectorAll<HTMLAnchorElement>('a')]
+  const reagentAnchors = [...reagentContainer.querySelectorAll<HTMLAnchorElement>('a')]
+  const reagents = reagentAnchors
     .map((anchor): WowheadImportReagent | null => {
       const wowheadItemId = getItemIdFromHref(anchor.getAttribute('href') ?? '')
       const quantityMatch = anchor.nextSibling?.textContent.match(/\((\d+)\)/)
       const quantity =
-        quantityMatch?.[1] === undefined ? null : parsePositiveId(quantityMatch[1])
+        quantityMatch?.[1] === undefined ? 1 : parsePositiveId(quantityMatch[1])
       const name = anchor.textContent.trim()
 
       if (wowheadItemId === null || quantity === null || name.length === 0) {
@@ -102,13 +147,9 @@ export function parseWowheadSpellTooltip(response: unknown): ParsedSpellTooltip 
     throw new Error('В данных Wowhead не найдены реагенты')
   }
 
-  const reagentIds = new Set(reagents.map((reagent) => reagent.wowheadItemId))
-  const productAnchor = [...document.querySelectorAll<HTMLAnchorElement>('a')].find(
-    (anchor) => {
-      const itemId = getItemIdFromHref(anchor.getAttribute('href') ?? '')
-      return itemId !== null && !reagentIds.has(itemId)
-    },
-  )
+  const productAnchor = [
+    ...document.querySelectorAll<HTMLAnchorElement>('span > a'),
+  ].find((anchor) => getItemIdFromHref(anchor.getAttribute('href') ?? '') !== null)
   const productItemId =
     productAnchor === undefined
       ? null
@@ -150,11 +191,12 @@ async function fetchTooltip(url: string): Promise<unknown> {
 
 async function enrichReagent(
   reagent: WowheadImportReagent,
+  version: WowheadVersion,
 ): Promise<WowheadImportReagent> {
   try {
     const response = tooltipResponseSchema.parse(
       await fetchTooltip(
-        `${WOWHEAD_TOOLTIP_BASE_URL}/item/${reagent.wowheadItemId.toString()}`,
+        `${getTooltipBaseUrl(version)}/item/${reagent.wowheadItemId.toString()}`,
       ),
     )
 
@@ -169,19 +211,25 @@ async function enrichReagent(
 }
 
 export async function fetchWowheadRecipe(value: string): Promise<WowheadRecipeImport> {
-  const wowheadSpellId = parseWowheadSpellUrl(value)
+  const reference = parseWowheadSpellReference(value)
 
-  if (wowheadSpellId === null) {
-    throw new Error('Введите ссылку на заклинание с сайта Wowhead Classic')
+  if (reference === null) {
+    throw new Error(
+      'Введите ссылку на заклинание с сайта Wowhead Classic, TBC или Forever',
+    )
   }
 
   const parsed = parseWowheadSpellTooltip(
-    await fetchTooltip(`${WOWHEAD_TOOLTIP_BASE_URL}/spell/${wowheadSpellId.toString()}`),
+    await fetchTooltip(
+      `${getTooltipBaseUrl(reference.version)}/spell/${reference.spellId.toString()}`,
+    ),
   )
-  const reagents = await Promise.all(parsed.reagents.map(enrichReagent))
+  const reagents = await Promise.all(
+    parsed.reagents.map((reagent) => enrichReagent(reagent, reference.version)),
+  )
 
   return {
-    wowheadSpellId,
+    wowheadSpellId: reference.spellId,
     product: parsed.product,
     reagents,
   }
