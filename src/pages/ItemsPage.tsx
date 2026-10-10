@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 
 import { ItemTree } from '../components/item-tree/ItemTree/ItemTree'
+import { ConfirmDialog } from '../components/ui/ConfirmDialog/ConfirmDialog'
 import { Modal } from '../components/ui/Modal/Modal'
 import { createCatalogCalculationSnapshot } from '../domain/calculations'
 import type { ItemId, ItemPriceField, ItemSection, Recipe } from '../domain/item.types'
@@ -47,6 +48,7 @@ export function ItemsPage({ section }: ItemsPageProps) {
   const [isCreating, setIsCreating] = useState(false)
   const [editingItemId, setEditingItemId] = useState<ItemId | null>(null)
   const [editingRecipeId, setEditingRecipeId] = useState<ItemId | null>(null)
+  const [deletingItemId, setDeletingItemId] = useState<ItemId | null>(null)
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set())
   const [priceDrafts, setPriceDrafts] = useState<Record<ItemId, number | null> | null>(
     null,
@@ -71,6 +73,7 @@ export function ItemsPage({ section }: ItemsPageProps) {
   )
   const editingItem = editingItemId === null ? undefined : items[editingItemId]
   const recipeItem = editingRecipeId === null ? undefined : items[editingRecipeId]
+  const deletingItem = deletingItemId === null ? undefined : items[deletingItemId]
 
   const toggleExpanded = (path: string) => {
     setExpandedPaths((current) => {
@@ -209,18 +212,7 @@ export function ItemsPage({ section }: ItemsPageProps) {
               onToggleExpanded={toggleExpanded}
               onEditItem={setEditingItemId}
               onEditRecipe={setEditingRecipeId}
-              onDeleteItem={(itemId) => {
-                const itemToDelete = items[itemId]
-
-                if (
-                  itemToDelete !== undefined &&
-                  window.confirm(
-                    `Удалить «${itemToDelete.name}»? Он также исчезнет из всех рецептов.`,
-                  )
-                ) {
-                  removeItem(itemId)
-                }
-              }}
+              onDeleteItem={setDeletingItemId}
               onSetAcquisition={setAcquisition}
             />
           ))}
@@ -289,6 +281,21 @@ export function ItemsPage({ section }: ItemsPageProps) {
             onSave={(recipe) => saveRecipe(recipeItem.id, recipe)}
           />
         </Modal>
+      )}
+
+      {deletingItem === undefined ? null : (
+        <ConfirmDialog
+          title="Удалить предмет?"
+          message={`«${deletingItem.name}» также исчезнет из всех рецептов. Это действие нельзя отменить.`}
+          confirmLabel="Удалить"
+          onCancel={() => {
+            setDeletingItemId(null)
+          }}
+          onConfirm={() => {
+            removeItem(deletingItem.id)
+            setDeletingItemId(null)
+          }}
+        />
       )}
     </section>
   )

@@ -1,0 +1,29 @@
+.confirm-dialog {
+  display: grid;
+  gap: 24px;
+  padding: 22px;
+}
+
+.confirm-dialog p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.confirm-dialog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.confirm-dialog__danger-button {
+  border-color: #b94f4f;
+  color: #fff;
+  background: linear-gradient(180deg, #d86565, #aa3f3f);
+  font-weight: 700;
+}
+
+.confirm-dialog__danger-button:hover {
+  filter: brightness(1.08);
+}
