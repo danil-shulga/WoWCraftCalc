@@ -63,8 +63,8 @@
 }
 
 .checkbox__input:focus-visible + .checkbox__control {
-  outline: 3px solid rgb(227 173 69 / 38%);
-  outline-offset: 2px;
+  outline: 1px solid var(--accent);
+  outline-offset: 1px;
 }
 
 .checkbox:has(.checkbox__input:disabled) {

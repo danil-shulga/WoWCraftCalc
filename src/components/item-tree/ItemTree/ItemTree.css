@@ -89,8 +89,8 @@
 
 .profit-value:focus-visible {
   border-radius: 3px;
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
+  outline: 1px solid var(--accent);
+  outline-offset: 1px;
 }
 
 .profit-tooltip {
