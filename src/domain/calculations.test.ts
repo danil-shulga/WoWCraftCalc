@@ -3,6 +3,7 @@ import {
   getCraftUnitCost,
   getProfitPerCraft,
   getRecipeBatchCost,
+  getTotalAcquisitionProfit,
 } from './calculations'
 import { recipeWouldCreateCycle } from './recipe-validation'
 import type { Item, ItemCatalog } from './item.types'
@@ -161,6 +162,43 @@ describe('craft calculations', () => {
     ).toBe(1_000)
   })
 
+  it('автоматически покупает реагент, если доступный крафт дороже', () => {
+    const expensiveCraftCatalog: ItemCatalog = {
+      material: makeItem({
+        id: 'material',
+        name: 'Материал',
+        purchasePriceCopper: 8_290,
+      }),
+      component: makeItem({
+        id: 'component',
+        name: 'Компонент',
+        purchasePriceCopper: 2_800,
+        recipe: {
+          outputQuantity: 1,
+          profession: 'engineering',
+          reagents: [{ itemId: 'material', quantity: 1, acquisition: 'buy' }],
+        },
+      }),
+    }
+
+    const snapshot = createCatalogCalculationSnapshot(
+      expensiveCraftCatalog,
+      new Set(['engineering']),
+      new Set(),
+    )
+
+    expect(snapshot.component).toMatchObject({
+      automaticMethod: 'buy',
+      selectedUnitProfits: {
+        auto: 5_490,
+        buy: 5_490,
+        craft: -5_490,
+      },
+    })
+    expect(getTotalAcquisitionProfit(5_490, 5)).toBe(27_450)
+    expect(getTotalAcquisitionProfit(null, 5)).toBeNull()
+  })
+
   it('ручной выбор имеет приоритет, а рецепт без профессии автоматически покупается', () => {
     const automaticCatalog: ItemCatalog = {
       material: makeItem({
@@ -268,10 +306,10 @@ describe('craft calculations', () => {
 
     expect(snapshot.bar).toMatchObject({
       craftUnitCost: 100,
-      selectedUnitCosts: {
-        auto: 250,
-        buy: 250,
-        craft: 100,
+      selectedUnitProfits: {
+        auto: -150,
+        buy: -150,
+        craft: 150,
       },
       automaticMethod: 'buy',
     })

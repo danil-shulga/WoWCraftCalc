@@ -3,7 +3,7 @@ import type { Profession } from './professions'
 
 export interface ItemCalculationSnapshot {
   craftUnitCost: number | null
-  selectedUnitCosts: Record<AcquisitionMethod, number | null>
+  selectedUnitProfits: Record<AcquisitionMethod, number | null>
   automaticMethod: Exclude<AcquisitionMethod, 'auto'>
   configuredProfit: number | null
   allProfessionsProfit: number | null
@@ -26,6 +26,7 @@ function resolveAcquisitionMethod(
   itemId: ItemId,
   acquisition: AcquisitionMethod,
   options: CalculationOptions,
+  automaticCraftUnitCost: number | null = null,
 ): Exclude<AcquisitionMethod, 'auto'> {
   const scenario = options.scenario ?? 'configured'
 
@@ -46,8 +47,20 @@ function resolveAcquisitionMethod(
   }
 
   const ownedProfessions = options.ownedProfessions ?? noProfessions
+  const canCraftAutomatically =
+    recipeProfession != null && ownedProfessions.has(recipeProfession)
 
-  return recipeProfession != null && ownedProfessions.has(recipeProfession)
+  if (!canCraftAutomatically) {
+    return 'buy'
+  }
+
+  const purchasePrice = item?.purchasePriceCopper
+
+  if (purchasePrice === null || purchasePrice === undefined) {
+    return 'craft'
+  }
+
+  return automaticCraftUnitCost !== null && automaticCraftUnitCost < purchasePrice
     ? 'craft'
     : 'buy'
 }
@@ -57,10 +70,13 @@ export function getAutomaticAcquisitionMethod(
   itemId: ItemId,
   ownedProfessions: ReadonlySet<Profession>,
 ): Exclude<AcquisitionMethod, 'auto'> {
-  return resolveAcquisitionMethod(catalog, itemId, 'auto', {
+  const options = {
     ownedProfessions,
     scenario: 'configured',
-  })
+  } as const
+  const craftUnitCost = getExactCraftUnitCost(catalog, itemId, options)
+
+  return resolveAcquisitionMethod(catalog, itemId, 'auto', options, craftUnitCost)
 }
 
 function getExactUnitCost(
@@ -75,6 +91,25 @@ function getExactUnitCost(
 
   if (item === undefined) {
     return null
+  }
+
+  if (acquisition === 'auto' && (options.scenario ?? 'configured') === 'configured') {
+    const craftUnitCost = getExactCraftUnitCost(
+      catalog,
+      itemId,
+      options,
+      path,
+      craftCostCache,
+    )
+    const automaticMethod = resolveAcquisitionMethod(
+      catalog,
+      itemId,
+      acquisition,
+      options,
+      craftUnitCost,
+    )
+
+    return automaticMethod === 'buy' ? item.purchasePriceCopper : craftUnitCost
   }
 
   return resolveAcquisitionMethod(catalog, itemId, acquisition, options) === 'buy'
@@ -139,24 +174,6 @@ export function getCraftUnitCost(
   options: CalculationOptions = {},
 ): number | null {
   const exactCost = getExactCraftUnitCost(catalog, itemId, options)
-
-  return exactCost === null ? null : Math.round(exactCost)
-}
-
-export function getSelectedUnitCost(
-  catalog: ItemCatalog,
-  itemId: ItemId,
-  acquisition: AcquisitionMethod,
-  options: CalculationOptions = {},
-): number | null {
-  const exactCost = getExactUnitCost(
-    catalog,
-    itemId,
-    acquisition,
-    options,
-    new Set(),
-    new Map(),
-  )
 
   return exactCost === null ? null : Math.round(exactCost)
 }
@@ -227,6 +244,30 @@ export function getProfitPerCraft(
   return item.salePriceCopper * item.recipe.outputQuantity - batchCost
 }
 
+function getUnitAcquisitionProfit(
+  purchasePrice: number | null,
+  craftUnitCost: number | null,
+  selectedMethod: Exclude<AcquisitionMethod, 'auto'>,
+): number | null {
+  if (purchasePrice === null || craftUnitCost === null) {
+    return null
+  }
+
+  const profit =
+    selectedMethod === 'buy'
+      ? craftUnitCost - purchasePrice
+      : purchasePrice - craftUnitCost
+
+  return Math.round(profit)
+}
+
+export function getTotalAcquisitionProfit(
+  unitProfit: number | null,
+  quantity: number,
+): number | null {
+  return unitProfit === null ? null : unitProfit * quantity
+}
+
 export function createCatalogCalculationSnapshot(
   catalog: ItemCatalog,
   ownedProfessions: ReadonlySet<Profession>,
@@ -253,24 +294,21 @@ export function createCatalogCalculationSnapshot(
         new Set(),
         configuredCache,
       )
-      const exactAutomaticCost = getExactUnitCost(
-        catalog,
-        itemId,
-        'auto',
-        configuredOptions,
-        new Set(),
-        configuredCache,
-      )
       const craftUnitCost = exactCraftCost === null ? null : Math.round(exactCraftCost)
+      const purchasePrice = catalog[itemId]?.purchasePriceCopper ?? null
 
       return [
         itemId,
         {
           craftUnitCost,
-          selectedUnitCosts: {
-            auto: exactAutomaticCost === null ? null : Math.round(exactAutomaticCost),
-            buy: catalog[itemId]?.purchasePriceCopper ?? null,
-            craft: craftUnitCost,
+          selectedUnitProfits: {
+            auto: getUnitAcquisitionProfit(
+              purchasePrice,
+              exactCraftCost,
+              automaticMethod,
+            ),
+            buy: getUnitAcquisitionProfit(purchasePrice, exactCraftCost, 'buy'),
+            craft: getUnitAcquisitionProfit(purchasePrice, exactCraftCost, 'craft'),
           },
           automaticMethod,
           configuredProfit: profitItemIds.has(itemId)

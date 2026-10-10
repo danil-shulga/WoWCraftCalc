@@ -4,6 +4,7 @@ import type {
   ItemId,
   RecipeLine,
 } from '../../../domain/item.types'
+import { getTotalAcquisitionProfit } from '../../../domain/calculations'
 import { AcquisitionMethodPicker } from '../../ui/AcquisitionMethodPicker/AcquisitionMethodPicker'
 import { ItemIcon } from '../../ui/ItemIcon/ItemIcon'
 import { MoneyDisplay } from '../../ui/MoneyDisplay/MoneyDisplay'
@@ -17,7 +18,7 @@ interface ReagentItemRowProps {
   isExpanded: boolean
   hasCycle: boolean
   craftUnitCost: number | null
-  selectedCost: number | null
+  selectedProfit: number | null
   automaticMethod: AcquisitionMethod
   onToggleExpanded: () => void
   onEditItem: (itemId: ItemId) => void
@@ -36,7 +37,7 @@ export function ReagentItemRow({
   isExpanded,
   hasCycle,
   craftUnitCost,
-  selectedCost,
+  selectedProfit,
   automaticMethod,
   onToggleExpanded,
   onEditItem,
@@ -44,6 +45,13 @@ export function ReagentItemRow({
   onSetAcquisition,
 }: ReagentItemRowProps) {
   const hasRecipe = item.recipe !== null
+  const totalProfit = getTotalAcquisitionProfit(selectedProfit, recipeLine.quantity)
+  const profitToneClass =
+    selectedProfit === null
+      ? ''
+      : selectedProfit >= 0
+        ? 'money-positive'
+        : 'money-negative'
 
   return (
     <article className="reagent-item-row">
@@ -78,9 +86,24 @@ export function ReagentItemRow({
           </dd>
         </div>
         <div>
-          <dt>Выбрано</dt>
-          <dd>
-            <MoneyDisplay value={selectedCost} />
+          <dt>Выгода</dt>
+          <dd
+            className={
+              totalProfit === null ? undefined : `profit-value ${profitToneClass}`
+            }
+            tabIndex={totalProfit === null ? undefined : 0}
+          >
+            <MoneyDisplay value={selectedProfit} />
+            {totalProfit === null ? null : (
+              <span className="profit-tooltip" role="tooltip">
+                <span>
+                  Суммарно за {recipeLine.quantity} шт.:{' '}
+                  <strong>
+                    <MoneyDisplay value={totalProfit} />
+                  </strong>
+                </span>
+              </span>
+            )}
           </dd>
         </div>
       </dl>
