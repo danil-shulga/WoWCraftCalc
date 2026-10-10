@@ -40,6 +40,15 @@
   background: var(--accent);
 }
 
+.acquisition-method-picker__options button[aria-pressed='true'] .currency-mark__text {
+  color: currentColor;
+  font-weight: 600;
+}
+
+.acquisition-method-picker__options button[aria-pressed='true'] .currency-icon {
+  box-shadow: 0 0 0 1px rgb(30 22 8 / 60%);
+}
+
 .acquisition-method-picker__options button:disabled {
   opacity: 0.42;
   cursor: not-allowed;

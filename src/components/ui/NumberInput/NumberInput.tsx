@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import './NumberInput.css'
 
@@ -30,10 +30,12 @@ export function NumberInput({
   disabled = false,
   onChange,
 }: NumberInputProps) {
+  const [draftValue, setDraftValue] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
   const changeBy = (direction: -1 | 1) => {
+    setDraftValue(null)
     onChange(clamp(value + step * direction, min, max))
   }
 
@@ -51,6 +53,7 @@ export function NumberInput({
 
       event.preventDefault()
       inputRef.current?.focus()
+      setDraftValue(null)
       onChange(clamp(value + step * (event.deltaY < 0 ? 1 : -1), min, max))
     }
 
@@ -77,10 +80,28 @@ export function NumberInput({
         step={step}
         inputMode="numeric"
         disabled={disabled}
-        value={value}
+        value={draftValue ?? value}
+        onFocus={() => {
+          if (value === 0) {
+            setDraftValue('')
+          }
+        }}
         onChange={(event) => {
+          setDraftValue(event.currentTarget.value)
+
           const nextValue = event.currentTarget.valueAsNumber
-          onChange(clamp(Number.isFinite(nextValue) ? nextValue : (min ?? 0), min, max))
+
+          if (Number.isFinite(nextValue)) {
+            onChange(clamp(nextValue, min, max))
+          }
+        }}
+        onBlur={() => {
+          if (draftValue === '') {
+            const fallbackValue = clamp(0, min, max)
+            onChange(fallbackValue)
+          }
+
+          setDraftValue(null)
         }}
       />
       <span className="number-input__controls">
