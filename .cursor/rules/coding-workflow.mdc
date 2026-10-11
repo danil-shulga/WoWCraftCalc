@@ -23,8 +23,8 @@ alwaysApply: false
   Для `.mdc` укажи Prettier `--parser markdown` явно.
 - Код: сначала профильные тесты, затем `npm run check` и `npm run build`.
 - Конфигурация/зависимости: дополнительно проверь оба TS-проекта и затронутую сборку.
-- Текущий `typecheck` (`tsc --noEmit`) читает корневой конфиг с `files: []`
-  и не проверяет дочерние проекты. Пока скрипт не исправлен, выполняй отдельно:
+- `npm run typecheck` проверяет приложение и конфигурацию инструментов по обоим
+  дочерним TS-проектам. Для отдельной диагностики выполняй:
 
 ```shell
 node node_modules/typescript/bin/tsc --noEmit -p tsconfig.app.json

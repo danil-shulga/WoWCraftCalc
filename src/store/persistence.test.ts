@@ -56,6 +56,43 @@ describe('JSON data transfer', () => {
     expect(result.success).toBe(false)
   })
 
+  it.each([undefined, { wowheadItemId: 4306 }])(
+    'сохраняет необязательный источник предмета при восстановлении и экспорте: %j',
+    (source) => {
+      const data = {
+        ...persistedData,
+        items: Object.fromEntries(
+          Object.entries(catalog).map(([itemId, item]) => [itemId, { ...item, source }]),
+        ),
+      }
+
+      const restored = parseCurrentPersistedData(data)
+      const imported = parseImportedData(createExportJson(restored))
+
+      expect(restored.items.cloth?.source).toEqual(source)
+      expect(imported.success).toBe(true)
+
+      if (imported.success) {
+        expect(imported.data.items.cloth?.source).toEqual(source)
+        expect(imported.data.items.bolt?.recipe).toEqual(catalog.bolt?.recipe)
+      }
+    },
+  )
+
+  it('отклоняет источник предмета с некорректным Wowhead ID', () => {
+    expect(() =>
+      parseCurrentPersistedData({
+        ...persistedData,
+        items: Object.fromEntries(
+          Object.entries(catalog).map(([itemId, item]) => [
+            itemId,
+            { ...item, source: { wowheadItemId: 0 } },
+          ]),
+        ),
+      }),
+    ).toThrow('Сохранённые данные не соответствуют текущему формату CraftCalc')
+  })
+
   it('преобразует пустой рецепт из старого экспорта в отсутствие рецепта', () => {
     const oldExport = JSON.stringify({
       version: 1,

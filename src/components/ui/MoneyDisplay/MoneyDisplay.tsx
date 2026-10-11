@@ -12,14 +12,17 @@ interface MoneyPartProps {
   value: number
   currency: 'gold' | 'silver' | 'copper'
   accessibleName: string
-  displayMode?: CurrencyDisplayMode
+  displayMode: CurrencyDisplayMode | undefined
 }
 
 function MoneyPart({ value, currency, accessibleName, displayMode }: MoneyPartProps) {
   return (
     <span className="money-display__part">
       <span>{value}</span>
-      <CurrencyIcon currency={currency} displayMode={displayMode} />
+      <CurrencyIcon
+        currency={currency}
+        {...(displayMode === undefined ? {} : { displayMode })}
+      />
       <span className="money-display__currency-name">{accessibleName}</span>
     </span>
   )

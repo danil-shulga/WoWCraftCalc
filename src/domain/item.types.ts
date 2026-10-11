@@ -25,9 +25,11 @@ export interface Item {
   id: ItemId
   name: string
   iconUrl: string
-  source?: {
-    wowheadItemId: number
-  }
+  source?:
+    | {
+        wowheadItemId: number
+      }
+    | undefined
   sections: ItemSection[]
   purchasePriceCopper: number | null
   salePriceCopper: number | null

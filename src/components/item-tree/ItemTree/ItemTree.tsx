@@ -84,7 +84,7 @@ function ItemTreeNode({
           configuredProfit={calculation.configuredProfit}
           allProfessionsProfit={calculation.allProfessionsProfit}
           boughtReagentsProfit={calculation.boughtReagentsProfit}
-          quickPriceEdit={quickPriceEdit}
+          {...(quickPriceEdit === undefined ? {} : { quickPriceEdit })}
           onToggleExpanded={() => {
             onToggleExpanded(path)
           }}

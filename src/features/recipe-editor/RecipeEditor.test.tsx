@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import type { ItemCatalog } from '../../domain/item.types'
 import { RecipeEditor } from './RecipeEditor'
 
-const catalog: ItemCatalog = {
+const catalog = {
   craft: {
     id: 'craft',
     name: 'Слиток осквернённого железа',
@@ -41,7 +41,7 @@ const catalog: ItemCatalog = {
     salePriceCopper: null,
     recipe: null,
   },
-}
+} satisfies ItemCatalog
 
 describe('RecipeEditor', () => {
   it('фильтрует список реагентов по части названия без учёта регистра', async () => {

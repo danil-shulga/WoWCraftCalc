@@ -130,7 +130,7 @@ export function parseWowheadSpellTooltip(response: unknown): ParsedSpellTooltip 
   const reagents = reagentAnchors
     .map((anchor): WowheadImportReagent | null => {
       const wowheadItemId = getItemIdFromHref(anchor.getAttribute('href') ?? '')
-      const quantityMatch = anchor.nextSibling?.textContent.match(/\((\d+)\)/)
+      const quantityMatch = anchor.nextSibling?.textContent?.match(/\((\d+)\)/)
       const quantity =
         quantityMatch?.[1] === undefined ? 1 : parsePositiveId(quantityMatch[1])
       const name = anchor.textContent.trim()

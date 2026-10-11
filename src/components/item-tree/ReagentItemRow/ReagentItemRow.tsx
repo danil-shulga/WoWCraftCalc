@@ -19,7 +19,7 @@ interface ReagentItemRowProps {
   hasCycle: boolean
   craftUnitCost: number | null
   selectedProfit: number | null
-  automaticMethod: AcquisitionMethod
+  automaticMethod: Exclude<AcquisitionMethod, 'auto'>
   onToggleExpanded: () => void
   onEditItem: (itemId: ItemId) => void
   onEditRecipe: (itemId: ItemId) => void
