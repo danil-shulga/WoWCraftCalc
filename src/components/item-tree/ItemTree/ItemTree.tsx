@@ -68,8 +68,10 @@ function ItemTreeNode({
   const hasRecipe = item.recipe !== null
   const isExpanded = expandedPaths.has(path)
   const hasCycle = visited.has(itemId)
-  const selectedProfit =
-    recipeLine === null ? null : calculation.selectedUnitProfits[recipeLine.acquisition]
+  const exactSelectedProfit =
+    recipeLine === null
+      ? null
+      : calculation.exactSelectedUnitProfits[recipeLine.acquisition]
   const nextVisited = new Set(visited)
   nextVisited.add(itemId)
 
@@ -100,7 +102,7 @@ function ItemTreeNode({
           isExpanded={isExpanded}
           hasCycle={hasCycle}
           craftUnitCost={calculation.craftUnitCost}
-          selectedProfit={selectedProfit}
+          exactSelectedProfit={exactSelectedProfit}
           automaticMethod={calculation.automaticMethod}
           onToggleExpanded={() => {
             onToggleExpanded(path)

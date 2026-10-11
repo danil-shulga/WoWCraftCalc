@@ -18,7 +18,7 @@ interface ReagentItemRowProps {
   isExpanded: boolean
   hasCycle: boolean
   craftUnitCost: number | null
-  selectedProfit: number | null
+  exactSelectedProfit: number | null
   automaticMethod: Exclude<AcquisitionMethod, 'auto'>
   onToggleExpanded: () => void
   onEditItem: (itemId: ItemId) => void
@@ -37,7 +37,7 @@ export function ReagentItemRow({
   isExpanded,
   hasCycle,
   craftUnitCost,
-  selectedProfit,
+  exactSelectedProfit,
   automaticMethod,
   onToggleExpanded,
   onEditItem,
@@ -45,7 +45,8 @@ export function ReagentItemRow({
   onSetAcquisition,
 }: ReagentItemRowProps) {
   const hasRecipe = item.recipe !== null
-  const totalProfit = getTotalAcquisitionProfit(selectedProfit, recipeLine.quantity)
+  const selectedProfit = getTotalAcquisitionProfit(exactSelectedProfit, 1)
+  const totalProfit = getTotalAcquisitionProfit(exactSelectedProfit, recipeLine.quantity)
   const profitToneClass =
     selectedProfit === null
       ? ''

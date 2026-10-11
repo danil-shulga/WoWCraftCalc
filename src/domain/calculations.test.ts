@@ -77,6 +77,56 @@ describe('craft calculations', () => {
     expect(getRecipeBatchCost(fractionalCatalog, 'thread')).toBe(1)
   })
 
+  it('не округляет выгоду единицы до расчёта суммарной экономии', () => {
+    const fractionalCatalog: ItemCatalog = {
+      dust: makeItem({
+        id: 'dust',
+        name: 'Пыль',
+        purchasePriceCopper: 1,
+      }),
+      thread: makeItem({
+        id: 'thread',
+        name: 'Нить',
+        purchasePriceCopper: 1,
+        salePriceCopper: 1,
+        recipe: {
+          outputQuantity: 2,
+          profession: 'tailoring',
+          reagents: [{ itemId: 'dust', quantity: 1, acquisition: 'buy' }],
+        },
+      }),
+    }
+    const snapshot = createCatalogCalculationSnapshot(
+      fractionalCatalog,
+      new Set(['tailoring']),
+      new Set(['thread']),
+    )
+    const profits = snapshot.thread?.exactSelectedUnitProfits
+
+    expect(profits).toEqual({ auto: 0.5, buy: -0.5, craft: 0.5 })
+    expect(getTotalAcquisitionProfit(profits?.craft ?? null, 2)).toBe(1)
+    expect(getTotalAcquisitionProfit(profits?.buy ?? null, 2)).toBe(-1)
+    expect(getTotalAcquisitionProfit(profits?.auto ?? null, 2)).toBe(1)
+    expect(snapshot.thread?.configuredProfit).toBe(1)
+    expect(getProfitPerCraft(fractionalCatalog, 'thread')).toBe(1)
+  })
+
+  it.each([
+    [0.5, 1, 1],
+    [0.5, 2, 1],
+    [0.5, 3, 2],
+    [0.5, 5, 3],
+    [-0.5, 2, -1],
+    [-0.5, 3, -1],
+    [-0.5, 5, -2],
+    [150, 3, 450],
+    [-150, 3, -450],
+    [0, 3, 0],
+    [null, 3, null],
+  ])('округляет итоговую выгоду %s × %s до %s', (profit, quantity, expected) => {
+    expect(getTotalAcquisitionProfit(profit, quantity)).toBe(expected)
+  })
+
   it('использует выбранный способ получения реагента', () => {
     const sword = catalog.sword
 
@@ -189,7 +239,7 @@ describe('craft calculations', () => {
 
     expect(snapshot.component).toMatchObject({
       automaticMethod: 'buy',
-      selectedUnitProfits: {
+      exactSelectedUnitProfits: {
         auto: 5_490,
         buy: 5_490,
         craft: -5_490,
@@ -306,7 +356,7 @@ describe('craft calculations', () => {
 
     expect(snapshot.bar).toMatchObject({
       craftUnitCost: 100,
-      selectedUnitProfits: {
+      exactSelectedUnitProfits: {
         auto: -150,
         buy: -150,
         craft: 150,

@@ -3,7 +3,7 @@ import type { Profession } from './professions'
 
 export interface ItemCalculationSnapshot {
   craftUnitCost: number | null
-  selectedUnitProfits: Record<AcquisitionMethod, number | null>
+  exactSelectedUnitProfits: Record<AcquisitionMethod, number | null>
   automaticMethod: Exclude<AcquisitionMethod, 'auto'>
   configuredProfit: number | null
   allProfessionsProfit: number | null
@@ -244,7 +244,7 @@ export function getProfitPerCraft(
   return item.salePriceCopper * item.recipe.outputQuantity - batchCost
 }
 
-function getUnitAcquisitionProfit(
+function getExactUnitAcquisitionProfit(
   purchasePrice: number | null,
   craftUnitCost: number | null,
   selectedMethod: Exclude<AcquisitionMethod, 'auto'>,
@@ -253,19 +253,16 @@ function getUnitAcquisitionProfit(
     return null
   }
 
-  const profit =
-    selectedMethod === 'buy'
-      ? craftUnitCost - purchasePrice
-      : purchasePrice - craftUnitCost
-
-  return Math.round(profit)
+  return selectedMethod === 'buy'
+    ? craftUnitCost - purchasePrice
+    : purchasePrice - craftUnitCost
 }
 
 export function getTotalAcquisitionProfit(
-  unitProfit: number | null,
+  exactUnitProfit: number | null,
   quantity: number,
 ): number | null {
-  return unitProfit === null ? null : unitProfit * quantity
+  return exactUnitProfit === null ? null : Math.round(exactUnitProfit * quantity)
 }
 
 export function createCatalogCalculationSnapshot(
@@ -301,14 +298,14 @@ export function createCatalogCalculationSnapshot(
         itemId,
         {
           craftUnitCost,
-          selectedUnitProfits: {
-            auto: getUnitAcquisitionProfit(
+          exactSelectedUnitProfits: {
+            auto: getExactUnitAcquisitionProfit(
               purchasePrice,
               exactCraftCost,
               automaticMethod,
             ),
-            buy: getUnitAcquisitionProfit(purchasePrice, exactCraftCost, 'buy'),
-            craft: getUnitAcquisitionProfit(purchasePrice, exactCraftCost, 'craft'),
+            buy: getExactUnitAcquisitionProfit(purchasePrice, exactCraftCost, 'buy'),
+            craft: getExactUnitAcquisitionProfit(purchasePrice, exactCraftCost, 'craft'),
           },
           automaticMethod,
           configuredProfit: profitItemIds.has(itemId)
