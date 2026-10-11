@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Modal } from '../../components/ui/Modal/Modal'
 import { Tabs } from '../../components/ui/Tabs/Tabs'
 import type { ItemCatalog, ItemSection } from '../../domain/item.types'
+import type { ItemLanguage } from '../../domain/user-settings'
 import type {
   ItemInput,
   RecipeImportData,
@@ -20,6 +21,7 @@ const addMethods: readonly { value: AddMethod; label: string }[] = [
 
 interface ItemAddModalProps {
   title: string
+  itemLanguage?: ItemLanguage
   defaultSection: ItemSection
   catalog: ItemCatalog
   onSave: (input: ItemInput) => void
@@ -30,6 +32,7 @@ interface ItemAddModalProps {
 
 export function ItemAddModal({
   title,
+  itemLanguage = 'ru',
   defaultSection,
   catalog,
   onSave,
@@ -62,6 +65,7 @@ export function ItemAddModal({
       />
       <div hidden={method !== 'wowhead'} inert={method !== 'wowhead'}>
         <WowheadImportForm
+          itemLanguage={itemLanguage}
           catalog={catalog}
           onImport={onImport}
           onSuccess={onSuccess}

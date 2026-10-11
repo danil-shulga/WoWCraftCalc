@@ -44,6 +44,42 @@ const catalog = {
 } satisfies ItemCatalog
 
 describe('RecipeEditor', () => {
+  it.each(['ru', 'en'] as const)(
+    'ищет реагент на обоих языках при отображении %s',
+    async (itemLanguage) => {
+      const user = userEvent.setup()
+      render(
+        <RecipeEditor
+          item={catalog.craft}
+          catalog={{
+            ...catalog,
+            ore: {
+              ...catalog.ore,
+              names: { ru: 'Руда осквернённого железа', en: 'Fel Iron Ore' },
+            },
+          }}
+          itemLanguage={itemLanguage}
+          ownedProfessions={[]}
+          onSave={vi.fn(() => null)}
+          onRemove={vi.fn()}
+          onCancel={vi.fn()}
+        />,
+      )
+      const field = screen.getByRole('combobox', { name: 'Поиск и выбор реагента' })
+      await user.type(field, itemLanguage === 'ru' ? 'FEL IRON' : 'ОСКВЕРНЕННОГО')
+      const name = itemLanguage === 'ru' ? 'Руда осквернённого железа' : 'Fel Iron Ore'
+      const secondaryName =
+        itemLanguage === 'ru' ? 'Fel Iron Ore' : 'Руда осквернённого железа'
+      expect(screen.getByRole('option', { name })).toHaveTextContent(secondaryName)
+      await user.click(screen.getByRole('option', { name }))
+      expect(field).toHaveValue(name)
+      expect(screen.getByText(secondaryName)).toBeVisible()
+      await user.click(screen.getByRole('button', { name: 'Добавить реагент' }))
+      expect(screen.getByText(name)).toBeVisible()
+      expect(screen.getByText(secondaryName)).toBeVisible()
+    },
+  )
+
   it('фильтрует список реагентов по части названия без учёта регистра', async () => {
     const user = userEvent.setup()
     const handleSave = vi.fn(() => null)

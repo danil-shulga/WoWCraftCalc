@@ -1,11 +1,17 @@
 import {
   fetchWowheadRecipe,
+  fetchWowheadItemNames,
   parseWowheadSpellTooltip,
   parseWowheadSpellUrl,
 } from './wowhead-import'
 import classicTooltip from './fixtures/classic-25146.json'
 import tbcTooltip from './fixtures/tbc-44391.json'
 import foreverTooltip from './fixtures/forever-1257390.json'
+import dreamweaveRu from './fixtures/classic-12092-ru.json'
+import dreamweaveEn from './fixtures/classic-12092-en.json'
+import classicEn from './fixtures/classic-25146-en.json'
+import tbcEn from './fixtures/tbc-44391-en.json'
+import foreverEn from './fixtures/forever-1257390-en.json'
 
 const spellTooltip = {
   name: 'Сапоги из паучьего шелка',
@@ -31,7 +37,118 @@ const spellTooltip = {
   `,
 }
 
+const englishSpellTooltip = {
+  ...spellTooltip,
+  tooltip: spellTooltip.tooltip
+    .replace('Ингредиенты:', 'Reagents:')
+    .replaceAll('Рулон шелка', 'Bolt of Silk')
+    .replaceAll('Жесткая кожа', 'Medium Leather')
+    .replaceAll('Сапоги из паучьего шелка', 'Spidersilk Boots'),
+}
+
 describe('импорт Wowhead', () => {
+  it.each([
+    ['classic', dreamweaveRu, dreamweaveEn],
+    ['classic', classicTooltip, classicEn],
+    ['tbc', tbcTooltip, tbcEn],
+    ['forever', foreverTooltip, foreverEn],
+  ])(
+    'разбирает сохранённые RU/EN tooltip %s с одинаковыми ID и количествами',
+    (_version, ru, en) => {
+      const russian = parseWowheadSpellTooltip(ru)
+      const english = parseWowheadSpellTooltip(en, 'en')
+      expect(english.product.wowheadItemId).toBe(russian.product.wowheadItemId)
+      expect(english.outputQuantity).toBe(russian.outputQuantity)
+      expect(
+        english.reagents.map(({ wowheadItemId, quantity }) => ({
+          wowheadItemId,
+          quantity,
+        })),
+      ).toEqual(
+        russian.reagents.map(({ wowheadItemId, quantity }) => ({
+          wowheadItemId,
+          quantity,
+        })),
+      )
+    },
+  )
+
+  it.each([
+    'https://www.wowhead.com/classic/spell=12092/dreamweave-circlet',
+    'https://www.wowhead.com/classic/ru/spell=12092/венец-из-ткани-грез',
+  ])('загружает оба названия результата и всех реагентов по ссылке %s', async (url) => {
+    const mock = vi.spyOn(globalThis, 'fetch').mockImplementation((input) => {
+      const endpoint =
+        typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
+      return Promise.resolve(
+        endpoint.includes('/spell/')
+          ? Response.json(endpoint.includes('/ru/') ? dreamweaveRu : dreamweaveEn)
+          : new Response(null, { status: 404 }),
+      )
+    })
+    const result = await fetchWowheadRecipe(url)
+    expect(result.product).toMatchObject({
+      wowheadItemId: 10041,
+      wowheadVersion: 'classic',
+      names: { ru: 'Венец из ткани Грез', en: 'Dreamweave Circlet' },
+    })
+    expect(result.reagents).toHaveLength(6)
+    expect(
+      result.reagents.every((reagent) => reagent.names?.ru && reagent.names.en),
+    ).toBe(true)
+    expect(result.reagents[0]).toMatchObject({
+      wowheadItemId: 4339,
+      quantity: 8,
+      names: { ru: 'Рулон магической ткани', en: 'Bolt of Mageweave' },
+    })
+    expect(mock).toHaveBeenCalledWith(
+      'https://nether.wowhead.com/classic/tooltip/spell/12092',
+    )
+  })
+
+  it('отклоняет разные количества в RU/EN и не загружает иконки', async () => {
+    const mock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(Response.json(dreamweaveRu))
+      .mockResolvedValueOnce(
+        Response.json({
+          ...dreamweaveEn,
+          tooltip: dreamweaveEn.tooltip.replace('(8)', '(7)'),
+        }),
+      )
+    await expect(
+      fetchWowheadRecipe('https://wowhead.com/classic/spell=12092'),
+    ).rejects.toThrow('не совпадают')
+    expect(mock).toHaveBeenCalledTimes(2)
+  })
+
+  it('сообщает об ошибке второго языка без неполного результата', async () => {
+    vi.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(Response.json(dreamweaveRu))
+      .mockResolvedValueOnce(new Response(null, { status: 503 }))
+    await expect(
+      fetchWowheadRecipe('https://wowhead.com/classic/spell=12092'),
+    ).rejects.toThrow('503')
+  })
+
+  it('загружает недостающие названия предмета по ID и версии', async () => {
+    const mock = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(
+        Response.json({ name: 'Нефрит', icon: '', tooltip: '<p>Нефрит</p>' }),
+      )
+      .mockResolvedValueOnce(
+        Response.json({ name: 'Jade', icon: '', tooltip: '<p>Jade</p>' }),
+      )
+    await expect(fetchWowheadItemNames(1529, 'tbc')).resolves.toEqual({
+      ru: 'Нефрит',
+      en: 'Jade',
+    })
+    expect(mock).toHaveBeenCalledWith(
+      'https://nether.wowhead.com/tbc/ru/tooltip/item/1529',
+    )
+    expect(mock).toHaveBeenCalledWith('https://nether.wowhead.com/tbc/tooltip/item/1529')
+  })
   afterEach(() => {
     vi.restoreAllMocks()
   })
@@ -200,7 +317,9 @@ describe('импорт Wowhead', () => {
         typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
 
       if (url.endsWith('/spell/3855')) {
-        return Promise.resolve(Response.json(spellTooltip))
+        return Promise.resolve(
+          Response.json(url.includes('/ru/') ? spellTooltip : englishSpellTooltip),
+        )
       }
 
       const itemId = url.endsWith('/item/4305') ? 4305 : 2319
@@ -229,7 +348,9 @@ describe('импорт Wowhead', () => {
         typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
 
       if (url.endsWith('/spell/44391')) {
-        return Promise.resolve(Response.json(spellTooltip))
+        return Promise.resolve(
+          Response.json(url.includes('/ru/') ? spellTooltip : englishSpellTooltip),
+        )
       }
 
       return Promise.resolve(
@@ -252,7 +373,9 @@ describe('импорт Wowhead', () => {
         typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
 
       if (url.endsWith('/spell/1257390')) {
-        return Promise.resolve(Response.json(spellTooltip))
+        return Promise.resolve(
+          Response.json(url.includes('/ru/') ? spellTooltip : englishSpellTooltip),
+        )
       }
 
       return Promise.resolve(

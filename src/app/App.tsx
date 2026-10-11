@@ -28,6 +28,9 @@ export function App() {
   const items = useCraftStore((state) => state.items)
   const ownedProfessions = useCraftStore((state) => state.ownedProfessions)
   const currencyDisplay = useCraftStore((state) => state.currencyDisplay)
+  const itemLanguage = useCraftStore((state) => state.itemLanguage)
+  const setItemLanguage = useCraftStore((state) => state.setItemLanguage)
+  const fillItemNames = useCraftStore((state) => state.fillItemNames)
   const replaceData = useCraftStore((state) => state.replaceData)
   const resetData = useCraftStore((state) => state.resetData)
   const setProfessionOwned = useCraftStore((state) => state.setProfessionOwned)
@@ -62,7 +65,7 @@ export function App() {
             Настройки
           </button>
           <DataTransferControls
-            data={{ items, ownedProfessions, currencyDisplay }}
+            data={{ items, ownedProfessions, currencyDisplay, itemLanguage }}
             onImport={replaceData}
             recoveryRequired={recoveryRequired}
             onReset={resetData}
@@ -88,8 +91,12 @@ export function App() {
       </button>
       {areSettingsOpen ? (
         <UserSettingsModal
+          catalog={items}
+          onItemNamesApply={fillItemNames}
           ownedProfessions={ownedProfessions}
           currencyDisplay={currencyDisplay}
+          itemLanguage={itemLanguage}
+          onItemLanguageChange={setItemLanguage}
           onProfessionChange={setProfessionOwned}
           onCurrencyDisplayChange={setCurrencyDisplay}
           onClose={() => {

@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
 import type { AcquisitionMethod, ItemCatalog } from '../domain/item.types'
@@ -9,6 +9,7 @@ const items: ItemCatalog = {
   potion: {
     id: 'potion',
     name: 'Лечебное зелье',
+    names: { ru: 'Лечебное зелье', en: 'Healing Potion' },
     iconUrl: '',
     sections: ['crafts'],
     purchasePriceCopper: null,
@@ -18,6 +19,7 @@ const items: ItemCatalog = {
   bag: {
     id: 'bag',
     name: 'Шерстяная сумка',
+    names: { ru: 'Шерстяная сумка', en: 'Wool Bag' },
     iconUrl: '',
     sections: ['crafts'],
     purchasePriceCopper: null,
@@ -27,8 +29,66 @@ const items: ItemCatalog = {
 }
 
 describe('ItemsPage', () => {
+  it.each(['crafts', 'reagents'] as const)(
+    'ищет оба названия в разделе %s при любом языке отображения',
+    async (section) => {
+      const user = userEvent.setup()
+      useCraftStore.setState({
+        items: Object.fromEntries(
+          Object.entries(items).map(([id, item]) => [
+            id,
+            { ...item, sections: [section] },
+          ]),
+        ),
+      })
+      render(<ItemsPage section={section} />)
+      const search = screen.getByRole('searchbox')
+      await user.type(search, 'HEALING')
+      expect(screen.getByText('Лечебное зелье')).toBeVisible()
+      expect(screen.queryByText('Шерстяная сумка')).not.toBeInTheDocument()
+      act(() => {
+        useCraftStore.getState().setItemLanguage('en')
+      })
+      expect(search).toHaveValue('HEALING')
+      expect(screen.getByText('Healing Potion')).toBeVisible()
+      await user.clear(search)
+      await user.type(search, 'ЛЕЧЕБНОЕ')
+      expect(screen.getByText('Healing Potion')).toBeVisible()
+    },
+  )
+
+  it('меняет язык раскрытого дерева без потери раскрытия и показывает доступное имя без перевода', async () => {
+    const user = userEvent.setup()
+    const potion = items.potion
+    const bag = items.bag
+    if (potion === undefined || bag === undefined)
+      throw new Error('Нет тестовых предметов')
+    useCraftStore.setState({
+      items: {
+        potion: {
+          ...potion,
+          recipe: {
+            outputQuantity: 1,
+            profession: null,
+            reagents: [{ itemId: 'bag', quantity: 2, acquisition: 'buy' }],
+          },
+        },
+        bag: { ...bag, sections: ['reagents'], names: { ru: null, en: 'Wool Bag' } },
+      },
+    })
+    render(<ItemsPage section="crafts" />)
+    await user.click(screen.getByRole('button', { name: 'Развернуть рецепт' }))
+    expect(screen.getByText('Wool Bag')).toBeVisible()
+    act(() => {
+      useCraftStore.getState().setItemLanguage('en')
+    })
+    expect(screen.getByText('Healing Potion')).toBeVisible()
+    expect(screen.getByText('Wool Bag')).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Свернуть рецепт' })).toBeVisible()
+  })
+
   beforeEach(() => {
-    useCraftStore.setState({ items })
+    useCraftStore.setState({ items, itemLanguage: 'ru' })
   })
 
   afterEach(() => {
@@ -60,7 +120,7 @@ describe('ItemsPage', () => {
         'checked',
         section === 'reagents',
       )
-      await user.type(screen.getByLabelText('Название'), 'Новый предмет')
+      await user.type(screen.getByLabelText('Название RU'), 'Новый предмет')
       expect(useCraftStore.getState().items).toBe(before)
       await user.click(screen.getByRole('button', { name: 'Сохранить' }))
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
@@ -86,7 +146,7 @@ describe('ItemsPage', () => {
         screen.getByLabelText('Ссылка на рецепт Wowhead Classic, TBC или Forever'),
       ).toBeVisible()
       await user.click(screen.getByRole('button', { name: 'Добавить вручную' }))
-      await user.type(screen.getByLabelText('Название'), 'Черновик')
+      await user.type(screen.getByLabelText('Название RU'), 'Черновик')
       await user.keyboard('{Escape}')
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
       expect(opener).toHaveFocus()

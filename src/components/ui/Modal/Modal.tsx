@@ -5,6 +5,7 @@ import './Modal.css'
 
 interface ModalProps {
   title: string
+  subtitle?: string | null
   children: ReactNode
   onClose: () => void
 }
@@ -18,7 +19,7 @@ const focusableSelector = [
   '[tabindex]:not([tabindex="-1"])',
 ].join(',')
 
-export function Modal({ title, children, onClose }: ModalProps) {
+export function Modal({ title, subtitle, children, onClose }: ModalProps) {
   const titleId = useId()
   const dialogRef = useRef<HTMLElement>(null)
 
@@ -107,7 +108,10 @@ export function Modal({ title, children, onClose }: ModalProps) {
         aria-labelledby={titleId}
       >
         <header className="modal__header">
-          <h2 id={titleId}>{title}</h2>
+          <div className="modal__title">
+            <h2 id={titleId}>{title}</h2>
+            {subtitle ? <small>{subtitle}</small> : null}
+          </div>
           <button
             className="icon-button"
             type="button"

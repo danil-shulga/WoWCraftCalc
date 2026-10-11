@@ -3,9 +3,11 @@ import { useCallback, useMemo, useState } from 'react'
 import { ItemTree } from '../components/item-tree/ItemTree/ItemTree'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog/ConfirmDialog'
 import { Modal } from '../components/ui/Modal/Modal'
+import { ItemName } from '../components/ui/ItemName/ItemName'
 import { SearchField } from '../components/ui/SearchField/SearchField'
 import { Toast } from '../components/ui/Toast/Toast'
 import { createCatalogCalculationSnapshot } from '../domain/calculations'
+import { getItemName, getSecondaryItemName, matchesItemName } from '../domain/item-names'
 import type { ItemId, ItemPriceField, ItemSection, Recipe } from '../domain/item.types'
 import { ItemAddModal } from '../features/item-editor/ItemAddModal'
 import { ItemForm } from '../features/item-editor/ItemForm'
@@ -40,6 +42,7 @@ const pageContent: Record<
 
 export function ItemsPage({ section }: ItemsPageProps) {
   const items = useCraftStore((state) => state.items)
+  const itemLanguage = useCraftStore((state) => state.itemLanguage)
   const ownedProfessions = useCraftStore((state) => state.ownedProfessions)
   const createItem = useCraftStore((state) => state.createItem)
   const updateItem = useCraftStore((state) => state.updateItem)
@@ -70,8 +73,8 @@ export function ItemsPage({ section }: ItemsPageProps) {
   const priceField: ItemPriceField =
     section === 'crafts' ? 'salePriceCopper' : 'purchasePriceCopper'
   const sectionItems = useMemo(
-    () => selectItemsBySection(items, section),
-    [items, section],
+    () => selectItemsBySection(items, section, itemLanguage),
+    [items, section, itemLanguage],
   )
   const visibleItems = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLocaleLowerCase('ru-RU')
@@ -80,9 +83,7 @@ export function ItemsPage({ section }: ItemsPageProps) {
       return sectionItems
     }
 
-    return sectionItems.filter((item) =>
-      item.name.toLocaleLowerCase('ru-RU').includes(normalizedQuery),
-    )
+    return sectionItems.filter((item) => matchesItemName(item, searchQuery))
   }, [searchQuery, sectionItems])
   const ownedProfessionSet = useMemo(() => new Set(ownedProfessions), [ownedProfessions])
   const calculationSnapshot = useMemo(
@@ -223,6 +224,7 @@ export function ItemsPage({ section }: ItemsPageProps) {
                 <ItemTree
                   key={item.id}
                   rootItemId={item.id}
+                  itemLanguage={itemLanguage}
                   catalog={items}
                   calculationSnapshot={calculationSnapshot}
                   {...(priceDrafts === null
@@ -255,6 +257,7 @@ export function ItemsPage({ section }: ItemsPageProps) {
         <ItemAddModal
           title={content.addLabel}
           defaultSection={section}
+          itemLanguage={itemLanguage}
           catalog={items}
           onSave={createItem}
           onImport={importRecipe}
@@ -277,7 +280,8 @@ export function ItemsPage({ section }: ItemsPageProps) {
 
       {editingItem === undefined ? null : (
         <Modal
-          title={`Редактировать: ${editingItem.name}`}
+          title={`Редактировать: ${getItemName(editingItem, itemLanguage)}`}
+          subtitle={getSecondaryItemName(editingItem, itemLanguage)}
           onClose={() => {
             setEditingItemId(null)
           }}
@@ -298,13 +302,15 @@ export function ItemsPage({ section }: ItemsPageProps) {
 
       {recipeItem === undefined ? null : (
         <Modal
-          title={`Рецепт: ${recipeItem.name}`}
+          title={`Рецепт: ${getItemName(recipeItem, itemLanguage)}`}
+          subtitle={getSecondaryItemName(recipeItem, itemLanguage)}
           onClose={() => {
             setEditingRecipeId(null)
           }}
         >
           <RecipeEditor
             item={recipeItem}
+            itemLanguage={itemLanguage}
             catalog={items}
             ownedProfessions={ownedProfessions}
             onCancel={() => {
@@ -322,7 +328,12 @@ export function ItemsPage({ section }: ItemsPageProps) {
       {deletingItem === undefined ? null : (
         <ConfirmDialog
           title="Удалить предмет?"
-          message={`«${deletingItem.name}» также исчезнет из всех рецептов. Это действие нельзя отменить.`}
+          message={
+            <>
+              <ItemName item={deletingItem} language={itemLanguage} /> также исчезнет из
+              всех рецептов. Это действие нельзя отменить.
+            </>
+          }
           confirmLabel="Удалить"
           onCancel={() => {
             setDeletingItemId(null)

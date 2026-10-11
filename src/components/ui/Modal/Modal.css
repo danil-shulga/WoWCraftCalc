@@ -37,6 +37,18 @@
   font-size: 1.2rem;
 }
 
+.modal__title {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.modal__title > small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
 @media (max-width: 720px) {
   .modal-backdrop {
     padding: 10px;

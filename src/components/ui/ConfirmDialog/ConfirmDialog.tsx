@@ -1,10 +1,11 @@
+import type { ReactNode } from 'react'
 import { Modal } from '../Modal/Modal'
 import '../Button.css'
 import './ConfirmDialog.css'
 
 interface ConfirmDialogProps {
   title: string
-  message: string
+  message: ReactNode
   confirmLabel: string
   onCancel: () => void
   onConfirm: () => void

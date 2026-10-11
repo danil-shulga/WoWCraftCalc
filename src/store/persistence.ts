@@ -36,18 +36,26 @@ const exportSchema = z.discriminatedUnion('version', [
     exportedAt: z.string(),
     data: persistedCraftDataSchema,
   }),
+  z.object({
+    version: z.literal(4),
+    exportedAt: z.string(),
+    data: persistedCraftDataSchema,
+  }),
 ])
 
 const legacyPersistedCraftDataSchema = z.object({
   items: legacyItemsSchema,
   ownedProfessions: persistedCraftDataSchema.shape.ownedProfessions,
   currencyDisplay: persistedCraftDataSchema.shape.currencyDisplay,
+  itemLanguage: persistedCraftDataSchema.shape.itemLanguage,
 })
 
 const persistedStorageSchema = z.object({
   state: z.unknown().refine((state) => state !== undefined),
   version: z.number().int().nonnegative().optional(),
 })
+
+type NormalizedCraftData = z.output<typeof persistedCraftDataSchema>
 
 export function createCraftStorage() {
   let writesBlocked = false
@@ -105,7 +113,7 @@ export function createCraftStorage() {
       name: string,
       data: PersistedCraftData,
       version: number,
-      apply: (data: PersistedCraftData) => void,
+      apply: (data: NormalizedCraftData) => void,
     ) => {
       const parsed = parseCurrentPersistedData(data)
       // Persist first: a failed write must keep both the original record and catalog.
@@ -154,8 +162,8 @@ function normalizeLegacyItems(
   )
 }
 
-function assertCatalogIsValid(data: PersistedCraftData): PersistedCraftData {
-  const validationError = getCatalogValidationError(data.items)
+function assertCatalogIsValid(data: NormalizedCraftData): NormalizedCraftData {
+  const validationError = getCatalogValidationError(data.items, data.itemLanguage)
 
   if (validationError !== null) {
     throw new Error(validationError)
@@ -164,7 +172,7 @@ function assertCatalogIsValid(data: PersistedCraftData): PersistedCraftData {
   return data
 }
 
-export function parseCurrentPersistedData(state: unknown): PersistedCraftData {
+export function parseCurrentPersistedData(state: unknown): NormalizedCraftData {
   const parsed = persistedCraftDataSchema.safeParse(state)
 
   if (!parsed.success) {
@@ -177,7 +185,7 @@ export function parseCurrentPersistedData(state: unknown): PersistedCraftData {
 export function migratePersistedData(
   state: unknown,
   version: number,
-): PersistedCraftData {
+): NormalizedCraftData {
   if (version >= 4) {
     return parseCurrentPersistedData(state)
   }
@@ -188,18 +196,20 @@ export function migratePersistedData(
     throw new Error('Не удалось преобразовать сохранённые данные CraftCalc')
   }
 
-  return assertCatalogIsValid({
-    ...parsed.data,
-    items: normalizeLegacyItems(parsed.data.items, version < 2),
-  })
+  return assertCatalogIsValid(
+    persistedCraftDataSchema.parse({
+      ...parsed.data,
+      items: normalizeLegacyItems(parsed.data.items, version < 2),
+    }),
+  )
 }
 
 export function createExportJson(data: PersistedCraftData): string {
   return JSON.stringify(
     {
-      version: 3,
+      version: 4,
       exportedAt: new Date().toISOString(),
-      data,
+      data: persistedCraftDataSchema.parse(data),
     },
     null,
     2,
@@ -225,14 +235,15 @@ export function parseImportedData(rawJson: string): ImportResult {
   }
 
   const data =
-    parsed.data.version === 3
+    parsed.data.version === 3 || parsed.data.version === 4
       ? parsed.data.data
       : {
           items: normalizeLegacyItems(parsed.data.items, parsed.data.version === 1),
           ownedProfessions: [],
           currencyDisplay: 'icons' as const,
+          itemLanguage: 'ru' as const,
         }
-  const validationError = getCatalogValidationError(data.items)
+  const validationError = getCatalogValidationError(data.items, data.itemLanguage)
 
   if (validationError !== null) {
     return { success: false, error: validationError }

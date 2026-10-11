@@ -4,6 +4,7 @@ const storageKey = 'craft-calc-data'
 const item: Item = {
   id: 'cloth',
   name: 'Ткань',
+  names: { ru: null, en: null },
   iconUrl: '',
   sections: ['reagents'],
   purchasePriceCopper: 42,
@@ -14,6 +15,7 @@ const savedData: PersistedCraftData = {
   items: { cloth: item },
   ownedProfessions: ['tailoring'],
   currencyDisplay: 'text',
+  itemLanguage: 'ru',
 }
 
 describe('первоначальная загрузка CraftStore', () => {
@@ -60,7 +62,7 @@ describe('первоначальная загрузка CraftStore', () => {
     const rawRecord = localStorage.getItem(storageKey)
     expect(JSON.parse(rawRecord ?? 'null') as unknown).toEqual({
       state: expectedData,
-      version: 4,
+      version: 5,
     })
 
     vi.resetModules()
@@ -74,7 +76,7 @@ describe('первоначальная загрузка CraftStore', () => {
   })
 
   it('восстанавливает валидную запись и настройки без перезаписи', async () => {
-    const rawRecord = JSON.stringify({ state: savedData, version: 4 })
+    const rawRecord = JSON.stringify({ state: savedData, version: 5 })
     localStorage.setItem(storageKey, rawRecord)
 
     const { useCraftStore, usePersistenceStatusStore } = await import('./useCraftStore')
@@ -297,7 +299,7 @@ describe('первоначальная загрузка CraftStore', () => {
     }
     expect(JSON.parse(localStorage.getItem(storageKey) ?? 'null') as unknown).toEqual({
       state: recoveredData,
-      version: 4,
+      version: 5,
     })
 
     vi.resetModules()
@@ -367,8 +369,13 @@ describe('первоначальная загрузка CraftStore', () => {
     expect(useCraftStore.getState().resetData()).toBeNull()
     expect(usePersistenceStatusStore.getState().recoveryRequired).toBe(false)
     expect(JSON.parse(localStorage.getItem(storageKey) ?? 'null') as unknown).toEqual({
-      state: { items: {}, ownedProfessions: [], currencyDisplay: 'icons' },
-      version: 4,
+      state: {
+        items: {},
+        ownedProfessions: [],
+        currencyDisplay: 'icons',
+        itemLanguage: 'ru',
+      },
+      version: 5,
     })
     useCraftStore.getState().setCurrencyDisplay('text')
     vi.resetModules()

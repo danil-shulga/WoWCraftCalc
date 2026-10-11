@@ -2,18 +2,28 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { z } from 'zod'
 
+import { getItemSearchNames, normalizeItemName } from '../domain/item-names'
+import { itemNamesSchema } from '../domain/item.schema'
+
 import { getRecipeValidationError } from '../domain/recipe-validation'
 import type {
   AcquisitionMethod,
   Item,
   ItemCatalog,
   ItemId,
+  ItemNames,
+  ItemNamesUpdate,
   ItemPriceField,
   PersistedCraftData,
   Recipe,
 } from '../domain/item.types'
 import { PROFESSION_IDS, type Profession } from '../domain/professions'
-import type { CurrencyDisplayMode } from '../domain/user-settings'
+import {
+  WOWHEAD_VERSIONS,
+  type CurrencyDisplayMode,
+  type ItemLanguage,
+  type WowheadVersion,
+} from '../domain/user-settings'
 import {
   createCraftStorage,
   migratePersistedData,
@@ -25,6 +35,8 @@ export type ItemInput = Omit<Item, 'id' | 'recipe'>
 export interface RecipeImportItem {
   wowheadItemId: number
   name: string
+  names?: ItemNames | undefined
+  wowheadVersion?: WowheadVersion | undefined
   iconUrl: string
 }
 
@@ -38,6 +50,8 @@ export interface RecipeImportData {
 const recipeImportItemSchema = z.object({
   wowheadItemId: z.number().int().positive(),
   name: z.string().trim().min(1),
+  names: itemNamesSchema.optional(),
+  wowheadVersion: z.enum(WOWHEAD_VERSIONS).optional(),
   iconUrl: z.union([z.literal(''), z.url()]),
 })
 
@@ -63,6 +77,7 @@ interface CraftStore {
   items: ItemCatalog
   ownedProfessions: Profession[]
   currencyDisplay: CurrencyDisplayMode
+  itemLanguage: ItemLanguage
   createItem: (input: ItemInput) => ItemId
   updateItem: (itemId: ItemId, input: ItemInput) => void
   setItemPrice: (itemId: ItemId, field: ItemPriceField, value: number | null) => void
@@ -82,6 +97,8 @@ interface CraftStore {
   resetData: () => string | null
   setProfessionOwned: (profession: Profession, owned: boolean) => void
   setCurrencyDisplay: (mode: CurrencyDisplayMode) => void
+  setItemLanguage: (language: ItemLanguage) => void
+  fillItemNames: (updates: readonly ItemNamesUpdate[]) => string | null
 }
 
 interface PersistenceStatusStore {
@@ -100,14 +117,20 @@ export const usePersistenceStatusStore = create<PersistenceStatusStore>((set) =>
 
 const craftStorage = createCraftStorage()
 const storageKey = 'craft-calc-data'
-const storageVersion = 4
+const storageVersion = 5
+
+function mergeItemNames(
+  current: Item | undefined,
+  imported: RecipeImportItem,
+): ItemNames {
+  return {
+    ru: imported.names?.ru ?? current?.names?.ru ?? null,
+    en: imported.names?.en ?? current?.names?.en ?? null,
+  }
+}
 
 function getPersistenceError(error: unknown): string {
   return error instanceof Error ? error.message : 'Не удалось сохранить данные CraftCalc'
-}
-
-function normalizeItemName(name: string): string {
-  return name.trim().replace(/\s+/g, ' ').toLocaleLowerCase('ru-RU')
 }
 
 export function findImportedItem(
@@ -115,20 +138,29 @@ export function findImportedItem(
   importedItem: RecipeImportItem,
   excludedIds: ReadonlySet<ItemId> = new Set(),
 ): Item | undefined {
-  const sourceMatch = Object.values(items).find(
+  const candidates = Object.values(items).filter((item) => !excludedIds.has(item.id))
+  const compatibleSource = (item: Item) =>
+    item.source?.wowheadVersion === undefined ||
+    importedItem.wowheadVersion === undefined ||
+    item.source.wowheadVersion === importedItem.wowheadVersion
+  const sourceMatches = candidates.filter(
     (item) =>
       !excludedIds.has(item.id) &&
-      item.source?.wowheadItemId === importedItem.wowheadItemId,
+      item.source?.wowheadItemId === importedItem.wowheadItemId &&
+      compatibleSource(item),
   )
 
-  if (sourceMatch !== undefined) {
-    return sourceMatch
+  if (sourceMatches.length > 0) {
+    return sourceMatches.length === 1 ? sourceMatches[0] : undefined
   }
 
-  const normalizedName = normalizeItemName(importedItem.name)
-  const nameMatches = Object.values(items).filter(
+  const importedNames = new Set(getItemSearchNames(importedItem).map(normalizeItemName))
+  const nameMatches = candidates.filter(
     (item) =>
-      !excludedIds.has(item.id) && normalizeItemName(item.name) === normalizedName,
+      compatibleSource(item) &&
+      (item.source === undefined ||
+        item.source.wowheadItemId === importedItem.wowheadItemId) &&
+      getItemSearchNames(item).some((name) => importedNames.has(normalizeItemName(name))),
   )
 
   return nameMatches.length === 1 ? nameMatches[0] : undefined
@@ -140,11 +172,13 @@ export const useCraftStore = create<CraftStore>()(
       items: {},
       ownedProfessions: [],
       currencyDisplay: 'icons',
+      itemLanguage: 'ru',
 
       createItem: (input) => {
         const itemId = crypto.randomUUID()
         const item = {
           ...input,
+          names: input.names ?? { ru: null, en: null },
           id: itemId,
           recipe: null,
         }
@@ -173,6 +207,7 @@ export const useCraftStore = create<CraftStore>()(
               [itemId]: {
                 ...currentItem,
                 ...input,
+                names: input.names ?? currentItem.names ?? { ru: null, en: null },
                 id: itemId,
                 recipe: currentItem.recipe,
               },
@@ -327,11 +362,17 @@ export const useCraftStore = create<CraftStore>()(
         const importedProduct: Item = {
           id: productItemId,
           name: data.product.name,
+          names: mergeItemNames(currentProduct, data.product),
           iconUrl:
             data.product.iconUrl.length > 0
               ? data.product.iconUrl
               : (currentProduct?.iconUrl ?? ''),
-          source: { wowheadItemId: data.product.wowheadItemId },
+          source: {
+            wowheadItemId: data.product.wowheadItemId,
+            ...(data.product.wowheadVersion === undefined
+              ? {}
+              : { wowheadVersion: data.product.wowheadVersion }),
+          },
           sections: [...new Set([...productSections, 'crafts' as const])],
           purchasePriceCopper: currentProduct?.purchasePriceCopper ?? null,
           salePriceCopper: currentProduct?.salePriceCopper ?? null,
@@ -357,11 +398,17 @@ export const useCraftStore = create<CraftStore>()(
           nextItems[reagentItemId] = {
             id: reagentItemId,
             name: importedReagent.name,
+            names: mergeItemNames(reagent, importedReagent),
             iconUrl:
               importedReagent.iconUrl.length > 0
                 ? importedReagent.iconUrl
                 : (reagent?.iconUrl ?? ''),
-            source: { wowheadItemId: importedReagent.wowheadItemId },
+            source: {
+              wowheadItemId: importedReagent.wowheadItemId,
+              ...(importedReagent.wowheadVersion === undefined
+                ? {}
+                : { wowheadVersion: importedReagent.wowheadVersion }),
+            },
             sections: [...new Set([...(reagent?.sections ?? []), 'reagents' as const])],
             purchasePriceCopper: reagent?.purchasePriceCopper ?? null,
             salePriceCopper: reagent?.salePriceCopper ?? null,
@@ -419,6 +466,7 @@ export const useCraftStore = create<CraftStore>()(
           items: {},
           ownedProfessions: [],
           currencyDisplay: 'icons',
+          itemLanguage: 'ru',
         }),
 
       setProfessionOwned: (profession, owned) => {
@@ -432,6 +480,49 @@ export const useCraftStore = create<CraftStore>()(
       setCurrencyDisplay: (currencyDisplay) => {
         set({ currencyDisplay })
       },
+      setItemLanguage: (itemLanguage) => {
+        set({ itemLanguage })
+      },
+      fillItemNames: (updates) => {
+        const parsed = z
+          .array(
+            z.object({
+              itemId: z.string().min(1),
+              wowheadItemId: z.number().int().positive(),
+              wowheadVersion: z.enum(WOWHEAD_VERSIONS),
+              names: itemNamesSchema.refine(
+                (names) => names.ru !== null && names.en !== null,
+              ),
+            }),
+          )
+          .safeParse(updates)
+        if (!parsed.success) return 'Не удалось проверить загруженные названия'
+        const items = get().items
+        const nextItems = { ...items }
+        const seenIds = new Set<ItemId>()
+        for (const update of parsed.data) {
+          const item = items[update.itemId]
+          if (
+            seenIds.has(update.itemId) ||
+            item?.source?.wowheadItemId !== update.wowheadItemId ||
+            (item.source.wowheadVersion !== undefined &&
+              item.source.wowheadVersion !== update.wowheadVersion)
+          ) {
+            return 'Каталог изменился. Загрузите названия повторно'
+          }
+          seenIds.add(update.itemId)
+          nextItems[update.itemId] = {
+            ...item,
+            names: {
+              ru: item.names?.ru ?? update.names.ru,
+              en: item.names?.en ?? update.names.en,
+            },
+            source: { ...item.source, wowheadVersion: update.wowheadVersion },
+          }
+        }
+        if (parsed.data.length > 0) set({ items: nextItems })
+        return null
+      },
     }),
     {
       name: storageKey,
@@ -441,6 +532,7 @@ export const useCraftStore = create<CraftStore>()(
         items: state.items,
         ownedProfessions: state.ownedProfessions,
         currencyDisplay: state.currencyDisplay,
+        itemLanguage: state.itemLanguage,
       }),
       migrate: migratePersistedData,
       merge: (persistedState, currentState) =>

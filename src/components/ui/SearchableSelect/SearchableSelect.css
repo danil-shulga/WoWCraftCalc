@@ -25,6 +25,13 @@
   position: relative;
 }
 
+.searchable-select__secondary {
+  display: block;
+  color: var(--muted);
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+
 .searchable-select__control input {
   width: 100%;
   padding-right: 34px;

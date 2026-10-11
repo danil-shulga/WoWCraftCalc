@@ -1,12 +1,13 @@
 import { z } from 'zod'
 
+import type { ItemNames } from '../../domain/item.types'
+import type { ItemLanguage, WowheadVersion } from '../../domain/user-settings'
+
 import { resolveIconUrl } from '../item-editor/icon-url'
 
 const WOWHEAD_HOSTS = new Set(['wowhead.com', 'www.wowhead.com'])
 const SPELL_PATH_PATTERN = /\/(classic|tbc|forever)\/(?:[a-z]{2}\/)?spell=(\d+)(?:\/|$)/i
 const ITEM_PATH_PATTERN = /\/item=(\d+)(?:\/|$)/i
-
-type WowheadVersion = 'classic' | 'tbc' | 'forever'
 
 interface WowheadSpellReference {
   version: WowheadVersion
@@ -22,6 +23,8 @@ const tooltipResponseSchema = z.object({
 export interface WowheadImportItem {
   wowheadItemId: number
   name: string
+  names?: ItemNames | undefined
+  wowheadVersion?: WowheadVersion | undefined
   iconUrl: string
 }
 
@@ -81,8 +84,11 @@ function parseWowheadSpellReference(value: string): WowheadSpellReference | null
   return { version, spellId }
 }
 
-function getTooltipBaseUrl(version: WowheadVersion): string {
-  return `https://nether.wowhead.com/${version}/ru/tooltip`
+function getTooltipBaseUrl(
+  version: WowheadVersion,
+  language: ItemLanguage = 'ru',
+): string {
+  return `https://nether.wowhead.com/${version}${language === 'ru' ? '/ru' : ''}/tooltip`
 }
 
 function getSectionTitle(container: Element): string {
@@ -122,7 +128,10 @@ export function parseWowheadSpellUrl(value: string): number | null {
   return parseWowheadSpellReference(value)?.spellId ?? null
 }
 
-export function parseWowheadSpellTooltip(response: unknown): ParsedSpellTooltip {
+export function parseWowheadSpellTooltip(
+  response: unknown,
+  language: ItemLanguage = 'ru',
+): ParsedSpellTooltip {
   const parsedResponse = tooltipResponseSchema.safeParse(response)
 
   if (!parsedResponse.success) {
@@ -136,7 +145,8 @@ export function parseWowheadSpellTooltip(response: unknown): ParsedSpellTooltip 
   const reagentContainers = [...document.querySelectorAll<HTMLElement>('.indent')]
 
   const matchingContainers = reagentContainers.filter(
-    (container) => getSectionTitle(container) === 'Ингредиенты:',
+    (container) =>
+      getSectionTitle(container) === (language === 'ru' ? 'Ингредиенты:' : 'Reagents:'),
   )
   const reagentContainer = matchingContainers[0]
 
@@ -245,7 +255,6 @@ async function enrichReagent(
 
     return {
       ...reagent,
-      name: response.name,
       iconUrl: getIconUrl(response.icon),
     }
   } catch {
@@ -267,15 +276,75 @@ export async function fetchWowheadRecipe(value: string): Promise<WowheadRecipeIm
       `${getTooltipBaseUrl(reference.version)}/spell/${reference.spellId.toString()}`,
     ),
   )
+  const english = parseWowheadSpellTooltip(
+    await fetchTooltip(
+      `${getTooltipBaseUrl(reference.version, 'en')}/spell/${reference.spellId.toString()}`,
+    ),
+    'en',
+  )
+  const englishReagents = new Map(
+    english.reagents.map((reagent) => [reagent.wowheadItemId, reagent]),
+  )
+  if (
+    parsed.product.wowheadItemId !== english.product.wowheadItemId ||
+    parsed.outputQuantity !== english.outputQuantity ||
+    englishReagents.size !== english.reagents.length ||
+    new Set(parsed.reagents.map((reagent) => reagent.wowheadItemId)).size !==
+      parsed.reagents.length ||
+    parsed.reagents.length !== english.reagents.length ||
+    parsed.reagents.some(
+      (reagent) =>
+        englishReagents.get(reagent.wowheadItemId)?.quantity !== reagent.quantity,
+    )
+  ) {
+    throw new Error('Русская и английская версии рецепта Wowhead не совпадают')
+  }
   const reagents = await Promise.all(
-    parsed.reagents.map((reagent) => enrichReagent(reagent, reference.version)),
+    parsed.reagents.map((reagent) =>
+      enrichReagent(
+        {
+          ...reagent,
+          names: {
+            ru: reagent.name,
+            en: englishReagents.get(reagent.wowheadItemId)?.name ?? null,
+          },
+          wowheadVersion: reference.version,
+        },
+        reference.version,
+      ),
+    ),
   )
 
   return {
     wowheadSpellId: reference.spellId,
-    product: parsed.product,
+    product: {
+      ...parsed.product,
+      names: { ru: parsed.product.name, en: english.product.name },
+      wowheadVersion: reference.version,
+    },
     reagents,
     outputQuantity: parsed.outputQuantity,
     profession: parsed.profession,
   }
+}
+
+export async function fetchWowheadItemNames(
+  wowheadItemId: number,
+  version: WowheadVersion,
+): Promise<ItemNames> {
+  if (!Number.isSafeInteger(wowheadItemId) || wowheadItemId < 1) {
+    throw new Error('Некорректный идентификатор предмета Wowhead')
+  }
+  const [ru, en] = await Promise.all(
+    ['ru', 'en'].map(async (language) => {
+      const response = await fetchTooltip(
+        `${getTooltipBaseUrl(version, language === 'ru' ? 'ru' : 'en')}/item/${wowheadItemId.toString()}`,
+      )
+      return tooltipResponseSchema.parse(response).name
+    }),
+  )
+  if (ru === undefined || en === undefined) {
+    throw new Error('Не удалось загрузить оба названия предмета Wowhead')
+  }
+  return { ru, en }
 }

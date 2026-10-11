@@ -5,14 +5,18 @@ import type {
   RecipeLine,
 } from '../../../domain/item.types'
 import { getTotalAcquisitionProfit } from '../../../domain/calculations'
+import { getItemName } from '../../../domain/item-names'
+import type { ItemLanguage } from '../../../domain/user-settings'
 import { AcquisitionMethodPicker } from '../../ui/AcquisitionMethodPicker/AcquisitionMethodPicker'
 import { ItemIcon } from '../../ui/ItemIcon/ItemIcon'
+import { ItemName } from '../../ui/ItemName/ItemName'
 import { MoneyDisplay } from '../../ui/MoneyDisplay/MoneyDisplay'
 import '../../ui/IconButton.css'
 import './ReagentItemRow.css'
 
 interface ReagentItemRowProps {
   item: Item
+  itemLanguage: ItemLanguage
   parentItemId: ItemId
   recipeLine: RecipeLine
   isExpanded: boolean
@@ -32,6 +36,7 @@ interface ReagentItemRowProps {
 
 export function ReagentItemRow({
   item,
+  itemLanguage,
   parentItemId,
   recipeLine,
   isExpanded,
@@ -45,6 +50,7 @@ export function ReagentItemRow({
   onSetAcquisition,
 }: ReagentItemRowProps) {
   const hasRecipe = item.recipe !== null
+  const itemName = getItemName(item, itemLanguage)
   const selectedProfit = getTotalAcquisitionProfit(exactSelectedProfit, 1)
   const totalProfit = getTotalAcquisitionProfit(exactSelectedProfit, recipeLine.quantity)
   const profitToneClass =
@@ -66,10 +72,12 @@ export function ReagentItemRow({
         {hasRecipe ? (isExpanded ? '▾' : '▸') : '·'}
       </button>
 
-      <ItemIcon iconUrl={item.iconUrl} itemName={item.name} />
+      <ItemIcon iconUrl={item.iconUrl} itemName={itemName} />
 
       <div className="item-row__identity">
-        <strong>{item.name}</strong>
+        <strong>
+          <ItemName item={item} language={itemLanguage} />
+        </strong>
         <span className="reagent-item-row__quantity">× {recipeLine.quantity}</span>
       </div>
 
@@ -126,7 +134,7 @@ export function ReagentItemRow({
           className="icon-button"
           type="button"
           title="Редактировать предмет"
-          aria-label={`Редактировать ${item.name}`}
+          aria-label={`Редактировать ${itemName}`}
           onClick={() => {
             onEditItem(item.id)
           }}
@@ -137,7 +145,7 @@ export function ReagentItemRow({
           className="icon-button"
           type="button"
           title="Редактировать рецепт"
-          aria-label={`Редактировать рецепт ${item.name}`}
+          aria-label={`Редактировать рецепт ${itemName}`}
           onClick={() => {
             onEditRecipe(item.id)
           }}

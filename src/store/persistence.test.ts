@@ -10,6 +10,7 @@ const catalog: ItemCatalog = {
   cloth: {
     id: 'cloth',
     name: 'Ткань',
+    names: { ru: null, en: null },
     iconUrl: '',
     sections: ['reagents'],
     purchasePriceCopper: 42,
@@ -19,6 +20,7 @@ const catalog: ItemCatalog = {
   bolt: {
     id: 'bolt',
     name: 'Рулон ткани',
+    names: { ru: null, en: null },
     iconUrl: '',
     sections: ['crafts'],
     purchasePriceCopper: null,
@@ -36,13 +38,14 @@ describe('JSON data transfer', () => {
     items: catalog,
     ownedProfessions: ['tailoring'],
     currencyDisplay: 'text',
+    itemLanguage: 'ru',
   }
 
   it('восстанавливает каталог и настройки из полной резервной копии', () => {
     const exportedJson = createExportJson(persistedData)
     const result = parseImportedData(exportedJson)
 
-    expect(exportedJson).toContain('"version": 3')
+    expect(exportedJson).toContain('"version": 4')
     expect(result.success).toBe(true)
 
     if (result.success) {
@@ -166,6 +169,55 @@ describe('JSON data transfer', () => {
 })
 
 describe('persist migrations', () => {
+  it('использует выбранный язык названия в сообщении о повреждённом каталоге', () => {
+    const cloth = catalog.cloth
+    if (cloth === undefined) throw new Error('Нет тестового предмета')
+    expect(() =>
+      parseCurrentPersistedData({
+        items: { cloth: { ...cloth, id: 'wrong', names: { ru: 'Ткань', en: 'Cloth' } } },
+        itemLanguage: 'en',
+      }),
+    ).toThrow('Идентификатор предмета «Cloth» повреждён')
+  })
+
+  it('сохраняет исходное имя v4 без угадывания языка и задаёт RU по умолчанию', () => {
+    const migrated = migratePersistedData(
+      {
+        items: { cloth: { ...catalog.cloth, name: 'Custom name', names: undefined } },
+        ownedProfessions: ['tailoring'],
+        currencyDisplay: 'text',
+      },
+      4,
+    )
+    expect(migrated.items.cloth).toMatchObject({
+      name: 'Custom name',
+      names: { ru: null, en: null },
+      purchasePriceCopper: 42,
+    })
+    expect(migrated.itemLanguage).toBe('ru')
+  })
+
+  it('переносит оба названия и язык отображения через резервную копию', () => {
+    const cloth = catalog.cloth
+    if (cloth === undefined) throw new Error('Нет тестового предмета')
+    const data = {
+      items: { cloth: { ...cloth, names: { ru: 'Ткань', en: 'Cloth' } } },
+      ownedProfessions: [],
+      currencyDisplay: 'icons' as const,
+      itemLanguage: 'en' as const,
+    }
+    expect(parseImportedData(createExportJson(data))).toEqual({ success: true, data })
+    expect(
+      parseImportedData(
+        JSON.stringify({
+          version: 3,
+          exportedAt: '',
+          data: { ...data, itemLanguage: undefined },
+        }),
+      ),
+    ).toMatchObject({ success: true, data: { itemLanguage: 'ru' } })
+  })
+
   it('преобразует состояние v3 и сохраняет пользовательские настройки', () => {
     const migrated = migratePersistedData(
       {

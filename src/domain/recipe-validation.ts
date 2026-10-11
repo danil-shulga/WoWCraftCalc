@@ -1,4 +1,6 @@
 import type { ItemCatalog, ItemId, RecipeLine } from './item.types'
+import { getItemName } from './item-names'
+import type { ItemLanguage } from './user-settings'
 
 function canReachItem(
   catalog: ItemCatalog,
@@ -65,10 +67,13 @@ export function getRecipeValidationError(
   return null
 }
 
-export function getCatalogValidationError(catalog: ItemCatalog): string | null {
+export function getCatalogValidationError(
+  catalog: ItemCatalog,
+  language: ItemLanguage = 'ru',
+): string | null {
   for (const [catalogId, item] of Object.entries(catalog)) {
     if (catalogId !== item.id) {
-      return `Идентификатор предмета «${item.name}» повреждён`
+      return `Идентификатор предмета «${getItemName(item, language)}» повреждён`
     }
 
     if (item.recipe === null) {
@@ -78,7 +83,7 @@ export function getCatalogValidationError(catalog: ItemCatalog): string | null {
     const recipeError = getRecipeValidationError(catalog, item.id, item.recipe.reagents)
 
     if (recipeError !== null) {
-      return `Ошибка в рецепте «${item.name}»: ${recipeError}`
+      return `Ошибка в рецепте «${getItemName(item, language)}»: ${recipeError}`
     }
   }
 

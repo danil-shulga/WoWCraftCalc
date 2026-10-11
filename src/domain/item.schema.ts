@@ -1,7 +1,12 @@
 import { z } from 'zod'
 
 import { PROFESSION_IDS } from './professions'
-import { CURRENCY_DISPLAY_MODES } from './user-settings'
+import { CURRENCY_DISPLAY_MODES, ITEM_LANGUAGES, WOWHEAD_VERSIONS } from './user-settings'
+
+export const itemNamesSchema = z.object({
+  ru: z.string().trim().min(1).nullable(),
+  en: z.string().trim().min(1).nullable(),
+})
 
 const nullableCopperSchema = z
   .number()
@@ -24,10 +29,12 @@ export const recipeSchema = z.object({
 export const itemSchema = z.object({
   id: z.string().min(1),
   name: z.string().trim().min(1, 'Введите название предмета'),
+  names: itemNamesSchema.default({ ru: null, en: null }),
   iconUrl: z.union([z.literal(''), z.url('Введите корректный URL')]),
   source: z
     .object({
       wowheadItemId: z.number().int().positive(),
+      wowheadVersion: z.enum(WOWHEAD_VERSIONS).optional(),
     })
     .optional(),
   sections: z.array(z.enum(['crafts', 'reagents'])).min(1),
@@ -40,4 +47,5 @@ export const persistedCraftDataSchema = z.object({
   items: z.record(z.string(), itemSchema),
   ownedProfessions: z.array(z.enum(PROFESSION_IDS)).default([]),
   currencyDisplay: z.enum(CURRENCY_DISPLAY_MODES).default('icons'),
+  itemLanguage: z.enum(ITEM_LANGUAGES).default('ru'),
 })

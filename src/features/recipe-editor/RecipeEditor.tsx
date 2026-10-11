@@ -2,6 +2,7 @@ import { useMemo, useState, type SyntheticEvent } from 'react'
 
 import { AcquisitionMethodPicker } from '../../components/ui/AcquisitionMethodPicker/AcquisitionMethodPicker'
 import { NumberInput } from '../../components/ui/NumberInput/NumberInput'
+import { ItemName } from '../../components/ui/ItemName/ItemName'
 import { SearchableSelect } from '../../components/ui/SearchableSelect/SearchableSelect'
 import {
   getAutomaticAcquisitionMethod,
@@ -10,12 +11,19 @@ import {
 import type { Item, ItemCatalog, Recipe, RecipeLine } from '../../domain/item.types'
 import { PROFESSION_OPTIONS, type Profession } from '../../domain/professions'
 import { selectAvailableReagents } from '../../store/craft.selectors'
+import {
+  getItemName,
+  getItemSearchNames,
+  getSecondaryItemName,
+} from '../../domain/item-names'
+import type { ItemLanguage } from '../../domain/user-settings'
 import '../../components/ui/Button.css'
 import '../EditorForm.css'
 import './RecipeEditor.css'
 
 interface RecipeEditorProps {
   item: Item
+  itemLanguage?: ItemLanguage
   catalog: ItemCatalog
   ownedProfessions: readonly Profession[]
   onSave: (recipe: Recipe) => string | null
@@ -25,6 +33,7 @@ interface RecipeEditorProps {
 
 export function RecipeEditor({
   item,
+  itemLanguage = 'ru',
   catalog,
   ownedProfessions,
   onSave,
@@ -47,16 +56,18 @@ export function RecipeEditor({
     [reagents],
   )
   const availableItems = useMemo(
-    () => selectAvailableReagents(catalog, item.id, selectedIds),
-    [catalog, item.id, selectedIds],
+    () => selectAvailableReagents(catalog, item.id, selectedIds, itemLanguage),
+    [catalog, item.id, selectedIds, itemLanguage],
   )
   const availableOptions = useMemo(
     () =>
       availableItems.map((availableItem) => ({
         value: availableItem.id,
-        label: availableItem.name,
+        label: getItemName(availableItem, itemLanguage),
+        secondaryLabel: getSecondaryItemName(availableItem, itemLanguage),
+        searchNames: getItemSearchNames(availableItem),
       })),
-    [availableItems],
+    [availableItems, itemLanguage],
   )
 
   const addReagent = () => {
@@ -169,7 +180,9 @@ export function RecipeEditor({
 
               return (
                 <li key={line.itemId}>
-                  <strong>{reagent.name}</strong>
+                  <strong>
+                    <ItemName item={reagent} language={itemLanguage} />
+                  </strong>
                   <div className="recipe-editor__quantity">
                     <label htmlFor={`reagent-quantity-${line.itemId}`}>Количество</label>
                     <NumberInput

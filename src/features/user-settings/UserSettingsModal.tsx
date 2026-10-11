@@ -2,21 +2,31 @@ import { Checkbox } from '../../components/ui/Checkbox/Checkbox'
 import { MoneyDisplay } from '../../components/ui/MoneyDisplay/MoneyDisplay'
 import { Modal } from '../../components/ui/Modal/Modal'
 import { PROFESSION_OPTIONS, type Profession } from '../../domain/professions'
-import type { CurrencyDisplayMode } from '../../domain/user-settings'
+import type { ItemCatalog, ItemNamesUpdate } from '../../domain/item.types'
+import { ItemNamesLoader } from '../wowhead-import/ItemNamesLoader'
+import type { CurrencyDisplayMode, ItemLanguage } from '../../domain/user-settings'
 import '../../components/ui/Button.css'
 import './UserSettingsModal.css'
 
 interface UserSettingsModalProps {
+  catalog: ItemCatalog
+  onItemNamesApply: (updates: readonly ItemNamesUpdate[]) => string | null
   ownedProfessions: readonly Profession[]
   currencyDisplay: CurrencyDisplayMode
+  itemLanguage: ItemLanguage
+  onItemLanguageChange: (language: ItemLanguage) => void
   onProfessionChange: (profession: Profession, owned: boolean) => void
   onCurrencyDisplayChange: (mode: CurrencyDisplayMode) => void
   onClose: () => void
 }
 
 export function UserSettingsModal({
+  catalog,
+  onItemNamesApply,
   ownedProfessions,
   currencyDisplay,
+  itemLanguage,
+  onItemLanguageChange,
   onProfessionChange,
   onCurrencyDisplayChange,
   onClose,
@@ -26,6 +36,34 @@ export function UserSettingsModal({
   return (
     <Modal title="Настройки" onClose={onClose}>
       <div className="user-settings">
+        <fieldset className="user-settings__section">
+          <legend>Язык названий предметов</legend>
+          <p>Названия предметов и реагентов. Поиск работает на обоих языках.</p>
+          <div
+            className="user-settings__language-options"
+            role="group"
+            aria-label="RU / EN"
+          >
+            {(['ru', 'en'] as const).map((language) => (
+              <button
+                key={language}
+                type="button"
+                className={`button ${itemLanguage === language ? 'button--primary' : 'button--secondary'}`}
+                aria-pressed={itemLanguage === language}
+                onClick={() => {
+                  onItemLanguageChange(language)
+                }}
+              >
+                {language.toUpperCase()}
+              </button>
+            ))}
+          </div>
+        </fieldset>
+        <ItemNamesLoader
+          catalog={catalog}
+          itemLanguage={itemLanguage}
+          onApply={onItemNamesApply}
+        />
         <fieldset className="user-settings__section">
           <legend>Отображение валют</legend>
           <p>Выберите вид обозначений золота, серебра и меди.</p>

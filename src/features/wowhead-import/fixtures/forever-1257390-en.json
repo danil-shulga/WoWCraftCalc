@@ -1,0 +1,11 @@
+{
+  "name": "Flame Sash",
+  "icon": "inv_belt_43c",
+  "tooltip": "<table><tr><td><a class=\"whtt-name q3\" href=\"/forever/spell=1257390/flame-sash\"><b class=\"whtt-name q3\">Flame Sash</b></a><br />8 sec cast</td></tr></table><table><tr><td>Reagents:<br /><div class=\"indent q1\"><a href=\"/forever/item=4305/bolt-of-silk-cloth\">Bolt of Silk Cloth</a>&nbsp;(8), <a href=\"/forever/item=2321/fine-thread\">Fine Thread</a>&nbsp;(4), <a href=\"/forever/item=249409/cerulean-dye\">Cerulean Dye</a>&nbsp;(3), <a href=\"/forever/item=6371/fire-oil\">Fire Oil</a>&nbsp;(3)</div><br /><span class=\"q3\"><a href=\"/forever/item=253929/flame-sash\">Flame Sash</a></span> (2)<!--ndstart--><!--ndend--><span class=\"q\"><br>Item Level <!--ilvl-->22</span><!--bo--><br>Binds when picked up<!--ue--><!--ue--><table width=\"100%\"><tr><td>Waist</td><th><!--scstart4:1--><span class=\"q1\">Cloth</span><!--scend--></th></tr></table><!--rf--><span><!--amr-->22 Armor</span><br><span><!--stat7-->+5 Stamina</span><br><span><!--stat5-->+4 Intellect</span><!--ebstats--><!--egstats--><!--eistats--><!--nameDescStats--><!--rs--><!--e--><!--ps--><br>Requires Level <!--rlvl-->17<br><!--rr--><span class=\"q2\">Equip: Increases damage done by Fire spells and effects by up to <!--rtg85-->7.</span><!--itemEffects:1--><br><!--pvpEquip--><!--pvpEquip--><div class=\"whtt-sellprice\">Sell Price: <span class=\"moneysilver\">4</span> <span class=\"moneycopper\">71</span></div><!--i?1257390:1:60:17--></td></tr></table>",
+  "tooltip2": "",
+  "buff": "",
+  "quality": 3,
+  "spells": {},
+  "buffspells": {},
+  "completion_category": 11
+}

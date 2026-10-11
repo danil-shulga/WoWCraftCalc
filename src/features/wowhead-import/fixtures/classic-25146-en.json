@@ -1,0 +1,11 @@
+{
+  "name": "Transmute: Elemental Fire",
+  "icon": "spell_fire_fire",
+  "tooltip": "<table><tr><td><a class=\"whtt-name q1\" href=\"/classic/spell=25146/transmute-elemental-fire\"><b class=\"whtt-name q1\">Transmute: Elemental Fire</b></a><table width=\"100%\"><tr><td>25 sec cast</td><th><!--cooldownText-->10 min cooldown<!--cooldownText--><!--baseCooldown:10 min cooldown--></th></tr></table><span class=\"wowhead-tooltip-requirements\">Requires level 45</span><br /></td></tr></table><table><tr><td>Tools:<br /><div class=\"indent q1\"><a href=\"/classic/item=9149/philosophers-stone\">Philosopher's Stone</a></div>Reagents:<br /><div class=\"indent q1\"><a href=\"/classic/item=7077/heart-of-fire\">Heart of Fire</a></div><div class=\"q\">Transmutes a Heart of Fire into three Elemental Fires.</div><br /><span class=\"q1\"><a href=\"/classic/item=7068/elemental-fire\">Elemental Fire</a></span> (3)<!--ndstart--><!--ndend--><span class=\"q whtt-extra whtt-ilvl\"><br>Item Level <!--ilvl-->25</span><!--bo--><!--ue--><!--ue--><!--ebstats--><!--egstats--><!--eistats--><!--nameDescStats--><!--itemEffects:1--><br><!--pvpEquip--><!--pvpEquip--><div class=\"whtt-extra whtt-maxstack\">Max Stack: 10</div><div class=\"whtt-sellprice\">Sell Price: <span class=\"moneysilver\">4</span></div></td></tr></table>",
+  "tooltip2": "",
+  "buff": "",
+  "quality": 1,
+  "spells": {},
+  "buffspells": {},
+  "completion_category": 11
+}

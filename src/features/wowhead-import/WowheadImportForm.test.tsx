@@ -7,11 +7,13 @@ import { useCraftStore } from '../../store/useCraftStore'
 import { ItemsPage } from '../../pages/ItemsPage'
 import classicTooltip from './fixtures/classic-25146.json'
 import tbcTooltip from './fixtures/tbc-44391.json'
+import classicEn from './fixtures/classic-25146-en.json'
+import tbcEn from './fixtures/tbc-44391-en.json'
 import { ItemAddModal } from '../item-editor/ItemAddModal'
 
 function ImportHarness(
   props: Pick<ComponentProps<typeof ItemAddModal>, 'catalog' | 'onImport' | 'onClose'> &
-    Partial<Pick<ComponentProps<typeof ItemAddModal>, 'onSuccess'>>,
+    Partial<Pick<ComponentProps<typeof ItemAddModal>, 'onSuccess' | 'itemLanguage'>>,
 ) {
   return (
     <ItemAddModal
@@ -24,13 +26,16 @@ function ImportHarness(
   )
 }
 
-function mockTooltip(tooltip = tbcTooltip) {
+function mockTooltip(
+  tooltip = tbcTooltip,
+  english = tooltip.name === tbcTooltip.name ? tbcEn : classicEn,
+) {
   return vi.spyOn(globalThis, 'fetch').mockImplementation((input) => {
     const url =
       typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
     return Promise.resolve(
       url.includes('/spell/')
-        ? Response.json(tooltip)
+        ? Response.json(url.includes('/ru/') ? tooltip : english)
         : new Response(null, { status: 404 }),
     )
   })
@@ -57,6 +62,30 @@ describe('проверка импорта Wowhead', () => {
     vi.restoreAllMocks()
   })
 
+  it.each(['ru', 'en'] as const)(
+    'показывает в приписке только другой язык при выборе %s',
+    async (itemLanguage) => {
+      mockTooltip()
+      render(
+        <ImportHarness
+          catalog={{}}
+          itemLanguage={itemLanguage}
+          onImport={vi.fn()}
+          onClose={vi.fn()}
+        />,
+      )
+      await loadRecipe(userEvent.setup())
+      const region = screen.getByRole('region', { name: 'Проверка рецепта' })
+      expect(within(region).getByRole('heading')).toHaveTextContent(
+        itemLanguage === 'ru' ? tbcTooltip.name : tbcEn.name,
+      )
+      expect(region.querySelector('.wowhead-import__product small')).toHaveTextContent(
+        itemLanguage === 'ru' ? tbcEn.name : tbcTooltip.name,
+      )
+      expect(region).not.toHaveTextContent(/RU:|EN:/)
+    },
+  )
+
   it('показывает иконку из Wowhead, сохранённую иконку и заглушку при недоступных данных', async () => {
     const iconUrl = 'https://wow.zamimg.com/images/wow/icons/large/inv_ingot_03.jpg'
     const savedIconUrl =
@@ -66,7 +95,7 @@ describe('проверка импорта Wowhead', () => {
         typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
       return Promise.resolve(
         url.includes('/spell/')
-          ? Response.json(tbcTooltip)
+          ? Response.json(url.includes('/ru/') ? tbcTooltip : tbcEn)
           : url.endsWith('/item/23446')
             ? Response.json({
                 name: 'Адамантитовый слиток',
@@ -127,7 +156,7 @@ describe('проверка импорта Wowhead', () => {
     )
     const reagents = screen.getByRole('list', { name: 'Реагенты' })
     expect(within(reagents).getAllByRole('listitem')[0]).toHaveTextContent(
-      'Адамантитовый слиток× 8',
+      'Адамантитовый слиток',
     )
     expect(within(screen.getByRole('region')).getAllByRole('listitem')).toHaveLength(3)
     expect(screen.getByText('× 1')).toBeVisible()
@@ -187,13 +216,22 @@ describe('проверка импорта Wowhead', () => {
   )
 
   it('подставляет выход 1 при неизвестном значении и проверяет количество и профессию', async () => {
-    mockTooltip({
-      ...tbcTooltip,
-      tooltip: tbcTooltip.tooltip.replace(
-        '</span> (5)<!--ndstart-->',
-        '</span><!--ndstart-->',
-      ),
-    })
+    mockTooltip(
+      {
+        ...tbcTooltip,
+        tooltip: tbcTooltip.tooltip.replace(
+          '</span> (5)<!--ndstart-->',
+          '</span><!--ndstart-->',
+        ),
+      },
+      {
+        ...tbcEn,
+        tooltip: tbcEn.tooltip.replace(
+          '</span> (5)<!--ndstart-->',
+          '</span><!--ndstart-->',
+        ),
+      },
+    )
     const user = userEvent.setup()
     const onImport = vi.fn(useCraftStore.getState().importRecipe)
     render(<ImportHarness catalog={{}} onImport={onImport} onClose={vi.fn()} />)

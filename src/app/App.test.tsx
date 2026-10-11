@@ -12,12 +12,14 @@ const emptyData: PersistedCraftData = {
   items: {},
   ownedProfessions: [],
   currencyDisplay: 'icons',
+  itemLanguage: 'ru',
 }
 const backupData: PersistedCraftData = {
   items: {
     cloth: {
       id: 'cloth',
       name: 'Восстановленная ткань',
+      names: { ru: null, en: null },
       iconUrl: '',
       sections: ['crafts'],
       purchasePriceCopper: 42,
@@ -27,6 +29,7 @@ const backupData: PersistedCraftData = {
   },
   ownedProfessions: ['tailoring'],
   currencyDisplay: 'text',
+  itemLanguage: 'ru',
 }
 
 describe('возврат наверх страницы', () => {
@@ -146,7 +149,7 @@ describe('восстановление сохранения в App', () => {
     ).not.toBeInTheDocument()
     expect(JSON.parse(localStorage.getItem(storageKey) ?? 'null') as unknown).toEqual({
       state: backupData,
-      version: 4,
+      version: 5,
     })
   })
 
@@ -181,7 +184,7 @@ describe('восстановление сохранения в App', () => {
     expect(usePersistenceStatusStore.getState().recoveryRequired).toBe(false)
     expect(JSON.parse(localStorage.getItem(storageKey) ?? 'null') as unknown).toEqual({
       state: emptyData,
-      version: 4,
+      version: 5,
     })
   })
 

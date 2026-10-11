@@ -1,5 +1,17 @@
 # Примеры tooltip Wowhead
 
+Двуязычные примеры добавлены 2026-10-12. Английский endpoint использует
+`/{version}/tooltip/spell/{id}`, русский — `/{version}/ru/tooltip/spell/{id}`.
+Для всех пяти новых ответов проверен `Access-Control-Allow-Origin: *`.
+
+- [Classic 12092 RU](https://nether.wowhead.com/classic/ru/tooltip/spell/12092)
+  и [EN](https://nether.wowhead.com/classic/tooltip/spell/12092): результат 10041,
+  шесть реагентов; явный выход отсутствует.
+- Английские пары для существующих примеров:
+  [Classic 25146](https://nether.wowhead.com/classic/tooltip/spell/25146),
+  [TBC 44391](https://nether.wowhead.com/tbc/tooltip/spell/44391),
+  [Forever 1257390](https://nether.wowhead.com/forever/tooltip/spell/1257390).
+
 Ответы сохранены без изменения содержимого 2026-10-11 из публичного endpoint
 Wowhead. Тесты читают локальные JSON; сетевые вызовы в тестах замоканы.
 

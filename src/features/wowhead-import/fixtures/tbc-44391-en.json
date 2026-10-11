@@ -1,0 +1,11 @@
+{
+  "name": "Field Repair Bot 110G",
+  "icon": "inv_misc_enggizmos_01",
+  "tooltip": "<table><tr><td><a class=\"whtt-name q1\" href=\"/tbc/spell=44391/field-repair-bot-110g\"><b class=\"whtt-name q1\">Field Repair Bot 110G</b></a><br />50 sec cast</td></tr></table><table><tr><td>Tools:<br /><div class=\"indent q1\"><a href=\"/tbc/items?filter=91;13;0\">Blacksmith Hammer</a>, <a href=\"/tbc/items?filter=91;14;0\">Arclight Spanner</a></div>Reagents:<br /><div class=\"indent q1\"><a href=\"/tbc/item=23446/adamantite-bar\">Adamantite Bar</a>&nbsp;(8), <a href=\"/tbc/item=23783/handful-of-fel-iron-bolts\">Handful of Fel Iron Bolts</a>&nbsp;(8), <a href=\"/tbc/item=23786/khorium-power-core\">Khorium Power Core</a></div><br /><span class=\"q1\"><a href=\"/tbc/item=34113/field-repair-bot-110g\">Field Repair Bot 110G</a></span> (5)<!--ndstart--><!--ndend--><span class=\"q whtt-extra whtt-ilvl\"><br>Item Level <!--ilvl-->70</span><!--bo--><!--ue--><!--ue--><!--ebstats--><!--egstats--><!--eistats--><!--nameDescStats--><br>Requires <a href=\"/tbc/skill=202/engineering\" class=\"q1\">Engineering</a> (325)<br><br><!--useText:0:1--><span id=\"useText1\" class=\"q2\">Use: <!--useEffect:0:1--><a href=\"/tbc/spell=44389/field-repair-bot-110g\" class=\"q2\">Unfolds into a Field Repair Bot that sells reagents and can repair damaged items. &nbsp;After 10 minutes its internal motor fails.</a> (10 Min Cooldown)<!--useEffect:1--></span><!--useText:1--><!--itemEffects:1--><br><!--pvpEquip--><!--pvpEquip--><div class=\"whtt-extra whtt-maxstack\">Max Stack: 5</div><div class=\"whtt-sellprice\">Sell Price: <span class=\"moneygold\">1</span></div></td></tr></table>",
+  "tooltip2": "",
+  "buff": "",
+  "quality": 1,
+  "spells": {},
+  "buffspells": {},
+  "completion_category": 11
+}

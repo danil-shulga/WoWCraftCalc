@@ -22,7 +22,10 @@ export function ItemForm({
   onSave,
   onCancel,
 }: ItemFormProps) {
-  const [name, setName] = useState(initialItem?.name ?? '')
+  const [nameRu, setNameRu] = useState(
+    initialItem?.names?.ru ?? (initialItem?.names?.en ? '' : (initialItem?.name ?? '')),
+  )
+  const [nameEn, setNameEn] = useState(initialItem?.names?.en ?? '')
   const [iconUrl, setIconUrl] = useState(initialItem?.iconUrl ?? '')
   const [sections, setSections] = useState<ItemSection[]>(
     initialItem?.sections ?? [defaultSection],
@@ -46,7 +49,8 @@ export function ItemForm({
   const handleSubmit = (event: SyntheticEvent<HTMLFormElement, SubmitEvent>) => {
     event.preventDefault()
 
-    const trimmedName = name.trim()
+    const names = { ru: nameRu.trim() || null, en: nameEn.trim() || null }
+    const trimmedName = names.ru ?? names.en ?? ''
     const resolvedIconUrl = resolveIconUrl(iconUrl)
 
     if (trimmedName.length === 0) {
@@ -66,6 +70,7 @@ export function ItemForm({
 
     onSave({
       name: trimmedName,
+      names,
       iconUrl: resolvedIconUrl,
       sections,
       purchasePriceCopper: purchasePriceCopper === 0 ? null : purchasePriceCopper,
@@ -76,16 +81,28 @@ export function ItemForm({
   return (
     <form className="editor-form" onSubmit={handleSubmit}>
       <label>
-        <span>Название</span>
+        <span>Название RU</span>
         <input
           autoFocus
-          required
-          value={name}
+          value={nameRu}
           onChange={(event) => {
-            setName(event.target.value)
+            setNameRu(event.target.value)
           }}
         />
       </label>
+
+      <label>
+        <span>Название EN</span>
+        <input
+          value={nameEn}
+          onChange={(event) => {
+            setNameEn(event.target.value)
+          }}
+        />
+      </label>
+      <small>
+        Достаточно одного названия. Если перевода нет, используется заполненное.
+      </small>
 
       <label>
         <span>URL иконки</span>

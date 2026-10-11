@@ -8,12 +8,15 @@ import {
   type CSSProperties,
 } from 'react'
 import { createPortal } from 'react-dom'
+import { normalizeItemName } from '../../../domain/item-names'
 
 import './SearchableSelect.css'
 
 export interface SearchableSelectOption {
   value: string
   label: string
+  secondaryLabel?: string | null
+  searchNames?: readonly string[]
 }
 
 interface SearchableSelectProps {
@@ -110,16 +113,16 @@ export function SearchableSelect({
 
   const filteredOptions = useMemo(() => {
     const isSelectedLabel = inputValue === selectedOption?.label
-    const normalizedQuery = isSelectedLabel
-      ? ''
-      : inputValue.trim().toLocaleLowerCase('ru-RU')
+    const normalizedQuery = isSelectedLabel ? '' : normalizeItemName(inputValue)
 
     if (normalizedQuery.length === 0) {
       return options
     }
 
     return options.filter((option) =>
-      option.label.toLocaleLowerCase('ru-RU').includes(normalizedQuery),
+      [option.label, ...(option.searchNames ?? [])].some((name) =>
+        normalizeItemName(name).includes(normalizedQuery),
+      ),
     )
   }, [inputValue, options, selectedOption])
 
@@ -217,6 +220,12 @@ export function SearchableSelect({
         </span>
       </div>
 
+      {selectedOption?.secondaryLabel && inputValue === selectedOption.label ? (
+        <small className="searchable-select__secondary">
+          {selectedOption.secondaryLabel}
+        </small>
+      ) : null}
+
       {isOpen && listPosition !== null
         ? createPortal(
             <ul
@@ -234,6 +243,7 @@ export function SearchableSelect({
                     className="searchable-select__option"
                     key={option.value}
                     role="option"
+                    aria-label={option.label}
                     aria-selected={option.value === value}
                     data-highlighted={index === highlightedIndex}
                     onMouseDown={(event) => {
@@ -247,6 +257,11 @@ export function SearchableSelect({
                     }}
                   >
                     {option.label}
+                    {option.secondaryLabel ? (
+                      <small className="searchable-select__secondary">
+                        {option.secondaryLabel}
+                      </small>
+                    ) : null}
                   </li>
                 ))
               )}

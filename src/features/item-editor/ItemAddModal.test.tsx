@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
 
 import tbcTooltip from '../wowhead-import/fixtures/tbc-44391.json'
+import tbcEn from '../wowhead-import/fixtures/tbc-44391-en.json'
 import { ItemAddModal } from './ItemAddModal'
 
 const recipeUrl = 'https://wowhead.com/tbc/ru/spell=44391'
@@ -57,14 +58,14 @@ describe('ItemAddModal', () => {
 
     await user.type(screen.getByLabelText(urlLabel), recipeUrl)
     await user.click(screen.getByRole('button', { name: 'Добавить вручную' }))
-    await user.type(screen.getByLabelText('Название'), 'Мой крафт')
+    await user.type(screen.getByLabelText('Название RU'), 'Мой крафт')
     await user.type(screen.getByLabelText(/URL иконки/), 'inv_ingot_10')
     await user.click(screen.getByRole('checkbox', { name: 'Реагенты' }))
     await user.click(screen.getByRole('button', { name: 'Импорт из Wowhead' }))
     expect(screen.getByLabelText(urlLabel)).toHaveValue(recipeUrl)
-    expect(screen.getByLabelText('Название')).not.toBeVisible()
+    expect(screen.getByLabelText('Название RU')).not.toBeVisible()
     await user.click(screen.getByRole('button', { name: 'Добавить вручную' }))
-    expect(screen.getByLabelText('Название')).toHaveValue('Мой крафт')
+    expect(screen.getByLabelText('Название RU')).toHaveValue('Мой крафт')
     expect(screen.getByLabelText(/URL иконки/)).toHaveValue('inv_ingot_10')
     expect(screen.getByRole('checkbox', { name: 'Реагенты' })).toBeChecked()
 
@@ -75,7 +76,7 @@ describe('ItemAddModal', () => {
     expect(screen.getByLabelText(urlLabel)).toBeVisible()
     expect(screen.getByLabelText(urlLabel)).toHaveValue('')
     await user.click(screen.getByRole('button', { name: 'Добавить вручную' }))
-    expect(screen.getByLabelText('Название')).toHaveValue('')
+    expect(screen.getByLabelText('Название RU')).toHaveValue('')
     expect(screen.getByRole('checkbox', { name: 'Реагенты' })).not.toBeChecked()
   })
 
@@ -85,7 +86,7 @@ describe('ItemAddModal', () => {
         typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
       return Promise.resolve(
         url.includes('/spell/')
-          ? Response.json(tbcTooltip)
+          ? Response.json(url.includes('/ru/') ? tbcTooltip : tbcEn)
           : new Response(null, { status: 404 }),
       )
     })
@@ -123,6 +124,8 @@ describe('ItemAddModal', () => {
     vi.spyOn(globalThis, 'fetch').mockImplementation((input) => {
       const url =
         typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
+      if (url.includes('/spell/') && !url.includes('/ru/'))
+        return Promise.resolve(Response.json(tbcEn))
       return url.includes('/spell/')
         ? new Promise<Response>((resolve) => {
             resolveResponse = resolve
@@ -134,14 +137,14 @@ describe('ItemAddModal', () => {
     await user.type(screen.getByLabelText(urlLabel), recipeUrl)
     await user.click(screen.getByRole('button', { name: 'Загрузить рецепт' }))
     await user.click(screen.getByRole('button', { name: 'Добавить вручную' }))
-    await user.type(screen.getByLabelText('Название'), 'Черновик')
+    await user.type(screen.getByLabelText('Название RU'), 'Черновик')
 
     await act(async () => {
       resolveResponse(Response.json(tbcTooltip))
       await Promise.resolve()
     })
-    expect(screen.getByLabelText('Название')).toHaveFocus()
-    expect(screen.getByLabelText('Название')).toHaveValue('Черновик')
+    expect(screen.getByLabelText('Название RU')).toHaveFocus()
+    expect(screen.getByLabelText('Название RU')).toHaveValue('Черновик')
     expect(
       screen.queryByRole('region', { name: 'Проверка рецепта' }),
     ).not.toBeInTheDocument()

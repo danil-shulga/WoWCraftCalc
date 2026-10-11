@@ -4,6 +4,8 @@ import { NumberInput } from '../../components/ui/NumberInput/NumberInput'
 import { ItemIcon } from '../../components/ui/ItemIcon/ItemIcon'
 import { SearchableSelect } from '../../components/ui/SearchableSelect/SearchableSelect'
 import type { ItemCatalog } from '../../domain/item.types'
+import { getItemName } from '../../domain/item-names'
+import type { ItemLanguage } from '../../domain/user-settings'
 import { PROFESSION_OPTIONS } from '../../domain/professions'
 import {
   findImportedItem,
@@ -17,6 +19,7 @@ import './WowheadImportForm.css'
 
 interface WowheadImportFormProps {
   catalog: ItemCatalog
+  itemLanguage?: ItemLanguage
   onImport: (data: RecipeImportData) => RecipeImportResult
   onSuccess: (message: string) => void
   onClose: () => void
@@ -41,11 +44,13 @@ interface RecipeReviewProps extends WowheadImportFormProps {
 function RecipeReview({
   recipe,
   catalog,
+  itemLanguage = 'ru',
   onImport,
   onClose,
   onSuccess,
   isActive = true,
 }: RecipeReviewProps) {
+  const otherLanguage = itemLanguage === 'ru' ? 'en' : 'ru'
   const outputId = useId()
   const [savedRecipe] = useState(
     () => findImportedItem(catalog, recipe.product)?.recipe ?? null,
@@ -94,9 +99,16 @@ function RecipeReview({
               recipe.product.iconUrl ||
               (findImportedItem(catalog, recipe.product)?.iconUrl ?? '')
             }
-            itemName={recipe.product.name}
+            itemName={getItemName(recipe.product, itemLanguage)}
           />
-          <h3>{recipe.product.name}</h3>
+          <div>
+            <h3>{getItemName(recipe.product, itemLanguage)}</h3>
+            {recipe.product.names?.[otherLanguage] &&
+            recipe.product.names[otherLanguage] !==
+              getItemName(recipe.product, itemLanguage) ? (
+              <small>{recipe.product.names[otherLanguage]}</small>
+            ) : null}
+          </div>
         </div>
         <ul aria-label="Реагенты">
           {recipe.reagents.map((reagent, index) => (
@@ -106,9 +118,17 @@ function RecipeReview({
                   iconUrl={
                     reagent.iconUrl || (findImportedItem(catalog, reagent)?.iconUrl ?? '')
                   }
-                  itemName={reagent.name}
+                  itemName={getItemName(reagent, itemLanguage)}
                 />
-                <span>{reagent.name}</span>
+                <span>
+                  {getItemName(reagent, itemLanguage)}
+                  {reagent.names?.[otherLanguage] &&
+                  reagent.names[otherLanguage] !== getItemName(reagent, itemLanguage) ? (
+                    <small className="wowhead-import__names">
+                      {reagent.names[otherLanguage]}
+                    </small>
+                  ) : null}
+                </span>
               </span>
               <strong>× {reagent.quantity}</strong>
             </li>
@@ -161,6 +181,7 @@ function RecipeReview({
 
 export function WowheadImportForm({
   catalog,
+  itemLanguage = 'ru',
   onImport,
   onSuccess,
   onClose,
@@ -209,6 +230,7 @@ export function WowheadImportForm({
         <RecipeReview
           recipe={recipe}
           catalog={catalog}
+          itemLanguage={itemLanguage}
           onImport={onImport}
           onClose={close}
           onSuccess={(message) => {
@@ -242,8 +264,8 @@ export function WowheadImportForm({
             />
           </label>
           <small>
-            Сначала загрузим рецепт для проверки состава, выхода и профессии. Каталог
-            изменится после подтверждения.
+            Загрузим названия RU и EN и рецепт для проверки состава, выхода и профессии.
+            Каталог изменится после подтверждения.
           </small>
           {error === null ? null : (
             <p className="form-error" role="alert">

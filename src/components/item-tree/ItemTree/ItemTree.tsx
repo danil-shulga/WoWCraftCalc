@@ -1,4 +1,5 @@
 import type { CatalogCalculationSnapshot } from '../../../domain/calculations'
+import type { ItemLanguage } from '../../../domain/user-settings'
 import type {
   AcquisitionMethod,
   ItemCatalog,
@@ -18,6 +19,7 @@ interface QuickPriceEdit {
 
 interface ItemTreeProps {
   rootItemId: ItemId
+  itemLanguage: ItemLanguage
   catalog: ItemCatalog
   calculationSnapshot: CatalogCalculationSnapshot
   quickPriceEdit?: QuickPriceEdit
@@ -43,6 +45,7 @@ interface ItemTreeNodeProps extends ItemTreeProps {
 
 function ItemTreeNode({
   itemId,
+  itemLanguage,
   path,
   parentItemId,
   recipeLine,
@@ -80,6 +83,7 @@ function ItemTreeNode({
       {recipeLine === null ? (
         <RootItemRow
           item={item}
+          itemLanguage={itemLanguage}
           isExpanded={isExpanded}
           hasCycle={hasCycle}
           craftUnitCost={calculation.craftUnitCost}
@@ -97,6 +101,7 @@ function ItemTreeNode({
       ) : parentItemId === null ? null : (
         <ReagentItemRow
           item={item}
+          itemLanguage={itemLanguage}
           parentItemId={parentItemId}
           recipeLine={recipeLine}
           isExpanded={isExpanded}
@@ -119,6 +124,7 @@ function ItemTreeNode({
             <ItemTreeNode
               key={line.itemId}
               rootItemId={rootItemId}
+              itemLanguage={itemLanguage}
               itemId={line.itemId}
               path={`${path}/${line.itemId}`}
               parentItemId={itemId}

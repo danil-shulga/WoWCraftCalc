@@ -1,12 +1,16 @@
 import type { Item, ItemId, ItemPriceField } from '../../../domain/item.types'
+import { getItemName } from '../../../domain/item-names'
+import type { ItemLanguage } from '../../../domain/user-settings'
 import { InlineMoneyInput } from '../../ui/InlineMoneyInput/InlineMoneyInput'
 import { ItemIcon } from '../../ui/ItemIcon/ItemIcon'
+import { ItemName } from '../../ui/ItemName/ItemName'
 import { MoneyDisplay } from '../../ui/MoneyDisplay/MoneyDisplay'
 import '../../ui/IconButton.css'
 import './RootItemRow.css'
 
 interface RootItemRowProps {
   item: Item
+  itemLanguage: ItemLanguage
   isExpanded: boolean
   hasCycle: boolean
   craftUnitCost: number | null
@@ -26,6 +30,7 @@ interface RootItemRowProps {
 
 export function RootItemRow({
   item,
+  itemLanguage,
   isExpanded,
   hasCycle,
   craftUnitCost,
@@ -39,6 +44,7 @@ export function RootItemRow({
   onDeleteItem,
 }: RootItemRowProps) {
   const hasRecipe = item.recipe !== null
+  const itemName = getItemName(item, itemLanguage)
 
   return (
     <article className="root-item-row">
@@ -52,10 +58,12 @@ export function RootItemRow({
         {hasRecipe ? (isExpanded ? '▾' : '▸') : '·'}
       </button>
 
-      <ItemIcon iconUrl={item.iconUrl} itemName={item.name} />
+      <ItemIcon iconUrl={item.iconUrl} itemName={itemName} />
 
       <div className="item-row__identity">
-        <strong>{item.name}</strong>
+        <strong>
+          <ItemName item={item} language={itemLanguage} />
+        </strong>
       </div>
 
       <dl className="root-item-row__prices item-row__prices">
@@ -64,7 +72,7 @@ export function RootItemRow({
           {quickPriceEdit?.field === 'purchasePriceCopper' ? (
             <dd className="item-row__price-editor">
               <InlineMoneyInput
-                label={`Цена покупки: ${item.name}`}
+                label={`Цена покупки: ${itemName}`}
                 value={quickPriceEdit.value}
                 onChange={quickPriceEdit.onChange}
               />
@@ -86,7 +94,7 @@ export function RootItemRow({
           {quickPriceEdit?.field === 'salePriceCopper' ? (
             <dd className="item-row__price-editor">
               <InlineMoneyInput
-                label={`Цена продажи: ${item.name}`}
+                label={`Цена продажи: ${itemName}`}
                 value={quickPriceEdit.value}
                 onChange={quickPriceEdit.onChange}
               />
@@ -129,7 +137,7 @@ export function RootItemRow({
           className="icon-button"
           type="button"
           title="Редактировать предмет"
-          aria-label={`Редактировать ${item.name}`}
+          aria-label={`Редактировать ${itemName}`}
           onClick={() => {
             onEditItem(item.id)
           }}
@@ -140,7 +148,7 @@ export function RootItemRow({
           className="icon-button"
           type="button"
           title="Редактировать рецепт"
-          aria-label={`Редактировать рецепт ${item.name}`}
+          aria-label={`Редактировать рецепт ${itemName}`}
           onClick={() => {
             onEditRecipe(item.id)
           }}
@@ -151,7 +159,7 @@ export function RootItemRow({
           className="icon-button icon-button--danger"
           type="button"
           title="Удалить предмет"
-          aria-label={`Удалить ${item.name}`}
+          aria-label={`Удалить ${itemName}`}
           onClick={() => {
             onDeleteItem(item.id)
           }}

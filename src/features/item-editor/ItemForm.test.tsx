@@ -15,6 +15,30 @@ const item: Item = {
 }
 
 describe('ItemForm', () => {
+  it.each(['RU', 'EN'])('сохраняет одно заполненное название %s', async (language) => {
+    const user = userEvent.setup()
+    const onSave = vi.fn()
+    render(<ItemForm defaultSection="reagents" onSave={onSave} onCancel={vi.fn()} />)
+    await user.type(screen.getByLabelText(`Название ${language}`), '  Jade  ')
+    await user.click(screen.getByRole('button', { name: 'Сохранить' }))
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'Jade',
+        names: language === 'RU' ? { ru: 'Jade', en: null } : { ru: null, en: 'Jade' },
+      }),
+    )
+  })
+
+  it('отклоняет два пустых названия', async () => {
+    const user = userEvent.setup()
+    const onSave = vi.fn()
+    render(<ItemForm defaultSection="reagents" onSave={onSave} onCancel={vi.fn()} />)
+    await user.type(screen.getByLabelText('Название EN'), '   ')
+    await user.click(screen.getByRole('button', { name: 'Сохранить' }))
+    expect(onSave).not.toHaveBeenCalled()
+    expect(screen.getByText('Введите название предмета')).toBeVisible()
+  })
+
   it('создаёт предмет с доступными полями цены без чекбоксов и неизвестными нулевыми ценами', async () => {
     const user = userEvent.setup()
     const onSave = vi.fn()
@@ -27,11 +51,12 @@ describe('ItemForm', () => {
       expect(input).toBeEnabled()
       expect(input).toHaveValue(0)
     }
-    await user.type(screen.getByLabelText('Название'), item.name)
+    await user.type(screen.getByLabelText('Название RU'), item.name)
     await user.click(screen.getByRole('button', { name: 'Сохранить' }))
 
     expect(onSave).toHaveBeenCalledWith({
       name: item.name,
+      names: { ru: item.name, en: null },
       iconUrl: '',
       sections: ['reagents'],
       purchasePriceCopper: null,
