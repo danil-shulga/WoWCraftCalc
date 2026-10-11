@@ -68,8 +68,8 @@ export function ItemForm({
       name: trimmedName,
       iconUrl: resolvedIconUrl,
       sections,
-      purchasePriceCopper,
-      salePriceCopper,
+      purchasePriceCopper: purchasePriceCopper === 0 ? null : purchasePriceCopper,
+      salePriceCopper: salePriceCopper === 0 ? null : salePriceCopper,
     })
   }
 

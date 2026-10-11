@@ -11,11 +11,6 @@
   font-size: 0.8rem;
 }
 
-.money-input__enabled {
-  margin-bottom: 12px;
-  font-size: 0.85rem;
-}
-
 .money-input__fields {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
