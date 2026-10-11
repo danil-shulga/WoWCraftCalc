@@ -1,0 +1,11 @@
+{
+  "name": "Полевой ремонтный робот 110G",
+  "icon": "inv_misc_enggizmos_01",
+  "tooltip": "<table><tr><td><a class=\"whtt-name q1\" href=\"/tbc/ru/spell=44391/полевой-ремонтный-робот-110g\"><b class=\"whtt-name q1\">Полевой ремонтный робот 110G</b></a><br />Применение: 50 сек</td></tr></table><table><tr><td>Инструменты:<br /><div class=\"indent q1\"><a href=\"/tbc/ru/items?filter=91;13;0\">Кузнечный молот</a>, <a href=\"/tbc/ru/items?filter=91;14;0\">Тангенциальный вращатель</a></div>Ингредиенты:<br /><div class=\"indent q1\"><a href=\"/tbc/ru/item=23446/адамантитовый-слиток\">Адамантитовый слиток</a>&nbsp;(8), <a href=\"/tbc/ru/item=23783/горсть-винтов-из-оскверненного-железа\">Горсть винтов из оскверненного железа</a>&nbsp;(8), <a href=\"/tbc/ru/item=23786/кориевое-силовое-ядро\">Кориевое силовое ядро</a></div><br /><span class=\"q1\"><a href=\"/tbc/ru/item=34113/полевой-ремонтный-робот-110g\">Полевой ремонтный робот 110G</a></span> (5)<!--ndstart--><!--ndend--><span class=\"q whtt-extra whtt-ilvl\"><br>Уровень предмета: <!--ilvl-->70</span><!--bo--><!--ue--><!--ue--><!--ebstats--><!--egstats--><!--eistats--><!--nameDescStats--><br>Требует <a href=\"/tbc/ru/skill=202/инженерное-дело\" class=\"q1\">Инженерное дело</a> (325)<br><br><!--useText:0:1--><span id=\"useText1\" class=\"q2\">Использование: <!--useEffect:0:1--><a href=\"/tbc/ru/spell=44389/110g\" class=\"q2\">Разворачивается в полевого ремонтного робота, который продает реагенты и чинит снаряжение. Через 10 минут его мотор отказывает.</a> (10 Мин Восстановление)<!--useEffect:1--></span><!--useText:1--><!--itemEffects:1--><br><!--pvpEquip--><!--pvpEquip--><div class=\"whtt-extra whtt-maxstack\">Максимум в стопке: 5</div><div class=\"whtt-sellprice\">Цена продажи: <span class=\"moneygold\">1</span></div></td></tr></table>",
+  "tooltip2": "",
+  "buff": "",
+  "quality": 1,
+  "spells": {},
+  "buffspells": {},
+  "completion_category": 11
+}

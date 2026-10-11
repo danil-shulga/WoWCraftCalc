@@ -277,6 +277,7 @@ export function ItemsPage({ section }: ItemsPageProps) {
 
       {isWowheadImportOpen ? (
         <WowheadImportModal
+          catalog={items}
           onImport={importRecipe}
           onClose={() => {
             setIsWowheadImportOpen(false)

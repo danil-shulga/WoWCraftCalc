@@ -1,0 +1,11 @@
+{
+  "name": "Пламенный кушак",
+  "icon": "inv_belt_43c",
+  "tooltip": "<table><tr><td><a class=\"whtt-name q3\" href=\"/forever/ru/spell=1257390/пламенный-кушак\"><b class=\"whtt-name q3\">Пламенный кушак</b></a><br />Применение: 8 сек</td></tr></table><table><tr><td>Ингредиенты:<br /><div class=\"indent q1\"><a href=\"/forever/ru/item=4305/рулон-шелка\">Рулон шелка</a>&nbsp;(8), <a href=\"/forever/ru/item=2321/тонкая-нить\">Тонкая нить</a>&nbsp;(4), <a href=\"/forever/ru/item=249409/небесно-голубая-краска\">Небесно-голубая краска</a>&nbsp;(3), <a href=\"/forever/ru/item=6371/зажигательное-масло\">Зажигательное масло</a>&nbsp;(3)</div><br /><span class=\"q3\"><a href=\"/forever/ru/item=253929/пламенный-кушак\">Пламенный кушак</a></span> (2)<!--ndstart--><!--ndend--><span class=\"q\"><br>Уровень предмета: <!--ilvl-->22</span><!--bo--><br>Становится персональным при поднятии<!--ue--><!--ue--><table width=\"100%\"><tr><td>Пояс</td><th><!--scstart4:1--><span class=\"q1\">Ткань</span><!--scend--></th></tr></table><!--rf--><span><!--amr-->Броня: 22</span><br><span><!--stat7-->+5 к выносливости</span><br><span><!--stat5-->+4 к интеллекту</span><!--ebstats--><!--egstats--><!--eistats--><!--nameDescStats--><!--rs--><!--e--><!--ps--><br>Требуется <!--rlvl-->17-й ур.<br><!--rr--><span class=\"q2\">Если на персонаже: увеличивает урон от эффектов и заклинаний огня максимум на <!--rtg85-->7 ед.</span><!--itemEffects:1--><br><!--pvpEquip--><!--pvpEquip--><div class=\"whtt-sellprice\">Цена продажи: <span class=\"moneysilver\">4</span> <span class=\"moneycopper\">71</span></div><!--i?1257390:1:60:17--></td></tr></table>",
+  "tooltip2": "",
+  "buff": "",
+  "quality": 3,
+  "spells": {},
+  "buffspells": {},
+  "completion_category": 11
+}

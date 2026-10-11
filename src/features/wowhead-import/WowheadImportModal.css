@@ -2,9 +2,45 @@
   min-width: min(520px, calc(100vw - 64px));
 }
 
-.wowhead-import > small {
+.wowhead-import small {
   color: var(--muted);
   line-height: 1.5;
+}
+
+.wowhead-import__review h3,
+.wowhead-import__review h4 {
+  margin: 0 0 12px;
+  overflow-wrap: anywhere;
+}
+
+.wowhead-import__review ul {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wowhead-import__review li {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+}
+
+.wowhead-import__review li span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.wowhead-import__review li strong {
+  flex-shrink: 0;
+}
+
+.wowhead-import__profession,
+.wowhead-import__output {
+  display: grid;
+  gap: 7px;
 }
 
 .wowhead-import__success {

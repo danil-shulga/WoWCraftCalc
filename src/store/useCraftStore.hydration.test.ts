@@ -205,6 +205,8 @@ describe('первоначальная загрузка CraftStore', () => {
       () => store.setRecipe('product', null),
       () =>
         store.importRecipe({
+          outputQuantity: 1,
+          profession: null,
           product: { wowheadItemId: 4305, name: 'Рулон ткани', iconUrl: '' },
           reagents: [{ wowheadItemId: 4306, name: 'Ткань', iconUrl: '', quantity: 2 }],
         }),

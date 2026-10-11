@@ -9,6 +9,8 @@ interface NumberInputProps {
   step?: number
   id?: string
   ariaLabel?: string
+  ariaDescribedBy?: string
+  autoFocus?: boolean
   disabled?: boolean
   onChange: (value: number) => void
 }
@@ -27,6 +29,8 @@ export function NumberInput({
   step = 1,
   id,
   ariaLabel,
+  ariaDescribedBy,
+  autoFocus = false,
   disabled = false,
   onChange,
 }: NumberInputProps) {
@@ -74,6 +78,8 @@ export function NumberInput({
         ref={inputRef}
         id={id}
         aria-label={ariaLabel}
+        aria-describedby={ariaDescribedBy}
+        autoFocus={autoFocus}
         type="number"
         min={min}
         max={max}

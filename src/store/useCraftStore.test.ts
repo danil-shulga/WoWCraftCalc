@@ -1,4 +1,5 @@
 import { persistedCraftDataSchema } from '../domain/item.schema'
+import { getAutomaticAcquisitionMethod, getCraftUnitCost } from '../domain/calculations'
 import type { ItemCatalog } from '../domain/item.types'
 import { useCraftStore, usePersistenceStatusStore } from './useCraftStore'
 
@@ -134,6 +135,8 @@ describe('целостность CraftStore', () => {
     })
 
     const importData = {
+      outputQuantity: 2,
+      profession: 'tailoring' as const,
       product: {
         wowheadItemId: 4320,
         name: 'Сапоги из паучьего шелка',
@@ -186,6 +189,76 @@ describe('целостность CraftStore', () => {
       reagentsCreated: 0,
     })
     expect(Object.keys(useCraftStore.getState().items)).toHaveLength(4)
+  })
+
+  it('применяет подтверждённый выход и профессию к новому крафту и выбору auto', () => {
+    const result = useCraftStore.getState().importRecipe({
+      product: { wowheadItemId: 34113, name: 'Робот', iconUrl: '' },
+      reagents: [{ wowheadItemId: 1, name: 'Реагент', iconUrl: '', quantity: 8 }],
+      outputQuantity: 5,
+      profession: 'engineering',
+    })
+    expect(result.success).toBe(true)
+    if (!result.success) return
+    const catalog = useCraftStore.getState().items
+    expect(catalog[result.productItemId]?.recipe).toMatchObject({
+      outputQuantity: 5,
+      profession: 'engineering',
+    })
+    expect(Object.keys(catalog)).toHaveLength(3)
+    expect(getCraftUnitCost(catalog, result.productItemId)).toBe(16)
+    expect(getAutomaticAcquisitionMethod(catalog, result.productItemId, new Set())).toBe(
+      'buy',
+    )
+    expect(
+      getAutomaticAcquisitionMethod(
+        catalog,
+        result.productItemId,
+        new Set(['engineering']),
+      ),
+    ).toBe('craft')
+  })
+
+  it('заменяет локальные параметры явно подтверждёнными значениями', () => {
+    expect(
+      useCraftStore.getState().importRecipe({
+        product: { wowheadItemId: 2, name: 'Изделие', iconUrl: '' },
+        reagents: [{ wowheadItemId: 1, name: 'Реагент', iconUrl: '', quantity: 2 }],
+        outputQuantity: 3,
+        profession: 'alchemy',
+      }).success,
+    ).toBe(true)
+    expect(useCraftStore.getState().items.product?.recipe).toMatchObject({
+      outputQuantity: 3,
+      profession: 'alchemy',
+      reagents: [{ itemId: 'reagent', quantity: 2, acquisition: 'buy' }],
+    })
+  })
+
+  it.each([
+    { outputQuantity: 0 },
+    { outputQuantity: 1.5 },
+    { outputQuantity: Number.NaN },
+    { profession: 'unknown' },
+    { profession: undefined },
+    { reagents: [] },
+    { reagents: [{ wowheadItemId: 1, name: 'Реагент', iconUrl: '', quantity: 0 }] },
+    { reagents: [{ wowheadItemId: 1, name: '', iconUrl: '', quantity: 2 }] },
+  ])('атомарно отклоняет некорректные данные %j', (updates) => {
+    const before = useCraftStore.getState().items
+    const saved = localStorage.getItem('craft-calc-data')
+    const data = {
+      product: { wowheadItemId: 2, name: 'Изделие', iconUrl: '' },
+      reagents: [{ wowheadItemId: 1, name: 'Реагент', iconUrl: '', quantity: 2 }],
+      outputQuantity: 2,
+      profession: null,
+      ...updates,
+    }
+    // @ts-expect-error Deliberately pass invalid runtime data to verify atomic rejection.
+    const result = useCraftStore.getState().importRecipe(data)
+    expect(result.success).toBe(false)
+    expect(useCraftStore.getState().items).toBe(before)
+    expect(localStorage.getItem('craft-calc-data')).toBe(saved)
   })
 
   it('сохраняет текущее состояние и сообщает об ошибке hydration', async () => {

@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import { z } from 'zod'
 
 import { getRecipeValidationError } from '../domain/recipe-validation'
 import type {
@@ -11,7 +12,7 @@ import type {
   PersistedCraftData,
   Recipe,
 } from '../domain/item.types'
-import type { Profession } from '../domain/professions'
+import { PROFESSION_IDS, type Profession } from '../domain/professions'
 import type { CurrencyDisplayMode } from '../domain/user-settings'
 import {
   createCraftStorage,
@@ -30,7 +31,24 @@ export interface RecipeImportItem {
 export interface RecipeImportData {
   product: RecipeImportItem
   reagents: (RecipeImportItem & { quantity: number })[]
+  outputQuantity: number
+  profession: Profession | null
 }
+
+const recipeImportItemSchema = z.object({
+  wowheadItemId: z.number().int().positive(),
+  name: z.string().trim().min(1),
+  iconUrl: z.union([z.literal(''), z.url()]),
+})
+
+const recipeImportSchema = z.object({
+  product: recipeImportItemSchema,
+  reagents: z
+    .array(recipeImportItemSchema.extend({ quantity: z.number().int().positive() }))
+    .min(1),
+  outputQuantity: z.number().int().positive(),
+  profession: z.enum(PROFESSION_IDS).nullable(),
+})
 
 export type RecipeImportResult =
   | {
@@ -88,7 +106,7 @@ function normalizeItemName(name: string): string {
   return name.trim().replace(/\s+/g, ' ').toLocaleLowerCase('ru-RU')
 }
 
-function findImportedItem(
+export function findImportedItem(
   items: ItemCatalog,
   importedItem: RecipeImportItem,
   excludedIds: ReadonlySet<ItemId> = new Set(),
@@ -268,6 +286,14 @@ export const useCraftStore = create<CraftStore>()(
       },
 
       importRecipe: (data) => {
+        const parsed = recipeImportSchema.safeParse(data)
+        if (!parsed.success) {
+          return {
+            success: false,
+            error: 'Некорректные данные импорта: проверьте состав, выход и профессию',
+          }
+        }
+        data = parsed.data
         const currentItems = get().items
         const currentProduct = findImportedItem(currentItems, data.product)
         const productItemId = currentProduct?.id ?? crypto.randomUUID()
@@ -329,8 +355,8 @@ export const useCraftStore = create<CraftStore>()(
         }
 
         const recipe: Recipe = {
-          outputQuantity: currentProduct?.recipe?.outputQuantity ?? 1,
-          profession: currentProduct?.recipe?.profession ?? null,
+          outputQuantity: data.outputQuantity,
+          profession: data.profession,
           reagents: reagentLines,
         }
         const validationError = getRecipeValidationError(

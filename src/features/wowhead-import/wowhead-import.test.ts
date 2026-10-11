@@ -3,6 +3,9 @@ import {
   parseWowheadSpellTooltip,
   parseWowheadSpellUrl,
 } from './wowhead-import'
+import classicTooltip from './fixtures/classic-25146.json'
+import tbcTooltip from './fixtures/tbc-44391.json'
+import foreverTooltip from './fixtures/forever-1257390.json'
 
 const spellTooltip = {
   name: 'Сапоги из паучьего шелка',
@@ -64,6 +67,8 @@ describe('импорт Wowhead', () => {
         { wowheadItemId: 4305, name: 'Рулон шелка', quantity: 2, iconUrl: '' },
         { wowheadItemId: 2319, name: 'Жесткая кожа', quantity: 4, iconUrl: '' },
       ],
+      outputQuantity: null,
+      profession: null,
     })
   })
 
@@ -108,6 +113,85 @@ describe('импорт Wowhead', () => {
     expect(() =>
       parseWowheadSpellTooltip({ ...spellTooltip, tooltip: '<p>Нет реагентов</p>' }),
     ).toThrow('не найден состав рецепта')
+  })
+
+  it.each([
+    [
+      'повреждённая ссылка',
+      'href="/classic/ru/item=2319/жесткая-кожа"',
+      'href="/classic/ru/item=broken"',
+    ],
+    ['пустое имя', '>Жесткая кожа</a>', '></a>'],
+    ['нулевое количество', '(4)', '(0)'],
+    ['дробное количество', '(4)', '(1.5)'],
+    ['нечисловое количество', '(4)', '(много)'],
+    ['оборванное количество', '(4)', '(4'],
+    [
+      'утраченная ссылка',
+      '<a href="/classic/ru/item=2319/жесткая-кожа">Жесткая кожа</a>',
+      'Жесткая кожа',
+    ],
+    ['небезопасное количество', '(4)', '(9007199254740992)'],
+  ])('отклоняет весь состав: %s', (_reason, original, damaged) => {
+    expect(() =>
+      parseWowheadSpellTooltip({
+        ...spellTooltip,
+        tooltip: spellTooltip.tooltip.replace(original, damaged),
+      }),
+    ).toThrow('Повреждён состав рецепта Wowhead')
+  })
+
+  it.each([
+    ['Classic', classicTooltip, 3, 7068],
+    ['TBC', tbcTooltip, 5, 34113],
+    ['Forever', foreverTooltip, 2, 253929],
+  ])(
+    'читает явный выход из сохранённого tooltip %s',
+    (_version, tooltip, output, productId) => {
+      const parsed = parseWowheadSpellTooltip(tooltip)
+      expect(parsed.outputQuantity).toBe(output)
+      expect(parsed.product.wowheadItemId).toBe(productId)
+      expect(parsed.profession).toBeNull()
+    },
+  )
+
+  it('использует имя результата, а не название заклинания трансмутации', () => {
+    expect(parseWowheadSpellTooltip(classicTooltip).product.name).toBe(
+      'Первородный огонь',
+    )
+  })
+
+  it.each(['', ' (0)', ' (2-4)', ' (много)', ' (1.5)'])(
+    'оставляет неподтверждённый выход неизвестным: %s',
+    (count) => {
+      expect(
+        parseWowheadSpellTooltip({
+          ...tbcTooltip,
+          tooltip: tbcTooltip.tooltip.replace(
+            '</span> (5)<!--ndstart-->',
+            `</span>${count}<!--ndstart-->`,
+          ),
+        }).outputQuantity,
+      ).toBeNull()
+    },
+  )
+
+  it('не принимает требование для использования предмета за профессию крафта', () => {
+    expect(tbcTooltip.tooltip).toContain('skill=202')
+    expect(parseWowheadSpellTooltip(tbcTooltip).profession).toBeNull()
+  })
+
+  it('отклоняет повреждённый состав до запросов item tooltip', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      Response.json({
+        ...spellTooltip,
+        tooltip: spellTooltip.tooltip.replace('(4)', '(0)'),
+      }),
+    )
+    await expect(
+      fetchWowheadRecipe('https://wowhead.com/classic/ru/spell=3855'),
+    ).rejects.toThrow('Повреждён состав')
+    expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 
   it('добавляет данные иконок реагентов из item tooltip', async () => {
