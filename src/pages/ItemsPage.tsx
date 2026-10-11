@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 
 import { ItemTree } from '../components/item-tree/ItemTree/ItemTree'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog/ConfirmDialog'
 import { Modal } from '../components/ui/Modal/Modal'
 import { SearchField } from '../components/ui/SearchField/SearchField'
+import { Toast } from '../components/ui/Toast/Toast'
 import { createCatalogCalculationSnapshot } from '../domain/calculations'
 import type { ItemId, ItemPriceField, ItemSection, Recipe } from '../domain/item.types'
 import { ItemAddModal } from '../features/item-editor/ItemAddModal'
@@ -49,6 +50,13 @@ export function ItemsPage({ section }: ItemsPageProps) {
   const importRecipe = useCraftStore((state) => state.importRecipe)
 
   const [isCreating, setIsCreating] = useState(false)
+  const [notification, setNotification] = useState<{
+    id: number
+    message: string
+  } | null>(null)
+  const closeNotification = useCallback(() => {
+    setNotification(null)
+  }, [])
   const [editingItemId, setEditingItemId] = useState<ItemId | null>(null)
   const [editingRecipeId, setEditingRecipeId] = useState<ItemId | null>(null)
   const [deletingItemId, setDeletingItemId] = useState<ItemId | null>(null)
@@ -250,11 +258,22 @@ export function ItemsPage({ section }: ItemsPageProps) {
           catalog={items}
           onSave={createItem}
           onImport={importRecipe}
+          onSuccess={(message) => {
+            setNotification((current) => ({ id: (current?.id ?? 0) + 1, message }))
+          }}
           onClose={() => {
             setIsCreating(false)
           }}
         />
       ) : null}
+
+      {notification === null ? null : (
+        <Toast
+          key={notification.id}
+          message={notification.message}
+          onClose={closeNotification}
+        />
+      )}
 
       {editingItem === undefined ? null : (
         <Modal

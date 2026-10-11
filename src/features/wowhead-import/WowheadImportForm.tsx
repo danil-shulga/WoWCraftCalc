@@ -17,6 +17,7 @@ import './WowheadImportForm.css'
 interface WowheadImportFormProps {
   catalog: ItemCatalog
   onImport: (data: RecipeImportData) => RecipeImportResult
+  onSuccess: (message: string) => void
   onClose: () => void
   isActive?: boolean
 }
@@ -34,7 +35,6 @@ function getSuccessMessage(
 
 interface RecipeReviewProps extends WowheadImportFormProps {
   recipe: WowheadRecipeImport
-  onSuccess: (message: string) => void
 }
 
 function RecipeReview({
@@ -163,6 +163,7 @@ function RecipeReview({
 export function WowheadImportForm({
   catalog,
   onImport,
+  onSuccess,
   onClose,
   isActive = true,
 }: WowheadImportFormProps) {
@@ -170,7 +171,6 @@ export function WowheadImportForm({
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [recipe, setRecipe] = useState<WowheadRecipeImport | null>(null)
-  const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const active = useRef(true)
 
   useEffect(() => {
@@ -206,22 +206,16 @@ export function WowheadImportForm({
 
   return (
     <>
-      {successMessage !== null ? (
-        <div className="wowhead-import wowhead-import__success">
-          <p role="status">{successMessage}</p>
-          <footer className="editor-form__actions">
-            <button className="button button--primary" type="button" onClick={close}>
-              Закрыть
-            </button>
-          </footer>
-        </div>
-      ) : recipe !== null ? (
+      {recipe !== null ? (
         <RecipeReview
           recipe={recipe}
           catalog={catalog}
           onImport={onImport}
           onClose={close}
-          onSuccess={setSuccessMessage}
+          onSuccess={(message) => {
+            onSuccess(message)
+            close()
+          }}
           isActive={isActive}
         />
       ) : (

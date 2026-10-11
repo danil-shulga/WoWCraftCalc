@@ -24,6 +24,7 @@ interface ItemAddModalProps {
   catalog: ItemCatalog
   onSave: (input: ItemInput) => void
   onImport: (data: RecipeImportData) => RecipeImportResult
+  onSuccess: (message: string) => void
   onClose: () => void
 }
 
@@ -33,6 +34,7 @@ export function ItemAddModal({
   catalog,
   onSave,
   onImport,
+  onSuccess,
   onClose,
 }: ItemAddModalProps) {
   const [method, setMethod] = useState<AddMethod>('wowhead')
@@ -62,6 +64,7 @@ export function ItemAddModal({
         <WowheadImportForm
           catalog={catalog}
           onImport={onImport}
+          onSuccess={onSuccess}
           onClose={close}
           isActive={method === 'wowhead'}
         />

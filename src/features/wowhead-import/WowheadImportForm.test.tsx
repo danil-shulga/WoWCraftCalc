@@ -10,13 +10,15 @@ import tbcTooltip from './fixtures/tbc-44391.json'
 import { ItemAddModal } from '../item-editor/ItemAddModal'
 
 function ImportHarness(
-  props: Pick<ComponentProps<typeof ItemAddModal>, 'catalog' | 'onImport' | 'onClose'>,
+  props: Pick<ComponentProps<typeof ItemAddModal>, 'catalog' | 'onImport' | 'onClose'> &
+    Partial<Pick<ComponentProps<typeof ItemAddModal>, 'onSuccess'>>,
 ) {
   return (
     <ItemAddModal
       title="Добавить крафт"
       defaultSection="crafts"
       onSave={vi.fn()}
+      onSuccess={vi.fn()}
       {...props}
     />
   )
@@ -59,7 +61,16 @@ describe('проверка импорта Wowhead', () => {
     mockTooltip()
     const user = userEvent.setup()
     const onImport = vi.fn(useCraftStore.getState().importRecipe)
-    render(<ImportHarness catalog={{}} onImport={onImport} onClose={vi.fn()} />)
+    const onSuccess = vi.fn()
+    const onClose = vi.fn()
+    render(
+      <ImportHarness
+        catalog={{}}
+        onImport={onImport}
+        onSuccess={onSuccess}
+        onClose={onClose}
+      />,
+    )
     await loadRecipe(user)
 
     expect(onImport).not.toHaveBeenCalled()
@@ -79,13 +90,49 @@ describe('проверка импорта Wowhead', () => {
     expect(onImport).toHaveBeenCalledWith(
       expect.objectContaining({ outputQuantity: 5, profession: 'engineering' }),
     )
-    expect(screen.getByRole('status')).toHaveTextContent('Крафт создан')
+    expect(onSuccess).toHaveBeenCalledWith('Крафт создан. Добавлено реагентов: 3.')
+    expect(onClose).toHaveBeenCalledOnce()
     expect(
       Object.values(useCraftStore.getState().items).find(
         (item) => item.source?.wowheadItemId === 34113,
       )?.recipe,
     ).toMatchObject({ outputQuantity: 5, profession: 'engineering' })
   })
+
+  it.each(['crafts', 'reagents'] as const)(
+    'после импорта в разделе %s закрывает окно и показывает отдельное уведомление',
+    async (section) => {
+      mockTooltip()
+      const user = userEvent.setup()
+      render(<ItemsPage section={section} />)
+      const addLabel = section === 'crafts' ? 'Добавить крафт' : 'Добавить реагент'
+      const opener = screen.getByRole('button', { name: `+ ${addLabel}` })
+
+      await user.click(opener)
+      await loadRecipe(user)
+      await user.click(screen.getByRole('combobox', { name: 'Профессия' }))
+      await user.click(screen.getByRole('option', { name: 'Без профессии' }))
+      await user.click(screen.getByRole('button', { name: 'Подтвердить импорт' }))
+
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+      expect(opener).toHaveFocus()
+      expect(screen.getByRole('status')).toHaveTextContent(
+        'Крафт создан. Добавлено реагентов: 3.',
+      )
+
+      await user.click(opener)
+      await loadRecipe(user)
+      await user.click(screen.getByRole('button', { name: 'Подтвердить импорт' }))
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+      expect(screen.getAllByRole('status')).toHaveLength(1)
+      expect(screen.getByRole('status')).toHaveTextContent(
+        'Крафт обновлён. Новые реагенты не потребовались.',
+      )
+      expect(Object.keys(useCraftStore.getState().items)).toHaveLength(4)
+      await user.click(screen.getByRole('button', { name: 'Закрыть уведомление' }))
+      expect(screen.queryByRole('status')).not.toBeInTheDocument()
+    },
+  )
 
   it('подставляет выход 1 при неизвестном значении и проверяет количество и профессию', async () => {
     mockTooltip({
