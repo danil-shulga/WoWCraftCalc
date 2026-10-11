@@ -29,20 +29,27 @@ export function App() {
   const ownedProfessions = useCraftStore((state) => state.ownedProfessions)
   const currencyDisplay = useCraftStore((state) => state.currencyDisplay)
   const replaceData = useCraftStore((state) => state.replaceData)
+  const resetData = useCraftStore((state) => state.resetData)
   const setProfessionOwned = useCraftStore((state) => state.setProfessionOwned)
   const setCurrencyDisplay = useCraftStore((state) => state.setCurrencyDisplay)
   const hydrationError = usePersistenceStatusStore((state) => state.hydrationError)
+  const recoveryRequired = usePersistenceStatusStore((state) => state.recoveryRequired)
 
   return (
     <div className="app-shell" data-currency-display={currencyDisplay}>
       <Sidebar activeTab={activeTab} onChange={setActiveTab} />
       <main className="main-content">
-        {hydrationError === null ? null : (
+        {recoveryRequired ? (
           <div className="persistence-error" role="alert">
             <strong>Не удалось загрузить сохранённые данные.</strong>
-            <span>{hydrationError}. Исходная запись в браузере не изменена.</span>
+            <span>{hydrationError}</span>
+            <span>
+              Автоматическое сохранение приостановлено. Изменения остаются только в
+              текущей вкладке; исходная запись в браузере защищена. Импортируйте резервную
+              копию или подтвердите сброс данных, чтобы возобновить сохранение.
+            </span>
           </div>
-        )}
+        ) : null}
         <div className="utility-bar">
           <button
             className="button button--secondary settings-button"
@@ -57,6 +64,8 @@ export function App() {
           <DataTransferControls
             data={{ items, ownedProfessions, currencyDisplay }}
             onImport={replaceData}
+            recoveryRequired={recoveryRequired}
+            onReset={resetData}
           />
         </div>
         <CurrentPage activeTab={activeTab} />

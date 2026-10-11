@@ -50,22 +50,74 @@ const persistedStorageSchema = z.object({
 })
 
 export function createCraftStorage() {
-  return createJSONStorage<PersistedCraftData>(() => localStorage, {
-    reviver: (key, value: unknown) => {
-      if (key !== '') {
-        return value
-      }
+  let writesBlocked = false
+  // Resolve localStorage on access so an unavailable browser storage is a load error.
+  const storage = createJSONStorage<PersistedCraftData>(
+    () => ({
+      getItem: (name) => localStorage.getItem(name),
+      setItem: (name, value) => {
+        localStorage.setItem(name, value)
+      },
+      removeItem: (name) => {
+        localStorage.removeItem(name)
+      },
+    }),
+    {
+      reviver: (key, value: unknown) => {
+        if (key !== '') {
+          return value
+        }
 
-      // JSON null is an existing record, unlike a missing localStorage key.
-      const parsed = persistedStorageSchema.safeParse(value)
+        // JSON null is an existing record, unlike a missing localStorage key.
+        const parsed = persistedStorageSchema.safeParse(value)
 
-      if (!parsed.success) {
-        throw new Error('Сохранённые данные не соответствуют формату хранилища CraftCalc')
-      }
+        if (!parsed.success) {
+          throw new Error(
+            'Сохранённые данные не соответствуют формату хранилища CraftCalc',
+          )
+        }
 
-      return parsed.data
+        return parsed.data
+      },
     },
-  })
+  )
+
+  if (storage === undefined) {
+    throw new Error('Хранилище CraftCalc недоступно')
+  }
+
+  return {
+    getItem: storage.getItem,
+    setItem: (...args: Parameters<typeof storage.setItem>) => {
+      if (!writesBlocked) {
+        return storage.setItem(...args)
+      }
+    },
+    removeItem: (name: string) => {
+      if (!writesBlocked) {
+        return storage.removeItem(name)
+      }
+    },
+    blockWrites: () => {
+      writesBlocked = true
+    },
+    replaceData: (
+      name: string,
+      data: PersistedCraftData,
+      version: number,
+      apply: (data: PersistedCraftData) => void,
+    ) => {
+      const parsed = parseCurrentPersistedData(data)
+      // Persist first: a failed write must keep both the original record and catalog.
+      storage.setItem(name, { state: parsed, version })
+      writesBlocked = true
+      try {
+        apply(parsed)
+      } finally {
+        writesBlocked = false
+      }
+    },
+  }
 }
 
 export type ImportResult =

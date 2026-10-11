@@ -106,6 +106,9 @@ describe('первоначальная загрузка CraftStore', () => {
       expect.any(String),
     )
     expect(localStorage.getItem(storageKey)).toBe(rawRecord)
+    useCraftStore.getState().setCurrencyDisplay('text')
+    useCraftStore.getState().createItem({ ...item, name: 'Черновик' })
+    expect(localStorage.getItem(storageKey)).toBe(rawRecord)
   })
 
   it.each([
@@ -138,6 +141,8 @@ describe('первоначальная загрузка CraftStore', () => {
       expect(useCraftStore.persist.hasHydrated()).toBe(false)
       expect(usePersistenceStatusStore.getState().hydrationError).toContain(error)
       expect(localStorage.getItem(storageKey)).toBe(rawRecord)
+      useCraftStore.getState().setCurrencyDisplay('text')
+      expect(localStorage.getItem(storageKey)).toBe(rawRecord)
     },
   )
 
@@ -152,5 +157,170 @@ describe('первоначальная загрузка CraftStore', () => {
     expect(usePersistenceStatusStore.getState().hydrationError).toBe(
       'Чтение хранилища запрещено',
     )
+  })
+
+  it('защищает исходную строку от всех обычных записей после ошибки rehydrate', async () => {
+    const { useCraftStore } = await import('./useCraftStore')
+    useCraftStore.getState().replaceData({
+      ...savedData,
+      items: {
+        ...savedData.items,
+        product: { ...item, id: 'product', name: 'Изделие', sections: ['crafts'] },
+      },
+    })
+    const rawRecord = '{broken'
+    localStorage.setItem(storageKey, rawRecord)
+    await useCraftStore.persist.rehydrate()
+
+    const store = useCraftStore.getState()
+    const actions = [
+      () => {
+        store.setCurrencyDisplay('icons')
+      },
+      () => {
+        store.setProfessionOwned('mining', true)
+      },
+      () => {
+        store.setItemPrice('cloth', 'purchasePriceCopper', 100)
+      },
+      () => {
+        store.updateItem('cloth', { ...item, name: 'Новая ткань' })
+      },
+      () => store.createItem({ ...item, name: 'Новый предмет' }),
+      () => {
+        expect(
+          store.setRecipe('product', {
+            outputQuantity: 1,
+            profession: null,
+            reagents: [{ itemId: 'cloth', quantity: 3, acquisition: 'buy' }],
+          }),
+        ).toBeNull()
+      },
+      () => {
+        store.setAcquisition('product', 'cloth', 'craft')
+        expect(
+          useCraftStore.getState().items.product?.recipe?.reagents[0]?.acquisition,
+        ).toBe('craft')
+      },
+      () => store.setRecipe('product', null),
+      () =>
+        store.importRecipe({
+          product: { wowheadItemId: 4305, name: 'Рулон ткани', iconUrl: '' },
+          reagents: [{ wowheadItemId: 4306, name: 'Ткань', iconUrl: '', quantity: 2 }],
+        }),
+      () => {
+        store.removeItem('cloth')
+      },
+      () => useCraftStore.setState({ currencyDisplay: 'text' }),
+      () => {
+        useCraftStore.persist.clearStorage()
+      },
+    ]
+
+    for (const action of actions) {
+      action()
+      expect(localStorage.getItem(storageKey)).toBe(rawRecord)
+    }
+
+    await useCraftStore.persist.rehydrate()
+    store.setCurrencyDisplay('icons')
+    expect(localStorage.getItem(storageKey)).toBe(rawRecord)
+  })
+
+  it('явно восстанавливает валидные данные, снимает защиту и переживает перезагрузку', async () => {
+    localStorage.setItem(storageKey, '{broken')
+    const { useCraftStore, usePersistenceStatusStore } = await import('./useCraftStore')
+    expect(usePersistenceStatusStore.getState().recoveryRequired).toBe(true)
+
+    expect(useCraftStore.getState().replaceData(savedData)).toBeNull()
+    expect(usePersistenceStatusStore.getState()).toMatchObject({
+      recoveryRequired: false,
+      hydrationError: null,
+    })
+    useCraftStore.getState().setItemPrice('cloth', 'purchasePriceCopper', 99)
+    const recoveredData = {
+      ...savedData,
+      items: { cloth: { ...item, purchasePriceCopper: 99 } },
+    }
+    expect(JSON.parse(localStorage.getItem(storageKey) ?? 'null') as unknown).toEqual({
+      state: recoveredData,
+      version: 4,
+    })
+
+    vi.resetModules()
+    const restored = await import('./useCraftStore')
+    expect(restored.useCraftStore.getState()).toMatchObject(recoveredData)
+    expect(restored.usePersistenceStatusStore.getState().recoveryRequired).toBe(false)
+  })
+
+  it('сохраняет оригинал и текущий каталог при неверных данных восстановления', async () => {
+    localStorage.setItem(storageKey, '{broken')
+    const { useCraftStore, usePersistenceStatusStore } = await import('./useCraftStore')
+    useCraftStore.getState().createItem({ ...item, name: 'Черновик' })
+    const currentItems = useCraftStore.getState().items
+    const invalidData = {
+      ...savedData,
+      items: {
+        cloth: {
+          ...item,
+          recipe: {
+            outputQuantity: 1,
+            profession: null,
+            reagents: [{ itemId: 'missing', quantity: 1, acquisition: 'buy' as const }],
+          },
+        },
+      },
+    }
+
+    expect(useCraftStore.getState().replaceData(invalidData)).toContain(
+      'Один из реагентов отсутствует в каталоге',
+    )
+    expect(useCraftStore.getState().items).toBe(currentItems)
+    expect(localStorage.getItem(storageKey)).toBe('{broken')
+    expect(usePersistenceStatusStore.getState().recoveryRequired).toBe(true)
+  })
+
+  it.each(['импорт', 'сброс'])(
+    'сохраняет защиту при отказе записи: %s',
+    async (action) => {
+      localStorage.setItem(storageKey, '{broken')
+      const { useCraftStore, usePersistenceStatusStore } = await import('./useCraftStore')
+      const originalState = useCraftStore.getState()
+      const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+        throw new Error('Запись хранилища запрещена')
+      })
+
+      const result =
+        action === 'импорт'
+          ? originalState.replaceData(savedData)
+          : originalState.resetData()
+
+      expect(result).toBe('Запись хранилища запрещена')
+      expect(useCraftStore.getState()).toBe(originalState)
+      expect(localStorage.getItem(storageKey)).toBe('{broken')
+      expect(usePersistenceStatusStore.getState().recoveryRequired).toBe(true)
+      originalState.setCurrencyDisplay('text')
+      expect(setItem).toHaveBeenCalledTimes(1)
+      setItem.mockRestore()
+      originalState.setProfessionOwned('mining', true)
+      expect(localStorage.getItem(storageKey)).toBe('{broken')
+      expect(originalState.replaceData(savedData)).toBeNull()
+    },
+  )
+
+  it('явно сбрасывает данные и возобновляет обычное сохранение', async () => {
+    localStorage.setItem(storageKey, '{broken')
+    const { useCraftStore, usePersistenceStatusStore } = await import('./useCraftStore')
+    expect(useCraftStore.getState().resetData()).toBeNull()
+    expect(usePersistenceStatusStore.getState().recoveryRequired).toBe(false)
+    expect(JSON.parse(localStorage.getItem(storageKey) ?? 'null') as unknown).toEqual({
+      state: { items: {}, ownedProfessions: [], currencyDisplay: 'icons' },
+      version: 4,
+    })
+    useCraftStore.getState().setCurrencyDisplay('text')
+    vi.resetModules()
+    const restored = await import('./useCraftStore')
+    expect(restored.useCraftStore.getState().currencyDisplay).toBe('text')
+    expect(restored.usePersistenceStatusStore.getState().hydrationError).toBeNull()
   })
 })

@@ -7,10 +7,17 @@ import './DataTransferControls.css'
 
 interface DataTransferControlsProps {
   data: PersistedCraftData
-  onImport: (data: PersistedCraftData) => void
+  onImport: (data: PersistedCraftData) => string | null
+  recoveryRequired?: boolean
+  onReset?: () => string | null
 }
 
-export function DataTransferControls({ data, onImport }: DataTransferControlsProps) {
+export function DataTransferControls({
+  data,
+  onImport,
+  recoveryRequired = false,
+  onReset,
+}: DataTransferControlsProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [message, setMessage] = useState<string | null>(null)
 
@@ -35,19 +42,34 @@ export function DataTransferControls({ data, onImport }: DataTransferControlsPro
       return
     }
 
-    const result = parseImportedData(await file.text())
+    let rawJson: string
+    try {
+      rawJson = await file.text()
+    } catch {
+      setMessage('Не удалось прочитать файл резервной копии')
+      return
+    }
+    const result = parseImportedData(rawJson)
 
     if (!result.success) {
       setMessage(result.error)
       return
     }
 
-    if (!window.confirm('Импорт заменит все текущие предметы и рецепты. Продолжить?')) {
+    if (
+      !window.confirm(
+        recoveryRequired
+          ? 'Импорт заменит исходную запись в браузере, текущий каталог и настройки. Продолжить?'
+          : 'Импорт заменит все текущие предметы, рецепты и настройки. Продолжить?',
+      )
+    ) {
       return
     }
 
-    onImport(result.data)
-    setMessage('Данные успешно импортированы')
+    const error = onImport(result.data)
+    setMessage(
+      error === null ? 'Данные успешно импортированы' : `Импорт не выполнен: ${error}`,
+    )
   }
 
   return (
@@ -64,6 +86,25 @@ export function DataTransferControls({ data, onImport }: DataTransferControlsPro
       >
         Импорт JSON
       </button>
+      {recoveryRequired && onReset !== undefined ? (
+        <button
+          className="button button--secondary"
+          type="button"
+          onClick={() => {
+            if (
+              !window.confirm(
+                'Сброс удалит исходную запись в браузере, текущий каталог и настройки. Продолжить?',
+              )
+            ) {
+              return
+            }
+            const error = onReset()
+            setMessage(error === null ? 'Данные сброшены' : `Сброс не выполнен: ${error}`)
+          }}
+        >
+          Сбросить данные
+        </button>
+      ) : null}
       <input
         ref={inputRef}
         className="visually-hidden"

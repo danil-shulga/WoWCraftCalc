@@ -56,22 +56,33 @@ interface CraftStore {
     acquisition: AcquisitionMethod,
   ) => void
   importRecipe: (data: RecipeImportData) => RecipeImportResult
-  replaceData: (data: PersistedCraftData) => void
+  replaceData: (data: PersistedCraftData) => string | null
+  resetData: () => string | null
   setProfessionOwned: (profession: Profession, owned: boolean) => void
   setCurrencyDisplay: (mode: CurrencyDisplayMode) => void
 }
 
 interface PersistenceStatusStore {
   hydrationError: string | null
+  recoveryRequired: boolean
   setHydrationError: (error: string | null) => void
 }
 
 export const usePersistenceStatusStore = create<PersistenceStatusStore>((set) => ({
   hydrationError: null,
+  recoveryRequired: false,
   setHydrationError: (hydrationError) => {
-    set({ hydrationError })
+    set({ hydrationError, recoveryRequired: hydrationError !== null })
   },
 }))
+
+const craftStorage = createCraftStorage()
+const storageKey = 'craft-calc-data'
+const storageVersion = 4
+
+function getPersistenceError(error: unknown): string {
+  return error instanceof Error ? error.message : 'Не удалось сохранить данные CraftCalc'
+}
 
 function normalizeItemName(name: string): string {
   return name.trim().replace(/\s+/g, ' ').toLocaleLowerCase('ru-RU')
@@ -344,8 +355,21 @@ export const useCraftStore = create<CraftStore>()(
       },
 
       replaceData: (data) => {
-        set(data)
+        try {
+          craftStorage.replaceData(storageKey, data, storageVersion, set)
+          usePersistenceStatusStore.getState().setHydrationError(null)
+          return null
+        } catch (error) {
+          return getPersistenceError(error)
+        }
       },
+
+      resetData: () =>
+        get().replaceData({
+          items: {},
+          ownedProfessions: [],
+          currencyDisplay: 'icons',
+        }),
 
       setProfessionOwned: (profession, owned) => {
         set((state) => ({
@@ -360,9 +384,9 @@ export const useCraftStore = create<CraftStore>()(
       },
     }),
     {
-      name: 'craft-calc-data',
-      storage: createCraftStorage(),
-      version: 4,
+      name: storageKey,
+      storage: craftStorage,
+      version: storageVersion,
       partialize: (state) => ({
         items: state.items,
         ownedProfessions: state.ownedProfessions,
@@ -377,15 +401,16 @@ export const useCraftStore = create<CraftStore>()(
               ...parseCurrentPersistedData(persistedState),
             },
       onRehydrateStorage: () => (_state, error) => {
-        usePersistenceStatusStore
-          .getState()
-          .setHydrationError(
-            error instanceof Error
-              ? error.message
-              : error === undefined
-                ? null
+        if (error !== undefined) {
+          craftStorage.blockWrites()
+          usePersistenceStatusStore
+            .getState()
+            .setHydrationError(
+              error instanceof Error
+                ? error.message
                 : 'Не удалось загрузить сохранённые данные CraftCalc',
-          )
+            )
+        }
       },
     },
   ),
