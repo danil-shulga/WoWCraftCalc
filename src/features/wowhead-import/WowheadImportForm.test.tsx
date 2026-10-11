@@ -57,6 +57,48 @@ describe('проверка импорта Wowhead', () => {
     vi.restoreAllMocks()
   })
 
+  it('показывает иконку из Wowhead, сохранённую иконку и заглушку при недоступных данных', async () => {
+    const iconUrl = 'https://wow.zamimg.com/images/wow/icons/large/inv_ingot_03.jpg'
+    const savedIconUrl =
+      'https://wow.zamimg.com/images/wow/icons/large/inv_misc_gear_01.jpg'
+    vi.spyOn(globalThis, 'fetch').mockImplementation((input) => {
+      const url =
+        typeof input === 'string' ? input : input instanceof URL ? input.href : input.url
+      return Promise.resolve(
+        url.includes('/spell/')
+          ? Response.json(tbcTooltip)
+          : url.endsWith('/item/23446')
+            ? Response.json({
+                name: 'Адамантитовый слиток',
+                icon: 'inv_ingot_03',
+                tooltip: '<p>Предмет</p>',
+              })
+            : new Response(null, { status: 404 }),
+      )
+    })
+    const catalog: ItemCatalog = {
+      gear: {
+        id: 'gear',
+        name: 'Шестерни',
+        iconUrl: savedIconUrl,
+        source: { wowheadItemId: 23783 },
+        sections: ['reagents'],
+        purchasePriceCopper: null,
+        salePriceCopper: null,
+        recipe: null,
+      },
+    }
+    render(<ImportHarness catalog={catalog} onImport={vi.fn()} onClose={vi.fn()} />)
+    await loadRecipe(userEvent.setup())
+    const rows = within(screen.getByRole('region')).getAllByRole('listitem')
+    const icons = rows.map((row) => row.querySelector('img'))
+    expect(icons[0]).toHaveAttribute('src', iconUrl)
+    expect(icons[1]).toHaveAttribute('src', savedIconUrl)
+    expect(icons[2]?.getAttribute('src')).toMatch(/item-placeholder\.svg$/)
+    if (icons[0]) fireEvent.error(icons[0])
+    expect(icons[0]?.getAttribute('src')).toMatch(/item-placeholder\.svg$/)
+  })
+
   it('показывает состав и выход; пишет в каталог только после выбора профессии и подтверждения', async () => {
     mockTooltip()
     const user = userEvent.setup()
@@ -76,7 +118,17 @@ describe('проверка импорта Wowhead', () => {
     expect(onImport).not.toHaveBeenCalled()
     expect(useCraftStore.getState().items).toEqual({})
     expect(screen.getByLabelText('Предметов за один крафт')).toHaveValue(5)
-    expect(screen.getByText('Выход из Wowhead: 5.')).toBeVisible()
+    expect(screen.queryByText(/Выход из Wowhead/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Профессия крафта не распознана/)).not.toBeInTheDocument()
+    expect(screen.queryByText('Состав из Wowhead')).not.toBeInTheDocument()
+    expect(screen.getByTitle(`Иконка: ${tbcTooltip.name}`)).toHaveAttribute(
+      'src',
+      'https://wow.zamimg.com/images/wow/icons/large/inv_misc_enggizmos_01.jpg',
+    )
+    const reagents = screen.getByRole('list', { name: 'Реагенты' })
+    expect(within(reagents).getAllByRole('listitem')[0]).toHaveTextContent(
+      'Адамантитовый слиток× 8',
+    )
     expect(within(screen.getByRole('region')).getAllByRole('listitem')).toHaveLength(3)
     expect(screen.getByText('× 1')).toBeVisible()
     expect(screen.getByRole('button', { name: 'Подтвердить импорт' })).toBeEnabled()
@@ -149,7 +201,7 @@ describe('проверка импорта Wowhead', () => {
     const output = screen.getByLabelText('Предметов за один крафт')
     const submit = screen.getByRole('button', { name: 'Подтвердить импорт' })
     expect(output).toHaveValue(1)
-    expect(screen.getByText(/По умолчанию: 1/)).toBeVisible()
+    expect(screen.queryByText(/По умолчанию: 1/)).not.toBeInTheDocument()
     await user.click(submit)
     expect(screen.getByRole('alert')).toHaveTextContent('Выберите профессию')
     await user.clear(output)
@@ -173,7 +225,7 @@ describe('проверка импорта Wowhead', () => {
     )
   })
 
-  it('подписывает сохранённые параметры отдельно и повторно импортирует без дублей', async () => {
+  it('подставляет сохранённые параметры и повторно импортирует без дублей', async () => {
     mockTooltip()
     const catalog: ItemCatalog = {
       robot: {
@@ -210,8 +262,9 @@ describe('проверка импорта Wowhead', () => {
     )
     await loadRecipe(user)
     expect(screen.getByLabelText('Предметов за один крафт')).toHaveValue(2)
-    expect(screen.getByText(/Выход из Wowhead: 5. Сохранённое значение: 2/)).toBeVisible()
-    expect(screen.getByText(/Сохранённое значение: Инженерное дело/)).toBeVisible()
+    expect(screen.getByRole('combobox', { name: 'Профессия' })).toHaveValue(
+      'Инженерное дело (Engineering)',
+    )
     await user.click(screen.getByRole('button', { name: 'Подтвердить импорт' }))
     first.unmount()
     const afterFirst = useCraftStore.getState().items

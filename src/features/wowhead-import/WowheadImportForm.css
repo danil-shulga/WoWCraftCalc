@@ -7,15 +7,31 @@
   line-height: 1.5;
 }
 
-.wowhead-import__review h3,
-.wowhead-import__review h4 {
-  margin: 0 0 12px;
+.wowhead-import__product {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.wowhead-import__product .item-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 7px;
+}
+
+.wowhead-import__product h3 {
+  min-width: 0;
+  margin: 0;
   overflow-wrap: anywhere;
 }
 
 .wowhead-import__review ul {
   display: grid;
-  gap: 10px;
+  gap: 6px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -24,8 +40,12 @@
 .wowhead-import__review li {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
   gap: 16px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #101724;
 }
 
 .wowhead-import__review li span {
@@ -35,16 +55,47 @@
 
 .wowhead-import__review li strong {
   flex-shrink: 0;
+  min-width: 3ch;
+  padding: 3px 8px;
+  border-radius: 5px;
+  background: #26324a;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.wowhead-import__reagent {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.wowhead-import__reagent .item-icon {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 5px;
+}
+
+.wowhead-import__parameters {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: end;
+  gap: 16px;
 }
 
 .wowhead-import__profession,
 .wowhead-import__output {
   display: grid;
+  min-width: 0;
   gap: 7px;
 }
 
 @media (max-width: 560px) {
   .wowhead-import {
     min-width: 0;
+  }
+
+  .wowhead-import__parameters {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState, type SyntheticEvent } from 'react'
 
 import { NumberInput } from '../../components/ui/NumberInput/NumberInput'
+import { ItemIcon } from '../../components/ui/ItemIcon/ItemIcon'
 import { SearchableSelect } from '../../components/ui/SearchableSelect/SearchableSelect'
 import type { ItemCatalog } from '../../domain/item.types'
 import { PROFESSION_OPTIONS } from '../../domain/professions'
@@ -56,9 +57,6 @@ function RecipeReview({
     savedRecipe === null ? '' : (savedRecipe.profession ?? 'none'),
   )
   const [error, setError] = useState<string | null>(null)
-  const savedProfession =
-    PROFESSION_OPTIONS.find((option) => option.value === savedRecipe?.profession)
-      ?.label ?? 'Без профессии'
 
   const handleConfirm = (event: SyntheticEvent<HTMLFormElement, SubmitEvent>) => {
     event.preventDefault()
@@ -90,57 +88,58 @@ function RecipeReview({
   return (
     <form className="editor-form wowhead-import" noValidate onSubmit={handleConfirm}>
       <section className="wowhead-import__review" aria-label="Проверка рецепта">
-        <h3>{recipe.product.name}</h3>
-        <h4>Состав из Wowhead</h4>
-        <ul>
+        <div className="wowhead-import__product">
+          <ItemIcon
+            iconUrl={
+              recipe.product.iconUrl ||
+              (findImportedItem(catalog, recipe.product)?.iconUrl ?? '')
+            }
+            itemName={recipe.product.name}
+          />
+          <h3>{recipe.product.name}</h3>
+        </div>
+        <ul aria-label="Реагенты">
           {recipe.reagents.map((reagent, index) => (
             <li key={`${reagent.wowheadItemId.toString()}-${index.toString()}`}>
-              <span>{reagent.name}</span>
+              <span className="wowhead-import__reagent">
+                <ItemIcon
+                  iconUrl={
+                    reagent.iconUrl || (findImportedItem(catalog, reagent)?.iconUrl ?? '')
+                  }
+                  itemName={reagent.name}
+                />
+                <span>{reagent.name}</span>
+              </span>
               <strong>× {reagent.quantity}</strong>
             </li>
           ))}
         </ul>
       </section>
-      <div className="wowhead-import__output">
-        <label htmlFor={outputId}>
-          <span>Предметов за один крафт</span>
-        </label>
-        <NumberInput
-          id={outputId}
-          ariaDescribedBy={`${outputId}-hint`}
-          autoFocus={isActive}
-          min={1}
-          step={1}
-          value={outputQuantity}
-          onChange={setOutputQuantity}
-        />
-        <small id={`${outputId}-hint`}>
-          {recipe.outputQuantity === null
-            ? 'Выход не распознан в Wowhead.'
-            : `Выход из Wowhead: ${recipe.outputQuantity.toString()}.`}
-          {savedRecipe === null
-            ? recipe.outputQuantity === null
-              ? ' По умолчанию: 1. При необходимости измените количество.'
-              : ''
-            : ` Сохранённое значение: ${savedRecipe.outputQuantity.toString()}.`}
-        </small>
-      </div>
-      <div className="wowhead-import__profession">
-        <SearchableSelect
-          label="Профессия"
-          value={profession}
-          options={[{ value: 'none', label: 'Без профессии' }, ...PROFESSION_OPTIONS]}
-          placeholder="Выберите профессию…"
-          onChange={(value) => {
-            setProfession(value)
-          }}
-        />
-        <small>
-          Профессия крафта не распознана в Wowhead.
-          {savedRecipe === null
-            ? ' Выберите её вручную или укажите «Без профессии».'
-            : ` Сохранённое значение: ${savedProfession}.`}
-        </small>
+      <div className="wowhead-import__parameters">
+        <div className="wowhead-import__output">
+          <label htmlFor={outputId}>
+            <span>Предметов за один крафт</span>
+          </label>
+          <NumberInput
+            id={outputId}
+            autoFocus={isActive}
+            min={1}
+            step={1}
+            value={outputQuantity}
+            onChange={setOutputQuantity}
+          />
+        </div>
+        <div className="wowhead-import__profession">
+          <SearchableSelect
+            label="Профессия"
+            value={profession}
+            options={[{ value: 'none', label: 'Без профессии' }, ...PROFESSION_OPTIONS]}
+            placeholder="Выберите профессию…"
+            onChange={(value) => {
+              setProfession(value)
+            }}
+          />
+        </div>
       </div>
       <small>Цены, вложенные рецепты и ручной выбор покупки/крафта сохранятся.</small>
       {error === null ? null : (
