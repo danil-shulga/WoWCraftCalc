@@ -29,6 +29,35 @@ const backupData: PersistedCraftData = {
   currencyDisplay: 'text',
 }
 
+describe('возврат наверх страницы', () => {
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+  })
+
+  it.each([false, true])(
+    'поднимает страницу с учётом уменьшения анимации: %s',
+    async (reducedMotion) => {
+      const scrollTo = vi.fn()
+      const matchMedia = vi.fn().mockReturnValue({ matches: reducedMotion })
+      vi.stubGlobal('scrollTo', scrollTo)
+      vi.stubGlobal('matchMedia', matchMedia)
+      const user = userEvent.setup()
+      render(<App />)
+
+      await user.tab()
+      screen.getByRole('button', { name: 'Наверх страницы' }).focus()
+      await user.keyboard('{Enter}')
+
+      expect(matchMedia).toHaveBeenCalledWith('(prefers-reduced-motion: reduce)')
+      expect(scrollTo).toHaveBeenCalledWith({
+        top: 0,
+        behavior: reducedMotion ? 'instant' : 'smooth',
+      })
+    },
+  )
+})
+
 describe('восстановление сохранения в App', () => {
   beforeEach(async () => {
     localStorage.clear()

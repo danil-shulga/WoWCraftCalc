@@ -70,6 +70,22 @@ export function App() {
         </div>
         <CurrentPage activeTab={activeTab} />
       </main>
+      <button
+        className="scroll-to-top"
+        type="button"
+        aria-label="Наверх страницы"
+        title="Наверх страницы"
+        onClick={() => {
+          window.scrollTo({
+            top: 0,
+            behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+              ? 'instant'
+              : 'smooth',
+          })
+        }}
+      >
+        <span aria-hidden="true">↑</span>
+      </button>
       {areSettingsOpen ? (
         <UserSettingsModal
           ownedProfessions={ownedProfessions}
