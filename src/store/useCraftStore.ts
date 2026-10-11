@@ -13,7 +13,11 @@ import type {
 } from '../domain/item.types'
 import type { Profession } from '../domain/professions'
 import type { CurrencyDisplayMode } from '../domain/user-settings'
-import { migratePersistedData, parseCurrentPersistedData } from './persistence'
+import {
+  createCraftStorage,
+  migratePersistedData,
+  parseCurrentPersistedData,
+} from './persistence'
 
 export type ItemInput = Omit<Item, 'id' | 'recipe'>
 
@@ -357,6 +361,7 @@ export const useCraftStore = create<CraftStore>()(
     }),
     {
       name: 'craft-calc-data',
+      storage: createCraftStorage(),
       version: 4,
       partialize: (state) => ({
         items: state.items,
@@ -364,10 +369,13 @@ export const useCraftStore = create<CraftStore>()(
         currencyDisplay: state.currencyDisplay,
       }),
       migrate: migratePersistedData,
-      merge: (persistedState, currentState) => ({
-        ...currentState,
-        ...parseCurrentPersistedData(persistedState),
-      }),
+      merge: (persistedState, currentState) =>
+        persistedState === undefined
+          ? currentState
+          : {
+              ...currentState,
+              ...parseCurrentPersistedData(persistedState),
+            },
       onRehydrateStorage: () => (_state, error) => {
         usePersistenceStatusStore
           .getState()

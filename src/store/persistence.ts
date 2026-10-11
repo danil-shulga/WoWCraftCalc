@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { createJSONStorage } from 'zustand/middleware'
 
 import {
   itemSchema,
@@ -42,6 +43,30 @@ const legacyPersistedCraftDataSchema = z.object({
   ownedProfessions: persistedCraftDataSchema.shape.ownedProfessions,
   currencyDisplay: persistedCraftDataSchema.shape.currencyDisplay,
 })
+
+const persistedStorageSchema = z.object({
+  state: z.unknown().refine((state) => state !== undefined),
+  version: z.number().int().nonnegative().optional(),
+})
+
+export function createCraftStorage() {
+  return createJSONStorage<PersistedCraftData>(() => localStorage, {
+    reviver: (key, value: unknown) => {
+      if (key !== '') {
+        return value
+      }
+
+      // JSON null is an existing record, unlike a missing localStorage key.
+      const parsed = persistedStorageSchema.safeParse(value)
+
+      if (!parsed.success) {
+        throw new Error('Сохранённые данные не соответствуют формату хранилища CraftCalc')
+      }
+
+      return parsed.data
+    },
+  })
+}
 
 export type ImportResult =
   { success: true; data: PersistedCraftData } | { success: false; error: string }
