@@ -1,0 +1,29 @@
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 16px 22px 0;
+}
+
+.tabs__button {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--muted);
+  background: var(--panel);
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+.tabs__button:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+
+.tabs__button--active {
+  color: var(--text);
+  border-color: var(--accent);
+  background: var(--panel-raised);
+}

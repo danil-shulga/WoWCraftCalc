@@ -6,9 +6,9 @@ import { Modal } from '../components/ui/Modal/Modal'
 import { SearchField } from '../components/ui/SearchField/SearchField'
 import { createCatalogCalculationSnapshot } from '../domain/calculations'
 import type { ItemId, ItemPriceField, ItemSection, Recipe } from '../domain/item.types'
+import { ItemAddModal } from '../features/item-editor/ItemAddModal'
 import { ItemForm } from '../features/item-editor/ItemForm'
 import { RecipeEditor } from '../features/recipe-editor/RecipeEditor'
-import { WowheadImportModal } from '../features/wowhead-import/WowheadImportModal'
 import { selectItemsBySection } from '../store/craft.selectors'
 import { useCraftStore } from '../store/useCraftStore'
 import '../components/ui/Button.css'
@@ -49,7 +49,6 @@ export function ItemsPage({ section }: ItemsPageProps) {
   const importRecipe = useCraftStore((state) => state.importRecipe)
 
   const [isCreating, setIsCreating] = useState(false)
-  const [isWowheadImportOpen, setIsWowheadImportOpen] = useState(false)
   const [editingItemId, setEditingItemId] = useState<ItemId | null>(null)
   const [editingRecipeId, setEditingRecipeId] = useState<ItemId | null>(null)
   const [deletingItemId, setDeletingItemId] = useState<ItemId | null>(null)
@@ -155,15 +154,6 @@ export function ItemsPage({ section }: ItemsPageProps) {
                 </button>
               )}
               <button
-                className="button button--secondary"
-                type="button"
-                onClick={() => {
-                  setIsWowheadImportOpen(true)
-                }}
-              >
-                Импорт из Wowhead
-              </button>
-              <button
                 className="button button--primary"
                 type="button"
                 onClick={() => {
@@ -254,31 +244,14 @@ export function ItemsPage({ section }: ItemsPageProps) {
       )}
 
       {isCreating ? (
-        <Modal
+        <ItemAddModal
           title={content.addLabel}
-          onClose={() => {
-            setIsCreating(false)
-          }}
-        >
-          <ItemForm
-            defaultSection={section}
-            onCancel={() => {
-              setIsCreating(false)
-            }}
-            onSave={(input) => {
-              createItem(input)
-              setIsCreating(false)
-            }}
-          />
-        </Modal>
-      ) : null}
-
-      {isWowheadImportOpen ? (
-        <WowheadImportModal
+          defaultSection={section}
           catalog={items}
+          onSave={createItem}
           onImport={importRecipe}
           onClose={() => {
-            setIsWowheadImportOpen(false)
+            setIsCreating(false)
           }}
         />
       ) : null}

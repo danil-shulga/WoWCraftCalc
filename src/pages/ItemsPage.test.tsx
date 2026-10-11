@@ -35,6 +35,65 @@ describe('ItemsPage', () => {
     vi.restoreAllMocks()
   })
 
+  it.each(['crafts', 'reagents'] as const)(
+    'открывает импорт по умолчанию и сохраняет ручной предмет в разделе %s',
+    async (section) => {
+      const user = userEvent.setup()
+      const addLabel = section === 'crafts' ? 'Добавить крафт' : 'Добавить реагент'
+      render(<ItemsPage section={section} />)
+      expect(
+        screen.queryByRole('button', { name: 'Импорт из Wowhead' }),
+      ).not.toBeInTheDocument()
+      const opener = screen.getByRole('button', { name: `+ ${addLabel}` })
+      await user.click(opener)
+      expect(screen.getAllByRole('dialog')).toHaveLength(1)
+      expect(
+        screen.getByLabelText('Ссылка на рецепт Wowhead Classic, TBC или Forever'),
+      ).toBeVisible()
+      const before = useCraftStore.getState().items
+      await user.click(screen.getByRole('button', { name: 'Добавить вручную' }))
+      expect(screen.getByRole('checkbox', { name: 'Крафты' })).toHaveProperty(
+        'checked',
+        section === 'crafts',
+      )
+      expect(screen.getByRole('checkbox', { name: 'Реагенты' })).toHaveProperty(
+        'checked',
+        section === 'reagents',
+      )
+      await user.type(screen.getByLabelText('Название'), 'Новый предмет')
+      expect(useCraftStore.getState().items).toBe(before)
+      await user.click(screen.getByRole('button', { name: 'Сохранить' }))
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+      expect(opener).toHaveFocus()
+      expect(screen.getByText('Новый предмет')).toBeVisible()
+      expect(Object.values(useCraftStore.getState().items)).toContainEqual(
+        expect.objectContaining({ name: 'Новый предмет', sections: [section] }),
+      )
+    },
+  )
+
+  it.each(['crafts', 'reagents'] as const)(
+    'открывает общую модалку из пустого раздела %s и отменяет без записи',
+    async (section) => {
+      useCraftStore.setState({ items: {} })
+      const before = useCraftStore.getState()
+      const user = userEvent.setup()
+      render(<ItemsPage section={section} />)
+      const addLabel = section === 'crafts' ? 'Добавить крафт' : 'Добавить реагент'
+      const opener = screen.getByRole('button', { name: addLabel })
+      await user.click(opener)
+      expect(
+        screen.getByLabelText('Ссылка на рецепт Wowhead Classic, TBC или Forever'),
+      ).toBeVisible()
+      await user.click(screen.getByRole('button', { name: 'Добавить вручную' }))
+      await user.type(screen.getByLabelText('Название'), 'Черновик')
+      await user.keyboard('{Escape}')
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+      expect(opener).toHaveFocus()
+      expect(useCraftStore.getState()).toBe(before)
+    },
+  )
+
   it('отменяет черновики без изменения каталога и сохраняет неизменённые цены без записи', async () => {
     const user = userEvent.setup()
     render(<ItemsPage section="crafts" />)

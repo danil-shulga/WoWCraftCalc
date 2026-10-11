@@ -1,6 +1,5 @@
 import { useEffect, useId, useRef, useState, type SyntheticEvent } from 'react'
 
-import { Modal } from '../../components/ui/Modal/Modal'
 import { NumberInput } from '../../components/ui/NumberInput/NumberInput'
 import { SearchableSelect } from '../../components/ui/SearchableSelect/SearchableSelect'
 import type { ItemCatalog } from '../../domain/item.types'
@@ -13,12 +12,13 @@ import {
 import '../../components/ui/Button.css'
 import '../EditorForm.css'
 import { fetchWowheadRecipe, type WowheadRecipeImport } from './wowhead-import'
-import './WowheadImportModal.css'
+import './WowheadImportForm.css'
 
-interface WowheadImportModalProps {
+interface WowheadImportFormProps {
   catalog: ItemCatalog
   onImport: (data: RecipeImportData) => RecipeImportResult
   onClose: () => void
+  isActive?: boolean
 }
 
 function getSuccessMessage(
@@ -32,7 +32,7 @@ function getSuccessMessage(
   return `Крафт ${action}. ${reagentMessage}`
 }
 
-interface RecipeReviewProps extends WowheadImportModalProps {
+interface RecipeReviewProps extends WowheadImportFormProps {
   recipe: WowheadRecipeImport
   onSuccess: (message: string) => void
 }
@@ -43,6 +43,7 @@ function RecipeReview({
   onImport,
   onClose,
   onSuccess,
+  isActive = true,
 }: RecipeReviewProps) {
   const outputId = useId()
   const [savedRecipe] = useState(
@@ -107,7 +108,7 @@ function RecipeReview({
         <NumberInput
           id={outputId}
           ariaDescribedBy={`${outputId}-hint`}
-          autoFocus
+          autoFocus={isActive}
           min={1}
           step={1}
           value={outputQuantity}
@@ -159,14 +160,12 @@ function RecipeReview({
   )
 }
 
-export function WowheadImportModal({
+export function WowheadImportForm({
   catalog,
   onImport,
   onClose,
-}: WowheadImportModalProps) {
-  const [returnFocus] = useState(() =>
-    document.activeElement instanceof HTMLElement ? document.activeElement : null,
-  )
+  isActive = true,
+}: WowheadImportFormProps) {
   const [url, setUrl] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -184,7 +183,6 @@ export function WowheadImportModal({
   const close = () => {
     active.current = false
     onClose()
-    returnFocus?.focus()
   }
 
   const handleSubmit = async (event: SyntheticEvent<HTMLFormElement, SubmitEvent>) => {
@@ -207,7 +205,7 @@ export function WowheadImportModal({
   }
 
   return (
-    <Modal title="Импорт рецепта из Wowhead" onClose={close}>
+    <>
       {successMessage !== null ? (
         <div className="wowhead-import wowhead-import__success">
           <p role="status">{successMessage}</p>
@@ -224,6 +222,7 @@ export function WowheadImportModal({
           onImport={onImport}
           onClose={close}
           onSuccess={setSuccessMessage}
+          isActive={isActive}
         />
       ) : (
         <form
@@ -235,7 +234,7 @@ export function WowheadImportModal({
           <label>
             <span>Ссылка на рецепт Wowhead Classic, TBC или Forever</span>
             <input
-              autoFocus
+              autoFocus={isActive}
               required
               type="url"
               inputMode="url"
@@ -268,6 +267,6 @@ export function WowheadImportModal({
           </footer>
         </form>
       )}
-    </Modal>
+    </>
   )
 }

@@ -1,12 +1,26 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import type { ComponentProps } from 'react'
 
 import type { ItemCatalog } from '../../domain/item.types'
 import { useCraftStore } from '../../store/useCraftStore'
 import { ItemsPage } from '../../pages/ItemsPage'
 import classicTooltip from './fixtures/classic-25146.json'
 import tbcTooltip from './fixtures/tbc-44391.json'
-import { WowheadImportModal } from './WowheadImportModal'
+import { ItemAddModal } from '../item-editor/ItemAddModal'
+
+function ImportHarness(
+  props: Pick<ComponentProps<typeof ItemAddModal>, 'catalog' | 'onImport' | 'onClose'>,
+) {
+  return (
+    <ItemAddModal
+      title="Добавить крафт"
+      defaultSection="crafts"
+      onSave={vi.fn()}
+      {...props}
+    />
+  )
+}
 
 function mockTooltip(tooltip = tbcTooltip) {
   return vi.spyOn(globalThis, 'fetch').mockImplementation((input) => {
@@ -45,7 +59,7 @@ describe('проверка импорта Wowhead', () => {
     mockTooltip()
     const user = userEvent.setup()
     const onImport = vi.fn(useCraftStore.getState().importRecipe)
-    render(<WowheadImportModal catalog={{}} onImport={onImport} onClose={vi.fn()} />)
+    render(<ImportHarness catalog={{}} onImport={onImport} onClose={vi.fn()} />)
     await loadRecipe(user)
 
     expect(onImport).not.toHaveBeenCalled()
@@ -83,7 +97,7 @@ describe('проверка импорта Wowhead', () => {
     })
     const user = userEvent.setup()
     const onImport = vi.fn(useCraftStore.getState().importRecipe)
-    render(<WowheadImportModal catalog={{}} onImport={onImport} onClose={vi.fn()} />)
+    render(<ImportHarness catalog={{}} onImport={onImport} onClose={vi.fn()} />)
     await loadRecipe(user)
     const output = screen.getByLabelText('Предметов за один крафт')
     const submit = screen.getByRole('button', { name: 'Подтвердить импорт' })
@@ -145,7 +159,7 @@ describe('проверка импорта Wowhead', () => {
     const user = userEvent.setup()
     const onImport = vi.fn(useCraftStore.getState().importRecipe)
     const first = render(
-      <WowheadImportModal catalog={catalog} onImport={onImport} onClose={vi.fn()} />,
+      <ImportHarness catalog={catalog} onImport={onImport} onClose={vi.fn()} />,
     )
     await loadRecipe(user)
     expect(screen.getByLabelText('Предметов за один крафт')).toHaveValue(2)
@@ -154,9 +168,7 @@ describe('проверка импорта Wowhead', () => {
     await user.click(screen.getByRole('button', { name: 'Подтвердить импорт' }))
     first.unmount()
     const afterFirst = useCraftStore.getState().items
-    render(
-      <WowheadImportModal catalog={afterFirst} onImport={onImport} onClose={vi.fn()} />,
-    )
+    render(<ImportHarness catalog={afterFirst} onImport={onImport} onClose={vi.fn()} />)
     await loadRecipe(user)
     await user.click(screen.getByRole('button', { name: 'Подтвердить импорт' }))
     expect(Object.keys(useCraftStore.getState().items)).toHaveLength(4)
@@ -183,7 +195,7 @@ describe('проверка импорта Wowhead', () => {
     const user = userEvent.setup()
     const onImport = vi.fn(useCraftStore.getState().importRecipe)
     const onClose = vi.fn()
-    render(<WowheadImportModal catalog={before} onImport={onImport} onClose={onClose} />)
+    render(<ImportHarness catalog={before} onImport={onImport} onClose={onClose} />)
     await loadRecipe(user)
     await user.click(screen.getByRole('button', { name: 'Отмена' }))
     expect(onClose).toHaveBeenCalledOnce()
@@ -196,7 +208,7 @@ describe('проверка импорта Wowhead', () => {
     mockTooltip()
     const user = userEvent.setup()
     render(<ItemsPage section="crafts" />)
-    const opener = screen.getByRole('button', { name: 'Импорт из Wowhead' })
+    const opener = screen.getByRole('button', { name: '+ Добавить крафт' })
     await user.click(opener)
     await loadRecipe(user)
     await user.keyboard('{Escape}')
@@ -210,7 +222,7 @@ describe('проверка импорта Wowhead', () => {
     const onImport = vi.fn(useCraftStore.getState().importRecipe)
     const before = useCraftStore.getState().items
     const saved = localStorage.getItem('craft-calc-data')
-    render(<WowheadImportModal catalog={before} onImport={onImport} onClose={vi.fn()} />)
+    render(<ImportHarness catalog={before} onImport={onImport} onClose={vi.fn()} />)
     await user.type(screen.getByRole('textbox'), 'https://wowhead.com/tbc/ru/spell=44391')
     await user.click(screen.getByRole('button', { name: 'Загрузить рецепт' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('Повреждён состав')
@@ -227,7 +239,7 @@ describe('проверка импорта Wowhead', () => {
       success: false as const,
       error: 'Этот рецепт создаёт циклическую зависимость',
     }))
-    render(<WowheadImportModal catalog={{}} onImport={onImport} onClose={vi.fn()} />)
+    render(<ImportHarness catalog={{}} onImport={onImport} onClose={vi.fn()} />)
     await loadRecipe(user)
     await user.click(screen.getByRole('combobox'))
     await user.click(screen.getByRole('option', { name: 'Без профессии' }))
@@ -250,7 +262,7 @@ describe('проверка импорта Wowhead', () => {
     const onImport = vi.fn()
     const onClose = vi.fn()
     const { unmount } = render(
-      <WowheadImportModal catalog={{}} onImport={onImport} onClose={onClose} />,
+      <ImportHarness catalog={{}} onImport={onImport} onClose={onClose} />,
     )
     await user.type(
       screen.getByRole('textbox'),
@@ -273,7 +285,7 @@ describe('проверка импорта Wowhead', () => {
     mockTooltip()
     const user = userEvent.setup()
     const onClose = vi.fn()
-    render(<WowheadImportModal catalog={{}} onImport={vi.fn()} onClose={onClose} />)
+    render(<ImportHarness catalog={{}} onImport={vi.fn()} onClose={onClose} />)
     await loadRecipe(user)
     const profession = screen.getByRole('combobox', { name: 'Профессия' })
     await user.click(profession)

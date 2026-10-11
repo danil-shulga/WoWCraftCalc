@@ -56,7 +56,7 @@ export function Modal({ title, children, onClose }: ModalProps) {
 
       const focusableElements = [
         ...dialog.querySelectorAll<HTMLElement>(focusableSelector),
-      ]
+      ].filter((element) => element.closest('[hidden], [inert]') === null)
 
       if (focusableElements.length === 0) {
         event.preventDefault()
