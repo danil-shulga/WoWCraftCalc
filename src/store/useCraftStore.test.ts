@@ -71,6 +71,85 @@ describe('целостность CraftStore', () => {
     usePersistenceStatusStore.getState().setHydrationError(null)
   })
 
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('обновляет цены одним уведомлением и одной записью, сохраняя остальные данные', () => {
+    const before = useCraftStore.getState()
+    const setItem = vi.spyOn(Storage.prototype, 'setItem')
+    const listener = vi.fn()
+    const unsubscribe = useCraftStore.subscribe(listener)
+
+    try {
+      before.setItemPrices('purchasePriceCopper', {
+        reagent: 0,
+        product: 50,
+        missing: 100,
+      })
+
+      const after = useCraftStore.getState()
+      expect(listener).toHaveBeenCalledTimes(1)
+      expect(
+        setItem.mock.calls.filter(([key]) => key === 'craft-calc-data'),
+      ).toHaveLength(1)
+      expect(after.items).toEqual({
+        reagent: { ...before.items.reagent, purchasePriceCopper: 0 },
+        product: { ...before.items.product, purchasePriceCopper: 50 },
+      })
+      expect(before.items.reagent?.purchasePriceCopper).toBe(10)
+      expect(before.items.product?.purchasePriceCopper).toBeNull()
+      expect(after.items.product?.recipe).toBe(before.items.product?.recipe)
+      expect(after.ownedProfessions).toBe(before.ownedProfessions)
+      expect(after.currencyDisplay).toBe(before.currencyDisplay)
+      expect(
+        JSON.parse(localStorage.getItem('craft-calc-data') ?? 'null') as unknown,
+      ).toEqual({
+        state: {
+          items: after.items,
+          ownedProfessions: before.ownedProfessions,
+          currencyDisplay: before.currencyDisplay,
+        },
+        version: 4,
+      })
+    } finally {
+      unsubscribe()
+    }
+  })
+
+  it.each([{}, { reagent: 10, product: null }, { missing: 0 }])(
+    'не обновляет состояние и не пишет пакет без изменений %j',
+    (prices) => {
+      const before = useCraftStore.getState()
+      const setItem = vi.spyOn(Storage.prototype, 'setItem')
+      const listener = vi.fn()
+      const unsubscribe = useCraftStore.subscribe(listener)
+
+      try {
+        before.setItemPrices('purchasePriceCopper', prices)
+
+        expect(useCraftStore.getState()).toBe(before)
+        expect(listener).not.toHaveBeenCalled()
+        expect(setItem).not.toHaveBeenCalled()
+      } finally {
+        unsubscribe()
+      }
+    },
+  )
+
+  it('пропускает неизменённые предметы в смешанном пакете и различает null и ноль', () => {
+    const before = useCraftStore.getState().items
+
+    useCraftStore
+      .getState()
+      .setItemPrices('salePriceCopper', { reagent: null, product: 0 })
+
+    expect(useCraftStore.getState().items.reagent).toBe(before.reagent)
+    expect(useCraftStore.getState().items.product?.salePriceCopper).toBe(0)
+    useCraftStore.getState().setItemPrices('salePriceCopper', { product: null })
+    expect(useCraftStore.getState().items.product?.salePriceCopper).toBeNull()
+  })
+
   it('не сохраняет пустой рецепт', () => {
     const error = useCraftStore.getState().setRecipe('product', {
       outputQuantity: 1,

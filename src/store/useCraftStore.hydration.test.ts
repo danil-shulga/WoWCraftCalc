@@ -85,6 +85,49 @@ describe('первоначальная загрузка CraftStore', () => {
     expect(localStorage.getItem(storageKey)).toBe(rawRecord)
   })
 
+  it('восстанавливает пакет цен в новом store и пересчитывает вложенный рецепт', async () => {
+    const { useCraftStore } = await import('./useCraftStore')
+    const recipe = {
+      outputQuantity: 1,
+      profession: null,
+      reagents: [{ itemId: 'cloth', quantity: 2, acquisition: 'buy' as const }],
+    }
+    useCraftStore.getState().replaceData({
+      ...savedData,
+      items: {
+        cloth: item,
+        thread: { ...item, id: 'thread', recipe },
+        product: {
+          ...item,
+          id: 'product',
+          recipe: {
+            ...recipe,
+            reagents: [{ itemId: 'thread', quantity: 3, acquisition: 'craft' }],
+          },
+        },
+      },
+    })
+    const { getCraftUnitCost } = await import('../domain/calculations')
+    expect(getCraftUnitCost(useCraftStore.getState().items, 'product')).toBe(252)
+    const setItem = vi.spyOn(Storage.prototype, 'setItem')
+
+    useCraftStore
+      .getState()
+      .setItemPrices('purchasePriceCopper', { cloth: 10, thread: 0 })
+
+    expect(setItem.mock.calls.filter(([key]) => key === storageKey)).toHaveLength(1)
+    expect(getCraftUnitCost(useCraftStore.getState().items, 'product')).toBe(60)
+    const expected = useCraftStore.getState().items
+    vi.resetModules()
+    const restored = await import('./useCraftStore')
+    expect(restored.useCraftStore.getState()).toMatchObject({
+      ...savedData,
+      items: expected,
+    })
+    expect(getCraftUnitCost(restored.useCraftStore.getState().items, 'product')).toBe(60)
+    expect(setItem.mock.calls.filter(([key]) => key === storageKey)).toHaveLength(1)
+  })
+
   it.each([
     ['JSON null', 'null'],
     ['неверный JSON', '{broken'],
@@ -182,6 +225,14 @@ describe('первоначальная загрузка CraftStore', () => {
       },
       () => {
         store.setItemPrice('cloth', 'purchasePriceCopper', 100)
+      },
+      () => {
+        const setItem = vi.spyOn(Storage.prototype, 'setItem')
+        store.setItemPrices('purchasePriceCopper', { cloth: 0, product: null })
+        expect(useCraftStore.getState().items.cloth?.purchasePriceCopper).toBe(0)
+        expect(useCraftStore.getState().items.product?.purchasePriceCopper).toBeNull()
+        expect(setItem).not.toHaveBeenCalled()
+        setItem.mockRestore()
       },
       () => {
         store.updateItem('cloth', { ...item, name: 'Новая ткань' })

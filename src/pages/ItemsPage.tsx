@@ -42,7 +42,7 @@ export function ItemsPage({ section }: ItemsPageProps) {
   const ownedProfessions = useCraftStore((state) => state.ownedProfessions)
   const createItem = useCraftStore((state) => state.createItem)
   const updateItem = useCraftStore((state) => state.updateItem)
-  const setItemPrice = useCraftStore((state) => state.setItemPrice)
+  const setItemPrices = useCraftStore((state) => state.setItemPrices)
   const removeItem = useCraftStore((state) => state.removeItem)
   const setRecipe = useCraftStore((state) => state.setRecipe)
   const setAcquisition = useCraftStore((state) => state.setAcquisition)
@@ -130,9 +130,7 @@ export function ItemsPage({ section }: ItemsPageProps) {
       return
     }
 
-    for (const [itemId, value] of Object.entries(priceDrafts)) {
-      setItemPrice(itemId, priceField, value)
-    }
+    setItemPrices(priceField, priceDrafts)
 
     setPriceDrafts(null)
   }

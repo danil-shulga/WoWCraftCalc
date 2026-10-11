@@ -66,6 +66,10 @@ interface CraftStore {
   createItem: (input: ItemInput) => ItemId
   updateItem: (itemId: ItemId, input: ItemInput) => void
   setItemPrice: (itemId: ItemId, field: ItemPriceField, value: number | null) => void
+  setItemPrices: (
+    field: ItemPriceField,
+    prices: Readonly<Record<ItemId, number | null>>,
+  ) => void
   removeItem: (itemId: ItemId) => void
   setRecipe: (itemId: ItemId, recipe: Recipe | null) => string | null
   setAcquisition: (
@@ -195,6 +199,26 @@ export const useCraftStore = create<CraftStore>()(
             },
           }
         })
+      },
+
+      setItemPrices: (field, prices) => {
+        const { items } = get()
+        let nextItems: ItemCatalog | undefined
+
+        for (const [itemId, value] of Object.entries(prices)) {
+          const item = items[itemId]
+
+          if (item === undefined || item[field] === value) {
+            continue
+          }
+
+          nextItems ??= { ...items }
+          nextItems[itemId] = { ...item, [field]: value }
+        }
+
+        if (nextItems !== undefined) {
+          set({ items: nextItems })
+        }
       },
 
       removeItem: (itemId) => {

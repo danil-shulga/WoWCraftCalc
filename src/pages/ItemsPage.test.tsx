@@ -31,6 +31,79 @@ describe('ItemsPage', () => {
     useCraftStore.setState({ items })
   })
 
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('отменяет черновики без изменения каталога и сохраняет неизменённые цены без записи', async () => {
+    const user = userEvent.setup()
+    render(<ItemsPage section="crafts" />)
+    const before = useCraftStore.getState()
+    const setItem = vi.spyOn(Storage.prototype, 'setItem')
+
+    await user.click(screen.getByRole('button', { name: 'Редактировать цены' }))
+    const group = screen.getByRole('group', { name: 'Цена продажи: Лечебное зелье' })
+    await user.click(within(group).getByRole('checkbox', { name: 'Указать цену' }))
+    await user.click(screen.getByRole('button', { name: 'Отмена' }))
+    expect(useCraftStore.getState()).toBe(before)
+
+    await user.click(screen.getByRole('button', { name: 'Редактировать цены' }))
+    expect(
+      within(
+        screen.getByRole('group', { name: 'Цена продажи: Лечебное зелье' }),
+      ).getByRole('checkbox', { name: 'Указать цену' }),
+    ).toBeChecked()
+    await user.click(screen.getByRole('button', { name: 'Сохранить все' }))
+    expect(useCraftStore.getState()).toBe(before)
+    expect(setItem).not.toHaveBeenCalled()
+  })
+
+  it.each(['crafts', 'reagents'] as const)(
+    'сохраняет черновики цен раздела %s одной записью, различая null и ноль',
+    async (section) => {
+      const user = userEvent.setup()
+      const field = section === 'crafts' ? 'salePriceCopper' : 'purchasePriceCopper'
+      const catalog = Object.fromEntries(
+        Object.entries(items).map(([id, item]) => [
+          id,
+          { ...item, sections: [section], purchasePriceCopper: 300 },
+        ]),
+      )
+      useCraftStore.setState({ items: catalog })
+      const before = useCraftStore.getState().items
+      render(<ItemsPage section={section} />)
+      const setItem = vi.spyOn(Storage.prototype, 'setItem')
+
+      await user.click(screen.getByRole('button', { name: 'Редактировать цены' }))
+      const groups = screen.getAllByRole('group', { name: /^Цена / })
+      const first = groups[0]
+      const second = groups[1]
+      if (first === undefined || second === undefined) {
+        throw new Error('Не найдены поля двух цен')
+      }
+      await user.click(within(first).getByRole('checkbox', { name: 'Указать цену' }))
+      await user.click(within(second).getByRole('checkbox', { name: 'Указать цену' }))
+      await user.click(within(second).getByRole('checkbox', { name: 'Указать цену' }))
+      expect(useCraftStore.getState().items).toBe(before)
+      expect(setItem).not.toHaveBeenCalled()
+
+      await user.click(screen.getByRole('button', { name: 'Сохранить все' }))
+
+      expect(useCraftStore.getState().items.potion).toEqual({
+        ...before.potion,
+        [field]: null,
+      })
+      expect(useCraftStore.getState().items.bag).toEqual({
+        ...before.bag,
+        [field]: 0,
+      })
+      expect(
+        setItem.mock.calls.filter(([key]) => key === 'craft-calc-data'),
+      ).toHaveLength(1)
+      expect(screen.getByRole('button', { name: 'Редактировать цены' })).toBeVisible()
+    },
+  )
+
   it('фильтрует предметы по названию без учёта регистра', async () => {
     const user = userEvent.setup()
 
