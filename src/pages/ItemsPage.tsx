@@ -51,6 +51,7 @@ export function ItemsPage({ section }: ItemsPageProps) {
   const setRecipe = useCraftStore((state) => state.setRecipe)
   const setAcquisition = useCraftStore((state) => state.setAcquisition)
   const importRecipe = useCraftStore((state) => state.importRecipe)
+  const addReferenceItem = useCraftStore((state) => state.addReferenceItem)
 
   const [isCreating, setIsCreating] = useState(false)
   const [notification, setNotification] = useState<{
@@ -261,6 +262,7 @@ export function ItemsPage({ section }: ItemsPageProps) {
           catalog={items}
           onSave={createItem}
           onImport={importRecipe}
+          onAddReferenceItem={addReferenceItem}
           onSuccess={(message) => {
             setNotification((current) => ({ id: (current?.id ?? 0) + 1, message }))
           }}

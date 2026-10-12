@@ -107,9 +107,7 @@ describe('ItemsPage', () => {
       const opener = screen.getByRole('button', { name: `+ ${addLabel}` })
       await user.click(opener)
       expect(screen.getAllByRole('dialog')).toHaveLength(1)
-      expect(
-        screen.getByLabelText('Ссылка на рецепт Wowhead Classic, TBC или Forever'),
-      ).toBeVisible()
+      expect(screen.getByText('База Forever')).toBeVisible()
       const before = useCraftStore.getState().items
       await user.click(screen.getByRole('button', { name: 'Добавить вручную' }))
       expect(screen.getByRole('checkbox', { name: 'Крафты' })).toHaveProperty(
@@ -142,9 +140,7 @@ describe('ItemsPage', () => {
       const addLabel = section === 'crafts' ? 'Добавить крафт' : 'Добавить реагент'
       const opener = screen.getByRole('button', { name: addLabel })
       await user.click(opener)
-      expect(
-        screen.getByLabelText('Ссылка на рецепт Wowhead Classic, TBC или Forever'),
-      ).toBeVisible()
+      expect(screen.getByText('База Forever')).toBeVisible()
       await user.click(screen.getByRole('button', { name: 'Добавить вручную' }))
       await user.type(screen.getByLabelText('Название RU'), 'Черновик')
       await user.keyboard('{Escape}')

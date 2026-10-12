@@ -14,6 +14,7 @@ import type {
   ItemNames,
   ItemNamesUpdate,
   ItemPriceField,
+  ItemSection,
   PersistedCraftData,
   Recipe,
 } from '../domain/item.types'
@@ -38,6 +39,8 @@ export interface RecipeImportItem {
   names?: ItemNames | undefined
   wowheadVersion?: WowheadVersion | undefined
   iconUrl: string
+  defaultPurchasePriceCopper?: number | null | undefined
+  defaultSalePriceCopper?: number | null | undefined
 }
 
 export interface RecipeImportData {
@@ -45,6 +48,7 @@ export interface RecipeImportData {
   reagents: (RecipeImportItem & { quantity: number })[]
   outputQuantity: number
   profession: Profession | null
+  productSection?: ItemSection | undefined
 }
 
 const recipeImportItemSchema = z.object({
@@ -53,6 +57,8 @@ const recipeImportItemSchema = z.object({
   names: itemNamesSchema.optional(),
   wowheadVersion: z.enum(WOWHEAD_VERSIONS).optional(),
   iconUrl: z.union([z.literal(''), z.url()]),
+  defaultPurchasePriceCopper: z.number().int().nonnegative().nullable().optional(),
+  defaultSalePriceCopper: z.number().int().nonnegative().nullable().optional(),
 })
 
 const recipeImportSchema = z.object({
@@ -62,6 +68,7 @@ const recipeImportSchema = z.object({
     .min(1),
   outputQuantity: z.number().int().positive(),
   profession: z.enum(PROFESSION_IDS).nullable(),
+  productSection: z.enum(['crafts', 'reagents']).optional(),
 })
 
 export type RecipeImportResult =
@@ -72,6 +79,9 @@ export type RecipeImportResult =
       reagentsCreated: number
     }
   | { success: false; error: string }
+
+export type ReferenceItemAddResult =
+  { success: true; itemId: ItemId; created: boolean } | { success: false; error: string }
 
 interface CraftStore {
   items: ItemCatalog
@@ -93,6 +103,7 @@ interface CraftStore {
     acquisition: AcquisitionMethod,
   ) => void
   importRecipe: (data: RecipeImportData) => RecipeImportResult
+  addReferenceItem: (data: RecipeImportItem) => ReferenceItemAddResult
   replaceData: (data: PersistedCraftData) => string | null
   resetData: () => string | null
   setProfessionOwned: (profession: Profession, owned: boolean) => void
@@ -133,11 +144,11 @@ function getPersistenceError(error: unknown): string {
   return error instanceof Error ? error.message : 'Не удалось сохранить данные CraftCalc'
 }
 
-export function findImportedItem(
+function findImportedItemCandidates(
   items: ItemCatalog,
   importedItem: RecipeImportItem,
   excludedIds: ReadonlySet<ItemId> = new Set(),
-): Item | undefined {
+): Item[] {
   const candidates = Object.values(items).filter((item) => !excludedIds.has(item.id))
   const compatibleSource = (item: Item) =>
     item.source?.wowheadVersion === undefined ||
@@ -151,7 +162,7 @@ export function findImportedItem(
   )
 
   if (sourceMatches.length > 0) {
-    return sourceMatches.length === 1 ? sourceMatches[0] : undefined
+    return sourceMatches
   }
 
   const importedNames = new Set(getItemSearchNames(importedItem).map(normalizeItemName))
@@ -163,7 +174,25 @@ export function findImportedItem(
       getItemSearchNames(item).some((name) => importedNames.has(normalizeItemName(name))),
   )
 
-  return nameMatches.length === 1 ? nameMatches[0] : undefined
+  return nameMatches
+}
+
+export function findImportedItem(
+  items: ItemCatalog,
+  importedItem: RecipeImportItem,
+  excludedIds: ReadonlySet<ItemId> = new Set(),
+): Item | undefined {
+  const matches = findImportedItemCandidates(items, importedItem, excludedIds)
+  return matches.length === 1 ? matches[0] : undefined
+}
+
+function getImportAmbiguityError(
+  items: ItemCatalog,
+  importedItem: RecipeImportItem,
+): string | null {
+  return findImportedItemCandidates(items, importedItem).length > 1
+    ? `Неоднозначное сопоставление «${importedItem.name}»: несколько предметов в каталоге. Уточните названия или источники перед импортом.`
+    : null
 }
 
 export const useCraftStore = create<CraftStore>()(
@@ -354,6 +383,24 @@ export const useCraftStore = create<CraftStore>()(
         }
         data = parsed.data
         const currentItems = get().items
+        const reagentSourceIds = new Set<number>()
+        for (const imported of [data.product, ...data.reagents]) {
+          const ambiguity = getImportAmbiguityError(currentItems, imported)
+          if (ambiguity !== null) return { success: false, error: ambiguity }
+        }
+        for (const reagent of data.reagents) {
+          if (
+            reagent.wowheadItemId === data.product.wowheadItemId ||
+            reagentSourceIds.has(reagent.wowheadItemId)
+          ) {
+            return {
+              success: false,
+              error:
+                'Рецепт содержит повтор реагента или ссылку на собственный результат',
+            }
+          }
+          reagentSourceIds.add(reagent.wowheadItemId)
+        }
         const currentProduct = findImportedItem(currentItems, data.product)
         const productItemId = currentProduct?.id ?? crypto.randomUUID()
         const productCreated = currentProduct === undefined
@@ -373,9 +420,21 @@ export const useCraftStore = create<CraftStore>()(
               ? {}
               : { wowheadVersion: data.product.wowheadVersion }),
           },
-          sections: [...new Set([...productSections, 'crafts' as const])],
-          purchasePriceCopper: currentProduct?.purchasePriceCopper ?? null,
-          salePriceCopper: currentProduct?.salePriceCopper ?? null,
+          sections: [
+            ...new Set([
+              ...productSections,
+              'crafts' as const,
+              ...(data.productSection === 'reagents' ? ['reagents' as const] : []),
+            ]),
+          ],
+          purchasePriceCopper:
+            currentProduct?.purchasePriceCopper ??
+            data.product.defaultPurchasePriceCopper ??
+            null,
+          salePriceCopper:
+            currentProduct?.salePriceCopper ??
+            data.product.defaultSalePriceCopper ??
+            null,
           recipe: currentProduct?.recipe ?? null,
         }
         nextItems[productItemId] = importedProduct
@@ -384,6 +443,8 @@ export const useCraftStore = create<CraftStore>()(
         let reagentsCreated = 0
 
         for (const importedReagent of data.reagents) {
+          const ambiguity = getImportAmbiguityError(nextItems, importedReagent)
+          if (ambiguity !== null) return { success: false, error: ambiguity }
           const reagent = findImportedItem(
             nextItems,
             importedReagent,
@@ -410,8 +471,12 @@ export const useCraftStore = create<CraftStore>()(
                 : { wowheadVersion: importedReagent.wowheadVersion }),
             },
             sections: [...new Set([...(reagent?.sections ?? []), 'reagents' as const])],
-            purchasePriceCopper: reagent?.purchasePriceCopper ?? null,
-            salePriceCopper: reagent?.salePriceCopper ?? null,
+            purchasePriceCopper:
+              reagent?.purchasePriceCopper ??
+              importedReagent.defaultPurchasePriceCopper ??
+              null,
+            salePriceCopper:
+              reagent?.salePriceCopper ?? importedReagent.defaultSalePriceCopper ?? null,
             recipe: reagent?.recipe ?? null,
           }
 
@@ -449,6 +514,38 @@ export const useCraftStore = create<CraftStore>()(
           productCreated,
           reagentsCreated,
         }
+      },
+
+      addReferenceItem: (data) => {
+        const parsed = recipeImportItemSchema.safeParse(data)
+        if (!parsed.success)
+          return { success: false, error: 'Некорректные данные предмета из базы' }
+        data = parsed.data
+        const items = get().items
+        const ambiguity = getImportAmbiguityError(items, data)
+        if (ambiguity !== null) return { success: false, error: ambiguity }
+        const current = findImportedItem(items, data)
+        const itemId = current?.id ?? crypto.randomUUID()
+        const item: Item = {
+          id: itemId,
+          name: data.name,
+          names: mergeItemNames(current, data),
+          iconUrl: data.iconUrl.length > 0 ? data.iconUrl : (current?.iconUrl ?? ''),
+          source: {
+            wowheadItemId: data.wowheadItemId,
+            ...(data.wowheadVersion === undefined
+              ? {}
+              : { wowheadVersion: data.wowheadVersion }),
+          },
+          sections: [...new Set([...(current?.sections ?? []), 'reagents' as const])],
+          purchasePriceCopper:
+            current?.purchasePriceCopper ?? data.defaultPurchasePriceCopper ?? null,
+          salePriceCopper:
+            current?.salePriceCopper ?? data.defaultSalePriceCopper ?? null,
+          recipe: current?.recipe ?? null,
+        }
+        set({ items: { ...items, [itemId]: item } })
+        return { success: true, itemId, created: current === undefined }
       },
 
       replaceData: (data) => {

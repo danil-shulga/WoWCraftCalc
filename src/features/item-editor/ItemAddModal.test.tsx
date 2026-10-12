@@ -29,6 +29,7 @@ function ModalHarness() {
           catalog={{}}
           onSave={vi.fn()}
           onImport={vi.fn()}
+          onAddReferenceItem={vi.fn()}
           onSuccess={vi.fn()}
           onClose={() => {
             setIsOpen(false)
@@ -42,6 +43,7 @@ function ModalHarness() {
 async function openModal(user: ReturnType<typeof userEvent.setup>) {
   render(<ModalHarness />)
   await user.click(screen.getByRole('button', { name: 'Добавить' }))
+  await user.click(screen.getByRole('button', { name: 'Импорт из Wowhead' }))
 }
 
 describe('ItemAddModal', () => {
@@ -73,6 +75,7 @@ describe('ItemAddModal', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Добавить' })).toHaveFocus()
     await user.click(screen.getByRole('button', { name: 'Добавить' }))
+    await user.click(screen.getByRole('button', { name: 'Импорт из Wowhead' }))
     expect(screen.getByLabelText(urlLabel)).toBeVisible()
     expect(screen.getByLabelText(urlLabel)).toHaveValue('')
     await user.click(screen.getByRole('button', { name: 'Добавить вручную' }))

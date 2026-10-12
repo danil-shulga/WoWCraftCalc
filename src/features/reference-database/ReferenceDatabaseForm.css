@@ -1,0 +1,129 @@
+.reference-db {
+  gap: 14px;
+}
+.reference-db__intro {
+  margin: 0;
+  color: var(--muted);
+}
+.reference-db__results {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+.reference-db__result {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.reference-db__result[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--panel-raised);
+}
+.reference-db__result > span {
+  overflow-wrap: anywhere;
+}
+.reference-db__result small {
+  display: block;
+  color: var(--muted);
+}
+.reference-db__pages {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+.reference-db__pages > span {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.reference-db__review {
+  display: grid;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.reference-db__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.reference-db__item h3 {
+  margin: 0;
+}
+.reference-db__product {
+  gap: 12px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.reference-db__product > div {
+  min-width: 0;
+}
+.reference-db__product .item-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 7px;
+}
+.reference-db__item small,
+.reference-db__review > small {
+  color: var(--muted);
+}
+.reference-db__ingredients {
+  display: grid;
+  gap: 6px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.reference-db__ingredients li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #101724;
+}
+.reference-db__ingredients .item-icon {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 5px;
+}
+.reference-db__ingredients strong {
+  flex-shrink: 0;
+  min-width: 3ch;
+  padding: 3px 8px;
+  border-radius: 5px;
+  background: #26324a;
+  text-align: center;
+  white-space: nowrap;
+}
+.reference-db__output {
+  display: grid;
+  gap: 6px;
+}
+.reference-db__output .number-input {
+  max-width: 180px;
+}
+.reference-db__warning {
+  padding: 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+}
+.reference-db__warning p {
+  margin: 0 0 6px;
+}

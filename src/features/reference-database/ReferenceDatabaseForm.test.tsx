@@ -1,0 +1,381 @@
+import { readFileSync } from 'node:fs'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import type { ComponentProps } from 'react'
+
+import { buildReferenceDatabaseIndex } from '../../domain/reference-database-index'
+import { parseReferenceDatabase } from '../../domain/reference-database.schema'
+import { ItemsPage } from '../../pages/ItemsPage'
+import { useCraftStore } from '../../store/useCraftStore'
+import { referenceFixture } from '../../test/reference-fixture'
+import * as loader from './reference-database-loader'
+import { ReferenceDatabaseForm } from './ReferenceDatabaseForm'
+
+function renderForm(props: Partial<ComponentProps<typeof ReferenceDatabaseForm>> = {}) {
+  const callbacks = {
+    onImport: vi.fn(useCraftStore.getState().importRecipe),
+    onAddItem: vi.fn(useCraftStore.getState().addReferenceItem),
+    onClose: vi.fn(),
+    onSuccess: vi.fn(),
+  }
+  const rendered = render(
+    <ReferenceDatabaseForm
+      catalog={useCraftStore.getState().items}
+      section="crafts"
+      itemLanguage="ru"
+      isActive
+      {...callbacks}
+      {...props}
+    />,
+  )
+  return { ...rendered, ...callbacks }
+}
+
+describe('вкладка базы', () => {
+  beforeEach(() => {
+    useCraftStore
+      .getState()
+      .replaceData({ items: {}, ownedProfessions: [], currencyDisplay: 'icons' })
+    vi.spyOn(loader, 'loadReferenceDatabase').mockResolvedValue(
+      buildReferenceDatabaseIndex(parseReferenceDatabase(referenceFixture())),
+    )
+  })
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('ищет RU/EN, фильтрует профессию и подтверждает отредактированный выход без лишних подписей', async () => {
+    const user = userEvent.setup()
+    const { onImport, onClose } = renderForm()
+    const search = await screen.findByRole('searchbox')
+    await user.type(search, 'DREAM')
+    await user.click(screen.getByRole('button', { name: /Венец Грёз/ }))
+    expect(screen.getByLabelText('Предметов за один крафт')).toHaveValue(3)
+    expect(screen.getByRole('combobox', { name: 'Рецепт' })).toHaveValue(
+      'Портняжное дело (Tailoring)',
+    )
+    expect(screen.queryByText(/Качество:|Привязка:|Рецепт #/)).not.toBeInTheDocument()
+    expect(
+      screen.queryByText(/Предположение из базы|Подтвердите фиксированное|Кандидат/),
+    ).not.toBeInTheDocument()
+    const preview = within(screen.getByRole('region', { name: 'Предпросмотр из базы' }))
+    expect(preview.queryByText('Портняжное дело (Tailoring)')).not.toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Инструменты' })).not.toBeInTheDocument()
+    expect(screen.queryByText(/инструмент/i)).not.toBeInTheDocument()
+    expect(
+      within(screen.getByRole('list', { name: 'Состав рецепта' })).getAllByRole(
+        'listitem',
+      ),
+    ).toHaveLength(1)
+    expect(useCraftStore.getState().items).toEqual({})
+    fireEvent.change(screen.getByLabelText('Предметов за один крафт'), {
+      target: { value: '2.5' },
+    })
+    await user.click(screen.getByRole('button', { name: 'Подтвердить импорт' }))
+    expect(screen.getByRole('alert')).toHaveTextContent('положительное целое')
+    expect(onImport).not.toHaveBeenCalled()
+    fireEvent.change(screen.getByLabelText('Предметов за один крафт'), {
+      target: { value: '7' },
+    })
+    await user.click(screen.getByRole('combobox', { name: 'Профессия' }))
+    await user.click(screen.getByRole('option', { name: 'Алхимия (Alchemy)' }))
+    expect(screen.getByText('Ничего не найдено')).toBeVisible()
+    await user.click(screen.getByRole('button', { name: 'Подтвердить импорт' }))
+    expect(onImport).toHaveBeenCalledWith(
+      expect.objectContaining({ outputQuantity: 7, profession: 'tailoring' }),
+    )
+    expect(onClose).toHaveBeenCalledOnce()
+  })
+
+  it('выбирает первый рецепт по умолчанию и позволяет сменить альтернативу', async () => {
+    const fixture = referenceFixture()
+    fixture.items['1'].recipeSpellIds.push(11)
+    const db = parseReferenceDatabase({
+      ...fixture,
+      recipes: {
+        ...fixture.recipes,
+        '11': {
+          ...fixture.recipes['10'],
+          spellId: 11,
+          output: {
+            ...fixture.recipes['10'].output,
+            baseQuantityCandidate: null,
+            variance: 2,
+          },
+        },
+      },
+    })
+    vi.mocked(loader.loadReferenceDatabase).mockResolvedValue(
+      buildReferenceDatabaseIndex(db),
+    )
+    const user = userEvent.setup()
+    renderForm()
+    await user.click(await screen.findByRole('button', { name: /Венец Грёз/ }))
+    expect(screen.getByRole('button', { name: 'Подтвердить импорт' })).toBeVisible()
+    expect(screen.getByLabelText('Предметов за один крафт')).toHaveValue(3)
+    await user.click(screen.getByRole('combobox', { name: 'Рецепт' }))
+    const options = screen.getAllByRole('option', { name: 'Портняжное дело (Tailoring)' })
+    expect(options).toHaveLength(2)
+    const alternative = options[1]
+    if (!alternative) throw new Error('Нет альтернативного рецепта')
+    await user.click(alternative)
+    expect(screen.getByLabelText('Предметов за один крафт')).toHaveValue(1)
+    expect(screen.queryByText(/По умолчанию|Переменный выход/)).not.toBeInTheDocument()
+  })
+
+  it('предпочитает рецепт выбранной профессии среди альтернатив', async () => {
+    const fixture = referenceFixture()
+    fixture.items['1'].recipeSpellIds.push(11)
+    const db = parseReferenceDatabase({
+      ...fixture,
+      professions: {
+        ...fixture.professions,
+        '171': { id: 'alchemy', skillLineId: 171, nameRu: 'Алхимия' },
+      },
+      recipes: {
+        ...fixture.recipes,
+        '11': {
+          ...fixture.recipes['10'],
+          spellId: 11,
+          profession: 'alchemy',
+          skillLineId: 171,
+          output: { ...fixture.recipes['10'].output, quantity: 5 },
+        },
+      },
+    })
+    vi.mocked(loader.loadReferenceDatabase).mockResolvedValue(
+      buildReferenceDatabaseIndex(db),
+    )
+    const user = userEvent.setup()
+    const { onImport } = renderForm()
+    await user.click(await screen.findByRole('combobox', { name: 'Профессия' }))
+    await user.click(screen.getByRole('option', { name: 'Алхимия (Alchemy)' }))
+    await user.click(screen.getByRole('button', { name: /Венец Грёз/ }))
+    expect(screen.getByRole('combobox', { name: 'Рецепт' })).toHaveValue(
+      'Алхимия (Alchemy)',
+    )
+    expect(screen.getByLabelText('Предметов за один крафт')).toHaveValue(5)
+    await user.click(screen.getByRole('button', { name: 'Подтвердить импорт' }))
+    expect(onImport).toHaveBeenCalledWith(
+      expect.objectContaining({ outputQuantity: 5, profession: 'alchemy' }),
+    )
+  })
+
+  it('добавляет реагент без рецепта и не предлагает результаты крафтов в этом разделе', async () => {
+    const user = userEvent.setup()
+    const { onAddItem, onImport } = renderForm({ section: 'reagents' })
+    await user.click(await screen.findByRole('button', { name: /Ткань/ }))
+    expect(screen.queryByRole('button', { name: /Венец/ })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Добавить реагент' }))
+    expect(onAddItem).toHaveBeenCalledOnce()
+    expect(onImport).not.toHaveBeenCalled()
+    expect(Object.values(useCraftStore.getState().items)[0]).toMatchObject({
+      sections: ['reagents'],
+      recipe: null,
+      purchasePriceCopper: 0,
+    })
+  })
+
+  it('выбирает рецепт изготавливаемого реагента по умолчанию и позволяет добавить без рецепта', async () => {
+    const fixture = referenceFixture()
+    const db = parseReferenceDatabase({
+      ...fixture,
+      items: {
+        ...fixture.items,
+        '3': {
+          ...fixture.items['1'],
+          itemId: 3,
+          names: { ru: 'Другой крафт', en: null },
+          recipeSpellIds: [11],
+        },
+      },
+      recipes: {
+        ...fixture.recipes,
+        '11': {
+          ...fixture.recipes['10'],
+          spellId: 11,
+          productItemId: 3,
+          reagents: [{ itemId: 1, quantity: 1 }],
+        },
+      },
+    })
+    vi.mocked(loader.loadReferenceDatabase).mockResolvedValue(
+      buildReferenceDatabaseIndex(db),
+    )
+    const user = userEvent.setup()
+    const { onAddItem } = renderForm({ section: 'reagents' })
+    await user.click(await screen.findByRole('button', { name: /Венец Грёз/ }))
+    expect(screen.getByRole('button', { name: 'Подтвердить импорт' })).toBeVisible()
+    expect(screen.getByRole('combobox', { name: 'Рецепт' })).toHaveValue(
+      'Портняжное дело (Tailoring)',
+    )
+    await user.click(screen.getByRole('combobox', { name: 'Рецепт' }))
+    await user.click(
+      screen.getByRole('option', { name: 'Только реагент, без импорта рецепта' }),
+    )
+    expect(screen.getByRole('button', { name: 'Добавить реагент' })).toBeVisible()
+    await user.click(screen.getByRole('button', { name: 'Добавить реагент' }))
+    expect(onAddItem).toHaveBeenCalledOnce()
+    expect(Object.values(useCraftStore.getState().items)[0]).toMatchObject({
+      sections: ['reagents'],
+      recipe: null,
+    })
+    await user.click(screen.getByRole('combobox', { name: 'Рецепт' }))
+    await user.click(screen.getByRole('option', { name: 'Портняжное дело (Tailoring)' }))
+    await user.click(screen.getByRole('button', { name: 'Подтвердить импорт' }))
+    expect(
+      Object.values(useCraftStore.getState().items).find(
+        (item) => item.source?.wowheadItemId === 1,
+      ),
+    ).toMatchObject({ sections: ['reagents', 'crafts'], recipe: { outputQuantity: 3 } })
+  })
+
+  it('разрешает повтор загрузки после ошибки и не загружает неактивную вкладку', async () => {
+    const user = userEvent.setup()
+    vi.mocked(loader.loadReferenceDatabase).mockRejectedValueOnce(
+      new Error('Сеть недоступна'),
+    )
+    const rendered = renderForm({ isActive: false })
+    expect(loader.loadReferenceDatabase).not.toHaveBeenCalled()
+    rendered.rerender(
+      <ReferenceDatabaseForm
+        catalog={{}}
+        section="crafts"
+        itemLanguage="ru"
+        isActive
+        onImport={rendered.onImport}
+        onAddItem={rendered.onAddItem}
+        onSuccess={rendered.onSuccess}
+        onClose={rendered.onClose}
+      />,
+    )
+    expect(await screen.findByRole('alert')).toHaveTextContent('Сеть недоступна')
+    await user.click(screen.getByRole('button', { name: 'Повторить загрузку' }))
+    expect(await screen.findByRole('searchbox')).toBeVisible()
+  })
+
+  it('закрытие одного потребителя не мешает второму получить общий запрос', async () => {
+    let resolve: (index: ReturnType<typeof buildReferenceDatabaseIndex>) => void = () => {
+      throw new Error('Нет запроса')
+    }
+    const promise = new Promise<ReturnType<typeof buildReferenceDatabaseIndex>>(
+      (callback) => {
+        resolve = callback
+      },
+    )
+    vi.mocked(loader.loadReferenceDatabase).mockReturnValue(promise)
+    const first = renderForm()
+    first.unmount()
+    const second = renderForm()
+    await act(async () => {
+      resolve(buildReferenceDatabaseIndex(parseReferenceDatabase(referenceFixture())))
+      await promise
+    })
+    expect(screen.getByRole('searchbox')).toBeVisible()
+    expect(first.onImport).not.toHaveBeenCalled()
+    expect(second.onImport).not.toHaveBeenCalled()
+    expect(useCraftStore.getState().items).toEqual({})
+  })
+
+  it('сохраняет предпросмотр при ошибке графа и заменяет сломанную картинку заглушкой', async () => {
+    const fixture = referenceFixture()
+    fixture.items['1'].iconUrl = 'https://example.com/broken.jpg'
+    vi.mocked(loader.loadReferenceDatabase).mockResolvedValue(
+      buildReferenceDatabaseIndex(parseReferenceDatabase(fixture)),
+    )
+    const user = userEvent.setup()
+    const onClose = vi.fn()
+    renderForm({
+      onImport: () => ({ success: false, error: 'Циклическая зависимость' }),
+      onClose,
+    })
+    await user.click(await screen.findByRole('button', { name: /Венец Грёз/ }))
+    const icon = within(
+      screen.getByRole('region', { name: 'Предпросмотр из базы' }),
+    ).getByTitle('Иконка: Венец Грёз')
+    expect(icon).toHaveAttribute('loading', 'lazy')
+    fireEvent.error(icon)
+    expect(icon.getAttribute('src')).toMatch(/item-placeholder.svg$/)
+    await user.click(screen.getByRole('button', { name: 'Подтвердить импорт' }))
+    expect(screen.getByRole('alert')).toHaveTextContent('Циклическая')
+    expect(onClose).not.toHaveBeenCalled()
+  })
+
+  it('ограничивает выдачу страницами по 50 и сбрасывает страницу при поиске', async () => {
+    const db = parseReferenceDatabase(
+      JSON.parse(
+        readFileSync('public/data/craftcalc-db.1.60.1.70338.json', 'utf8'),
+      ) as unknown,
+    )
+    vi.mocked(loader.loadReferenceDatabase).mockResolvedValue(
+      buildReferenceDatabaseIndex(db),
+    )
+    const user = userEvent.setup()
+    renderForm()
+    const group = await screen.findByRole('group', { name: 'Результаты поиска в базе' })
+    expect(within(group).getAllByRole('button')).toHaveLength(50)
+    await user.click(screen.getByRole('button', { name: 'Далее' }))
+    expect(screen.getByRole('status')).toHaveTextContent('Страница 2')
+    await user.type(screen.getByRole('searchbox'), 'Dreamweave Circlet')
+    expect(within(group).getAllByRole('button')).toHaveLength(1)
+    expect(screen.getByRole('status')).toHaveTextContent('Страница 1')
+  })
+
+  it('проводит сценарий реальной базы: импорт, цены, повтор и восстановление', async () => {
+    const db = parseReferenceDatabase(
+      JSON.parse(
+        readFileSync('public/data/craftcalc-db.1.60.1.70338.json', 'utf8'),
+      ) as unknown,
+    )
+    vi.mocked(loader.loadReferenceDatabase).mockResolvedValue(
+      buildReferenceDatabaseIndex(db),
+    )
+    const user = userEvent.setup()
+    render(<ItemsPage section="crafts" />)
+    const opener = screen.getByRole('button', { name: '+ Добавить крафт' })
+    const choose = async () => {
+      await user.click(opener)
+      await user.type(
+        await screen.findByRole('searchbox', { name: 'Поиск по названию предмета' }),
+        'Венец из ткани Грёз',
+      )
+      await user.click(screen.getByRole('button', { name: /Венец из ткани Грез/ }))
+    }
+    await choose()
+    await user.click(screen.getByRole('button', { name: 'Подтвердить импорт' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(opener).toHaveFocus()
+    const item = Object.values(useCraftStore.getState().items).find(
+      (entry) => entry.source?.wowheadItemId === 10041,
+    )
+    if (!item) throw new Error('Нет венца')
+    expect(item.recipe?.reagents).toHaveLength(6)
+    act(() => {
+      useCraftStore.getState().setItemPrice(item.id, 'purchasePriceCopper', 0)
+      useCraftStore.getState().setItemPrice(item.id, 'salePriceCopper', 999)
+    })
+    await user.click(opener)
+    const dialog = screen.getByRole('dialog')
+    await user.type(await within(dialog).findByRole('searchbox'), 'Dreamweave Circlet')
+    await user.click(within(dialog).getByRole('button', { name: /Венец из ткани Грез/ }))
+    expect(screen.getByLabelText('Предметов за один крафт')).toHaveValue(
+      item.recipe?.outputQuantity,
+    )
+    await user.click(screen.getByRole('button', { name: 'Подтвердить импорт' }))
+    expect(useCraftStore.getState().items[item.id]).toMatchObject({
+      purchasePriceCopper: 0,
+      salePriceCopper: 999,
+    })
+    const saved = localStorage.getItem('craft-calc-data')
+    expect(saved).not.toContain('craftcalc-reference-database')
+    act(() => {
+      useCraftStore.setState({ items: {} })
+    })
+    localStorage.setItem('craft-calc-data', saved ?? '')
+    await act(async () => {
+      await useCraftStore.persist.rehydrate()
+    })
+    expect(screen.getByText('Венец из ткани Грез')).toBeVisible()
+    expect(Object.keys(useCraftStore.getState().items)).toHaveLength(7)
+  })
+})

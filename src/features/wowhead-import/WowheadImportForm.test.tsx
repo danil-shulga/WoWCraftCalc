@@ -20,6 +20,7 @@ function ImportHarness(
       title="Добавить крафт"
       defaultSection="crafts"
       onSave={vi.fn()}
+      onAddReferenceItem={vi.fn()}
       onSuccess={vi.fn()}
       {...props}
     />
@@ -42,6 +43,7 @@ function mockTooltip(
 }
 
 async function loadRecipe(user: ReturnType<typeof userEvent.setup>) {
+  await user.click(screen.getByRole('button', { name: 'Импорт из Wowhead' }))
   await user.type(
     screen.getByLabelText('Ссылка на рецепт Wowhead Classic, TBC или Forever'),
     'https://wowhead.com/tbc/ru/spell=44391',
@@ -361,6 +363,7 @@ describe('проверка импорта Wowhead', () => {
     const before = useCraftStore.getState().items
     const saved = localStorage.getItem('craft-calc-data')
     render(<ImportHarness catalog={before} onImport={onImport} onClose={vi.fn()} />)
+    await user.click(screen.getByRole('button', { name: 'Импорт из Wowhead' }))
     await user.type(screen.getByRole('textbox'), 'https://wowhead.com/tbc/ru/spell=44391')
     await user.click(screen.getByRole('button', { name: 'Загрузить рецепт' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('Повреждён состав')
@@ -402,6 +405,7 @@ describe('проверка импорта Wowhead', () => {
     const { unmount } = render(
       <ImportHarness catalog={{}} onImport={onImport} onClose={onClose} />,
     )
+    await user.click(screen.getByRole('button', { name: 'Импорт из Wowhead' }))
     await user.type(
       screen.getByRole('textbox'),
       'https://wowhead.com/classic/ru/spell=25146',
