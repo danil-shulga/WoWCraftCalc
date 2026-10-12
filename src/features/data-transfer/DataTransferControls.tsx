@@ -1,4 +1,5 @@
 import { Button } from '../../components/ui/Button/Button'
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog/ConfirmDialog'
 import { useRef, useState, type ChangeEvent } from 'react'
 
 import type { PersistedCraftData } from '../../domain/item.types'
@@ -20,6 +21,7 @@ export function DataTransferControls({
 }: DataTransferControlsProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [message, setMessage] = useState<string | null>(null)
+  const [pendingImport, setPendingImport] = useState<PersistedCraftData | null>(null)
 
   const exportData = () => {
     const blob = new Blob([createExportJson(data)], {
@@ -56,17 +58,16 @@ export function DataTransferControls({
       return
     }
 
-    if (
-      !window.confirm(
-        recoveryRequired
-          ? 'Импорт заменит исходную запись в браузере, все три каталога и общие настройки. Продолжить?'
-          : 'Импорт заменит все три каталога, их предметы, рецепты и общие настройки. Продолжить?',
-      )
-    ) {
+    setPendingImport(result.data)
+  }
+
+  const confirmImport = () => {
+    if (pendingImport === null) {
       return
     }
 
-    const error = onImport(result.data)
+    const error = onImport(pendingImport)
+    setPendingImport(null)
     setMessage(
       error === null ? 'Данные успешно импортированы' : `Импорт не выполнен: ${error}`,
     )
@@ -116,6 +117,21 @@ export function DataTransferControls({
       />
       {message === null ? null : (
         <output className="data-transfer__message">{message}</output>
+      )}
+      {pendingImport === null ? null : (
+        <ConfirmDialog
+          title="Импорт JSON"
+          message={
+            recoveryRequired
+              ? 'Импорт заменит исходную запись в браузере, все три каталога и общие настройки. Продолжить?'
+              : 'Импорт заменит все три каталога, их предметы, рецепты и общие настройки. Продолжить?'
+          }
+          confirmLabel="Импортировать"
+          onCancel={() => {
+            setPendingImport(null)
+          }}
+          onConfirm={confirmImport}
+        />
       )}
     </div>
   )

@@ -108,7 +108,7 @@ describe('восстановление сохранения в App', () => {
 
   it('сохраняет оригинал при неверном импорте и разрешает повторную попытку', async () => {
     const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true)
-    const { upload } = setup()
+    const { user, upload } = setup()
     await upload('{invalid')
     expect(screen.getByRole('status')).toHaveTextContent(
       'Файл не является корректным JSON',
@@ -118,6 +118,10 @@ describe('восстановление сохранения в App', () => {
     expect(screen.getByRole('alert')).toBeVisible()
 
     await upload(createExportJson(backupData))
+    expect(screen.getByRole('dialog', { name: 'Импорт JSON' })).toBeVisible()
+    expect(localStorage.getItem(storageKey)).toBe(originalRecord)
+    expect(confirm).not.toHaveBeenCalled()
+    await user.click(screen.getByRole('button', { name: 'Импортировать' }))
     expect(screen.getByRole('status')).toHaveTextContent('Данные успешно импортированы')
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
@@ -127,10 +131,14 @@ describe('восстановление сохранения в App', () => {
     const { user, upload } = setup()
     if (action === 'импорт') {
       await upload(createExportJson(backupData))
+      expect(screen.getByRole('dialog')).toHaveTextContent('исходную запись')
+      await user.click(screen.getByRole('button', { name: 'Отмена' }))
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+      expect(confirm).not.toHaveBeenCalled()
     } else {
       await user.click(screen.getByRole('button', { name: 'Сбросить данные' }))
+      expect(confirm).toHaveBeenCalledWith(expect.stringContaining('исходную запись'))
     }
-    expect(confirm).toHaveBeenCalledWith(expect.stringContaining('исходную запись'))
     expect(localStorage.getItem(storageKey)).toBe(originalRecord)
     expect(
       useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items,
@@ -140,9 +148,9 @@ describe('восстановление сохранения в App', () => {
   })
 
   it('восстанавливает каталог и настройки и убирает предупреждение', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(true)
-    const { upload } = setup()
+    const { user, upload } = setup()
     await upload(createExportJson(backupData))
+    await user.click(screen.getByRole('button', { name: 'Импортировать' }))
 
     expect(useCraftStore.getState()).toMatchObject(backupData)
     expect(screen.getByText('Восстановленная ткань')).toBeVisible()
@@ -166,6 +174,7 @@ describe('восстановление сохранения в App', () => {
       const { user, upload } = setup()
       if (action === 'импорт') {
         await upload(createExportJson(backupData))
+        await user.click(screen.getByRole('button', { name: 'Импортировать' }))
       } else {
         await user.click(screen.getByRole('button', { name: 'Сбросить данные' }))
       }
