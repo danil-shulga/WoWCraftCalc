@@ -1,6 +1,6 @@
+import { IconButton } from '../IconButton/IconButton'
 import { useEffect, useId, useRef, type ReactNode } from 'react'
 
-import '../IconButton.css'
 import './Modal.css'
 
 interface ModalProps {
@@ -132,14 +132,9 @@ export function Modal({ title, subtitle, children, onClose }: ModalProps) {
             <h2 id={titleId}>{title}</h2>
             {subtitle ? <small>{subtitle}</small> : null}
           </div>
-          <button
-            className="icon-button"
-            type="button"
-            aria-label="Закрыть"
-            onClick={onClose}
-          >
+          <IconButton type="button" aria-label="Закрыть" onClick={onClose}>
             ×
-          </button>
+          </IconButton>
         </header>
         {children}
       </section>

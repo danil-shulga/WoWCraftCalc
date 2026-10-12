@@ -1,6 +1,6 @@
+import { Button } from '../Button/Button'
 import type { ReactNode } from 'react'
 import { Modal } from '../Modal/Modal'
-import '../Button.css'
 import './ConfirmDialog.css'
 
 interface ConfirmDialogProps {
@@ -25,21 +25,12 @@ export function ConfirmDialog({
       <div className="confirm-dialog">
         <p>{message}</p>
         <footer className="confirm-dialog__actions">
-          <button
-            className="button button--secondary"
-            type="button"
-            autoFocus
-            onClick={onCancel}
-          >
+          <Button variant="secondary" type="button" autoFocus onClick={onCancel}>
             {cancelLabel}
-          </button>
-          <button
-            className="button confirm-dialog__danger-button"
-            type="button"
-            onClick={onConfirm}
-          >
+          </Button>
+          <Button variant="danger" type="button" onClick={onConfirm}>
             {confirmLabel}
-          </button>
+          </Button>
         </footer>
       </div>
     </Modal>

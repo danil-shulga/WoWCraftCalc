@@ -1,3 +1,5 @@
+import { FormError } from '../../components/ui/FormError/FormError'
+import { Button } from '../../components/ui/Button/Button'
 import { useEffect, useRef, useState } from 'react'
 
 import { Modal } from '../../components/ui/Modal/Modal'
@@ -105,18 +107,14 @@ export function ItemEditModal({
             onChange={setDraft}
             nameInputRef={nameInputRef}
           />
-          {error === null ? null : (
-            <p className="form-error" role="alert">
-              {error}
-            </p>
-          )}
+          <FormError message={error} />
           <footer className="editor-form__actions">
-            <button className="button button--secondary" type="button" onClick={close}>
+            <Button variant="secondary" type="button" onClick={close}>
               Отмена
-            </button>
-            <button className="button button--primary" type="submit">
+            </Button>
+            <Button variant="primary" type="submit">
               Сохранить
-            </button>
+            </Button>
           </footer>
         </form>
       </div>

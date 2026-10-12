@@ -1,3 +1,5 @@
+import { FormError } from '../../components/ui/FormError/FormError'
+import { Button } from '../../components/ui/Button/Button'
 import { useDraftGuard } from '../../app/draft-guard'
 import { useEffect, useRef, useState } from 'react'
 
@@ -69,8 +71,8 @@ function ItemNamesLoaderForVersion({
       ) : null}
       {updates === null ? (
         <>
-          <button
-            className="button button--secondary"
+          <Button
+            variant="secondary"
             type="button"
             disabled={isLoading || pending.length === 0}
             onClick={() => {
@@ -78,7 +80,7 @@ function ItemNamesLoaderForVersion({
             }}
           >
             {isLoading ? 'Загрузка названий…' : 'Загрузить недостающие названия'}
-          </button>
+          </Button>
         </>
       ) : (
         <>
@@ -99,8 +101,8 @@ function ItemNamesLoaderForVersion({
             ))}
           </ul>
           <div className="user-settings__language-options">
-            <button
-              className="button button--primary"
+            <Button
+              variant="primary"
               type="button"
               onClick={() => {
                 const result = onApply(updates)
@@ -111,25 +113,21 @@ function ItemNamesLoaderForVersion({
               }}
             >
               Сохранить названия
-            </button>
-            <button
-              className="button button--secondary"
+            </Button>
+            <Button
+              variant="secondary"
               type="button"
               onClick={() => {
                 setUpdates(null)
               }}
             >
               Отмена
-            </button>
+            </Button>
           </div>
         </>
       )}
       {message === null ? null : <p role="status">{message}</p>}
-      {error === null ? null : (
-        <p className="form-error" role="alert">
-          {error}
-        </p>
-      )}
+      <FormError message={error} />
     </fieldset>
   )
 }

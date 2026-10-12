@@ -1,3 +1,4 @@
+import { Button } from '../Button/Button'
 import { useEffect, useRef, useState } from 'react'
 
 import './NumberInput.css'
@@ -111,7 +112,8 @@ export function NumberInput({
         }}
       />
       <span className="number-input__controls">
-        <button
+        <Button
+          variant="plain"
           type="button"
           aria-label="Увеличить значение"
           disabled={disabled || (max !== undefined && value >= max)}
@@ -120,8 +122,9 @@ export function NumberInput({
           }}
         >
           ▲
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="plain"
           type="button"
           aria-label="Уменьшить значение"
           disabled={disabled || (min !== undefined && value <= min)}
@@ -130,7 +133,7 @@ export function NumberInput({
           }}
         >
           ▼
-        </button>
+        </Button>
       </span>
     </div>
   )

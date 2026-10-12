@@ -1,8 +1,8 @@
+import { Button } from '../../components/ui/Button/Button'
 import { useRef, useState, type ChangeEvent } from 'react'
 
 import type { PersistedCraftData } from '../../domain/item.types'
 import { createExportJson, parseImportedData } from '../../store/persistence'
-import '../../components/ui/Button.css'
 import './DataTransferControls.css'
 
 interface DataTransferControlsProps {
@@ -74,21 +74,21 @@ export function DataTransferControls({
 
   return (
     <div className="data-transfer">
-      <button className="button button--secondary" type="button" onClick={exportData}>
+      <Button variant="secondary" type="button" onClick={exportData}>
         Экспорт JSON
-      </button>
-      <button
-        className="button button--secondary"
+      </Button>
+      <Button
+        variant="secondary"
         type="button"
         onClick={() => {
           inputRef.current?.click()
         }}
       >
         Импорт JSON
-      </button>
+      </Button>
       {recoveryRequired && onReset !== undefined ? (
-        <button
-          className="button button--secondary"
+        <Button
+          variant="secondary"
           type="button"
           onClick={() => {
             if (
@@ -103,7 +103,7 @@ export function DataTransferControls({
           }}
         >
           Сбросить данные
-        </button>
+        </Button>
       ) : null}
       <input
         ref={inputRef}

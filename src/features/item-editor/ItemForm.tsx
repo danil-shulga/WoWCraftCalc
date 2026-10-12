@@ -1,8 +1,9 @@
+import { FormError } from '../../components/ui/FormError/FormError'
+import { Button } from '../../components/ui/Button/Button'
 import { useState, type SyntheticEvent } from 'react'
 
 import type { Item, ItemSection } from '../../domain/item.types'
 import type { ItemInput } from '../../store/useCraftStore'
-import '../../components/ui/Button.css'
 import '../EditorForm.css'
 import { ItemDescriptionFields } from './ItemDescriptionFields'
 import {
@@ -41,15 +42,15 @@ export function ItemForm({
     <form className="editor-form" onSubmit={handleSubmit}>
       <ItemDescriptionFields draft={draft} onChange={setDraft} />
 
-      {error === null ? null : <p className="form-error">{error}</p>}
+      <FormError message={error} announce={false} />
 
       <footer className="editor-form__actions">
-        <button className="button button--secondary" type="button" onClick={onCancel}>
+        <Button variant="secondary" type="button" onClick={onCancel}>
           Отмена
-        </button>
-        <button className="button button--primary" type="submit">
+        </Button>
+        <Button variant="primary" type="submit">
           Сохранить
-        </button>
+        </Button>
       </footer>
     </form>
   )

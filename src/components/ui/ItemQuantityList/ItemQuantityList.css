@@ -1,0 +1,28 @@
+.item-quantity-list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item-quantity-list > li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--field);
+}
+
+.item-quantity-list__quantity {
+  flex-shrink: 0;
+  min-width: 3ch;
+  padding: 3px 8px;
+  border-radius: 5px;
+  background: var(--panel-raised);
+  text-align: center;
+  white-space: nowrap;
+}

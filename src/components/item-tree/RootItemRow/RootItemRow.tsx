@@ -1,11 +1,11 @@
+import { ItemExpandButton } from '../ItemExpandButton/ItemExpandButton'
+import { IconButton } from '../../ui/IconButton/IconButton'
 import type { Item, ItemId, ItemPriceField } from '../../../domain/item.types'
 import { getItemName } from '../../../domain/item-names'
 import type { ItemLanguage } from '../../../domain/user-settings'
 import { InlineMoneyInput } from '../../ui/InlineMoneyInput/InlineMoneyInput'
-import { ItemIcon } from '../../ui/ItemIcon/ItemIcon'
-import { ItemName } from '../../ui/ItemName/ItemName'
+import { ItemIdentity } from '../../ui/ItemIdentity/ItemIdentity'
 import { MoneyDisplay } from '../../ui/MoneyDisplay/MoneyDisplay'
-import '../../ui/IconButton.css'
 import './RootItemRow.css'
 
 interface RootItemRowProps {
@@ -41,28 +41,24 @@ export function RootItemRow({
   onEditItem,
   onDeleteItem,
 }: RootItemRowProps) {
-  const hasRecipe = item.recipe !== null
   const itemName = getItemName(item, itemLanguage)
 
   return (
     <article className="root-item-row">
-      <button
-        className="expand-button"
-        type="button"
-        aria-label={isExpanded ? 'Свернуть рецепт' : 'Развернуть рецепт'}
-        disabled={!hasRecipe || hasCycle}
-        onClick={onToggleExpanded}
-      >
-        {hasRecipe ? (isExpanded ? '▾' : '▸') : '·'}
-      </button>
+      <ItemExpandButton
+        hasRecipe={item.recipe !== null}
+        hasCycle={hasCycle}
+        isExpanded={isExpanded}
+        onToggle={onToggleExpanded}
+      />
 
-      <ItemIcon iconUrl={item.iconUrl} itemName={itemName} />
-
-      <div className="item-row__identity">
-        <strong>
-          <ItemName item={item} language={itemLanguage} />
-        </strong>
-      </div>
+      <ItemIdentity
+        item={item}
+        language={itemLanguage}
+        nameAs="strong"
+        truncate
+        className="item-row__identity"
+      />
 
       <dl className="root-item-row__prices item-row__prices">
         <div>
@@ -131,8 +127,7 @@ export function RootItemRow({
       </dl>
 
       <div className="item-row__actions">
-        <button
-          className="icon-button"
+        <IconButton
           type="button"
           title="Редактировать предмет"
           aria-label={`Редактировать ${itemName}`}
@@ -141,9 +136,9 @@ export function RootItemRow({
           }}
         >
           ✎
-        </button>
-        <button
-          className="icon-button icon-button--danger"
+        </IconButton>
+        <IconButton
+          variant="danger"
           type="button"
           title="Удалить предмет"
           aria-label={`Удалить ${itemName}`}
@@ -152,7 +147,7 @@ export function RootItemRow({
           }}
         >
           ×
-        </button>
+        </IconButton>
       </div>
     </article>
   )

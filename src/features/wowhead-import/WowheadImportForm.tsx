@@ -1,11 +1,13 @@
+import { ItemQuantityList } from '../../components/ui/ItemQuantityList/ItemQuantityList'
+import { FormError } from '../../components/ui/FormError/FormError'
+import { Button } from '../../components/ui/Button/Button'
 import { useDraftGuard } from '../../app/draft-guard'
 import { useEffect, useId, useRef, useState, type SyntheticEvent } from 'react'
 
 import { NumberInput } from '../../components/ui/NumberInput/NumberInput'
-import { ItemIcon } from '../../components/ui/ItemIcon/ItemIcon'
+import { ItemIdentity } from '../../components/ui/ItemIdentity/ItemIdentity'
 import { SearchableSelect } from '../../components/ui/SearchableSelect/SearchableSelect'
 import type { Item, ItemCatalog } from '../../domain/item.types'
-import { getItemName } from '../../domain/item-names'
 import type { ItemLanguage } from '../../domain/user-settings'
 import { GAME_VERSION_REGISTRY, professionOptionsFor } from '../../domain/game-version'
 import type { GameVersion } from '../../domain/game-version'
@@ -14,7 +16,6 @@ import {
   type RecipeImportData,
   type RecipeImportResult,
 } from '../../store/useCraftStore'
-import '../../components/ui/Button.css'
 import '../EditorForm.css'
 import { fetchWowheadRecipe, type WowheadRecipeImport } from './wowhead-import'
 import './WowheadImportForm.css'
@@ -57,7 +58,6 @@ function RecipeReview({
   targetItem,
 }: RecipeReviewProps) {
   const PROFESSION_OPTIONS = professionOptionsFor(gameVersion)
-  const otherLanguage = itemLanguage === 'ru' ? 'en' : 'ru'
   const outputId = useId()
   const [savedRecipe] = useState(() =>
     targetItem === undefined
@@ -102,47 +102,31 @@ function RecipeReview({
   return (
     <form className="editor-form wowhead-import" noValidate onSubmit={handleConfirm}>
       <section className="wowhead-import__review" aria-label="Проверка рецепта">
-        <div className="wowhead-import__product">
-          <ItemIcon
-            iconUrl={
+        <ItemIdentity
+          className="wowhead-import__product"
+          item={{
+            ...recipe.product,
+            iconUrl:
               recipe.product.iconUrl ||
-              (findImportedItem(catalog, recipe.product)?.iconUrl ?? '')
-            }
-            itemName={getItemName(recipe.product, itemLanguage)}
-          />
-          <div>
-            <h3>{getItemName(recipe.product, itemLanguage)}</h3>
-            {recipe.product.names?.[otherLanguage] &&
-            recipe.product.names[otherLanguage] !==
-              getItemName(recipe.product, itemLanguage) ? (
-              <small>{recipe.product.names[otherLanguage]}</small>
-            ) : null}
-          </div>
-        </div>
-        <ul aria-label="Реагенты">
-          {recipe.reagents.map((reagent, index) => (
-            <li key={`${reagent.wowheadItemId.toString()}-${index.toString()}`}>
-              <span className="wowhead-import__reagent">
-                <ItemIcon
-                  iconUrl={
-                    reagent.iconUrl || (findImportedItem(catalog, reagent)?.iconUrl ?? '')
-                  }
-                  itemName={getItemName(reagent, itemLanguage)}
-                />
-                <span>
-                  {getItemName(reagent, itemLanguage)}
-                  {reagent.names?.[otherLanguage] &&
-                  reagent.names[otherLanguage] !== getItemName(reagent, itemLanguage) ? (
-                    <small className="wowhead-import__names">
-                      {reagent.names[otherLanguage]}
-                    </small>
-                  ) : null}
-                </span>
-              </span>
-              <strong>× {reagent.quantity}</strong>
-            </li>
-          ))}
-        </ul>
+              (findImportedItem(catalog, recipe.product)?.iconUrl ?? ''),
+          }}
+          language={itemLanguage}
+          iconSize="medium"
+          nameAs="h3"
+        />
+        <ItemQuantityList
+          label="Реагенты"
+          language={itemLanguage}
+          items={recipe.reagents.map((reagent, index) => ({
+            key: `${reagent.wowheadItemId.toString()}-${index.toString()}`,
+            quantity: reagent.quantity,
+            item: {
+              ...reagent,
+              iconUrl:
+                reagent.iconUrl || (findImportedItem(catalog, reagent)?.iconUrl ?? ''),
+            },
+          }))}
+        />
       </section>
       <div className="wowhead-import__parameters">
         <div className="wowhead-import__output">
@@ -171,18 +155,14 @@ function RecipeReview({
         </div>
       </div>
       <small>Цены, вложенные рецепты и ручной выбор покупки/крафта сохранятся.</small>
-      {error === null ? null : (
-        <p className="form-error" role="alert">
-          {error}
-        </p>
-      )}
+      <FormError message={error} />
       <footer className="editor-form__actions">
-        <button className="button button--secondary" type="button" onClick={onClose}>
+        <Button variant="secondary" type="button" onClick={onClose}>
           Отмена
-        </button>
-        <button className="button button--primary" type="submit">
+        </Button>
+        <Button variant="primary" type="submit">
           Подтвердить импорт
-        </button>
+        </Button>
       </footer>
     </form>
   )
@@ -284,18 +264,14 @@ function WowheadImportFormForVersion({
             Загрузим названия RU и EN и рецепт для проверки состава, выхода и профессии.
             Каталог изменится после подтверждения.
           </small>
-          {error === null ? null : (
-            <p className="form-error" role="alert">
-              {error}
-            </p>
-          )}
+          <FormError message={error} />
           <footer className="editor-form__actions">
-            <button className="button button--secondary" type="button" onClick={close}>
+            <Button variant="secondary" type="button" onClick={close}>
               Отмена
-            </button>
-            <button className="button button--primary" type="submit" disabled={isLoading}>
+            </Button>
+            <Button variant="primary" type="submit" disabled={isLoading}>
               {isLoading ? 'Загрузка…' : 'Загрузить рецепт'}
-            </button>
+            </Button>
           </footer>
         </form>
       )}

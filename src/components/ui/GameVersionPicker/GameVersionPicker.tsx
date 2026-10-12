@@ -1,3 +1,4 @@
+import { Button } from '../Button/Button'
 import { GAME_VERSIONS, GAME_VERSION_REGISTRY } from '../../../domain/game-version'
 import type { GameVersion } from '../../../domain/game-version'
 import './GameVersionPicker.css'
@@ -11,17 +12,17 @@ export function GameVersionPicker({ value, onChange }: GameVersionPickerProps) {
   return (
     <div className="game-version-picker" role="group" aria-label="Версия игры">
       {GAME_VERSIONS.map((version) => (
-        <button
+        <Button
           key={version}
           type="button"
-          className={`button ${value === version ? 'button--primary' : 'button--secondary'}`}
+          variant={value === version ? 'primary' : 'secondary'}
           aria-pressed={value === version}
           onClick={() => {
             onChange(version)
           }}
         >
           {GAME_VERSION_REGISTRY[version].name}
-        </button>
+        </Button>
       ))}
     </div>
   )

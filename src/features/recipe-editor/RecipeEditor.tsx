@@ -1,3 +1,5 @@
+import { FormError } from '../../components/ui/FormError/FormError'
+import { Button } from '../../components/ui/Button/Button'
 import { useDraftSnapshot } from '../../app/draft-guard'
 import { useMemo, useState, type SyntheticEvent } from 'react'
 
@@ -20,7 +22,6 @@ import {
   getSecondaryItemName,
 } from '../../domain/item-names'
 import type { ItemLanguage } from '../../domain/user-settings'
-import '../../components/ui/Button.css'
 import '../EditorForm.css'
 import './RecipeEditor.css'
 
@@ -233,8 +234,8 @@ export function RecipeEditor({
                       updateLine(line.itemId, { acquisition })
                     }}
                   />
-                  <button
-                    className="button button--danger-text"
+                  <Button
+                    variant="danger-text"
                     type="button"
                     onClick={() => {
                       changeDraft({
@@ -245,7 +246,7 @@ export function RecipeEditor({
                     }}
                   >
                     Удалить
-                  </button>
+                  </Button>
                 </li>
               )
             })}
@@ -262,35 +263,31 @@ export function RecipeEditor({
           placeholder="Выберите предмет…"
           onChange={setSelectedItemId}
         />
-        <button
-          className="button button--secondary"
+        <Button
+          variant="secondary"
           type="button"
           disabled={selectedItemId.length === 0}
           onClick={addReagent}
         >
           Добавить реагент
-        </button>
+        </Button>
       </div>
 
-      {error === null ? null : (
-        <p className="form-error" role="alert">
-          {error}
-        </p>
-      )}
+      <FormError message={error} />
 
       <footer className="editor-form__actions">
         {item.recipe === null ? null : (
-          <button className="button button--danger-text" type="button" onClick={onRemove}>
+          <Button variant="danger-text" type="button" onClick={onRemove}>
             Удалить рецепт
-          </button>
+          </Button>
         )}
         <span className="actions-spacer" />
-        <button className="button button--secondary" type="button" onClick={onCancel}>
+        <Button variant="secondary" type="button" onClick={onCancel}>
           Отмена
-        </button>
-        <button className="button button--primary" type="submit">
+        </Button>
+        <Button variant="primary" type="submit">
           Сохранить рецепт
-        </button>
+        </Button>
       </footer>
     </form>
   )

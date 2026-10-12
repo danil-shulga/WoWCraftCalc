@@ -1,7 +1,10 @@
+import { ItemQuantityList } from '../../components/ui/ItemQuantityList/ItemQuantityList'
+import { FormError } from '../../components/ui/FormError/FormError'
+import { Button } from '../../components/ui/Button/Button'
 import { useDraftGuard } from '../../app/draft-guard'
 import { useEffect, useId, useMemo, useState } from 'react'
 
-import { ItemIcon } from '../../components/ui/ItemIcon/ItemIcon'
+import { ItemIdentity } from '../../components/ui/ItemIdentity/ItemIdentity'
 import { SearchField } from '../../components/ui/SearchField/SearchField'
 import { SearchableSelect } from '../../components/ui/SearchableSelect/SearchableSelect'
 import {
@@ -115,16 +118,13 @@ function ReferenceReview({
   }
   return (
     <section className="reference-db__review" aria-label="Предпросмотр из базы">
-      <div className="reference-db__item reference-db__product">
-        <ItemIcon
-          iconUrl={item.iconUrl}
-          itemName={referenceItemName(item, itemLanguage)}
-        />
-        <div>
-          <h3>{referenceItemName(item, itemLanguage)}</h3>
-          <small>{item.names[itemLanguage === 'ru' ? 'en' : 'ru']}</small>
-        </div>
-      </div>
+      <ItemIdentity
+        item={imported}
+        language={itemLanguage}
+        iconSize="medium"
+        nameAs="h3"
+        className="reference-db__product"
+      />
       <p>
         NPC-цены из таблиц клиента: покупка{' '}
         <MoneyDisplay value={item.vendor.baseBuyPriceCopper} />, продажа{' '}
@@ -136,24 +136,26 @@ function ReferenceReview({
         <p>Будет добавлен реагент. Существующий рецепт сохранится.</p>
       ) : (
         <>
-          <ul className="reference-db__ingredients" aria-label="Состав рецепта">
-            {recipe.reagents.map((line) => {
+          <ItemQuantityList
+            label="Состав рецепта"
+            language={itemLanguage}
+            showSecondaryName={false}
+            items={recipe.reagents.flatMap((line) => {
               const reagent = index.database.items[String(line.itemId)]
-              if (!reagent) return null
-              return (
-                <li key={line.itemId}>
-                  <span className="reference-db__item">
-                    <ItemIcon
-                      iconUrl={reagent.iconUrl}
-                      itemName={referenceItemName(reagent, itemLanguage)}
-                    />
-                    <span>{referenceItemName(reagent, itemLanguage)}</span>
-                  </span>
-                  <strong>× {line.quantity}</strong>
-                </li>
-              )
+              if (!reagent) return []
+              return [
+                {
+                  key: line.itemId,
+                  quantity: line.quantity,
+                  item: {
+                    name: String(reagent.itemId),
+                    names: reagent.names,
+                    iconUrl: reagent.iconUrl,
+                  },
+                },
+              ]
             })}
-          </ul>
+          />
           <div className="reference-db__output">
             <label htmlFor={outputId}>Предметов за один крафт</label>
             <input
@@ -193,18 +195,14 @@ function ReferenceReview({
           </small>
         </>
       )}
-      {error !== null ? (
-        <p role="alert" className="form-error">
-          {error}
-        </p>
-      ) : null}
+      <FormError message={error} />
       <div className="editor-form__actions">
-        <button className="button button--secondary" type="button" onClick={onClose}>
+        <Button variant="secondary" type="button" onClick={onClose}>
           Отмена
-        </button>
-        <button className="button button--primary" type="button" onClick={confirm}>
+        </Button>
+        <Button variant="primary" type="button" onClick={confirm}>
           {recipe === null ? 'Добавить реагент' : 'Подтвердить импорт'}
-        </button>
+        </Button>
       </div>
     </section>
   )
@@ -297,7 +295,8 @@ function ReferenceBrowser(
               <p>Ничего не найдено</p>
             ) : (
               results.slice(page * 50, (page + 1) * 50).map((item) => (
-                <button
+                <Button
+                  variant="plain"
                   className="reference-db__result"
                   type="button"
                   key={item.itemId}
@@ -314,21 +313,21 @@ function ReferenceBrowser(
                     )
                   }}
                 >
-                  <ItemIcon
-                    iconUrl={item.iconUrl}
-                    itemName={referenceItemName(item, itemLanguage)}
+                  <ItemIdentity
+                    item={{
+                      name: String(item.itemId),
+                      names: item.names,
+                      iconUrl: item.iconUrl,
+                    }}
+                    language={itemLanguage}
                   />
-                  <span>
-                    {referenceItemName(item, itemLanguage)}
-                    <small>{item.names[itemLanguage === 'ru' ? 'en' : 'ru']}</small>
-                  </span>
-                </button>
+                </Button>
               ))
             )}
           </div>
           <div className="reference-db__pages">
-            <button
-              className="button button--secondary"
+            <Button
+              variant="secondary"
               type="button"
               disabled={page === 0}
               onClick={() => {
@@ -336,13 +335,13 @@ function ReferenceBrowser(
               }}
             >
               Назад
-            </button>
+            </Button>
             <span role="status">
               Найдено: {results.length} · Страница {page + 1} из{' '}
               {Math.max(1, Math.ceil(results.length / 50))}
             </span>
-            <button
-              className="button button--secondary"
+            <Button
+              variant="secondary"
               type="button"
               disabled={(page + 1) * 50 >= results.length}
               onClick={() => {
@@ -350,7 +349,7 @@ function ReferenceBrowser(
               }}
             >
               Далее
-            </button>
+            </Button>
           </div>
         </>
       ) : null}
@@ -393,13 +392,9 @@ function ReferenceBrowser(
         </>
       ) : (
         <div className="editor-form__actions">
-          <button
-            className="button button--secondary"
-            type="button"
-            onClick={props.onClose}
-          >
+          <Button variant="secondary" type="button" onClick={props.onClose}>
             Отмена
-          </button>
+          </Button>
         </div>
       )}
     </div>
@@ -439,29 +434,23 @@ function ReferenceDatabaseFormForVersion(props: ReferenceDatabaseFormProps) {
         <p role="status">Загрузка базы…</p>
       ) : (
         <>
-          <p className="form-error" role="alert">
-            {error}
-          </p>
-          <button
+          <FormError message={error} />
+          <Button
+            variant="primary"
             type="button"
-            className="button button--primary"
             onClick={() => {
               setError(null)
               setAttempt(attempt + 1)
             }}
           >
             Повторить загрузку
-          </button>
+          </Button>
         </>
       )}
       <div className="editor-form__actions">
-        <button
-          className="button button--secondary"
-          type="button"
-          onClick={props.onClose}
-        >
+        <Button variant="secondary" type="button" onClick={props.onClose}>
           Отмена
-        </button>
+        </Button>
       </div>
     </div>
   )

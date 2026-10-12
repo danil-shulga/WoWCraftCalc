@@ -1,3 +1,4 @@
+import { Button } from '../../ui/Button/Button'
 import './Sidebar.css'
 import { useEffect, useRef, useState } from 'react'
 import { GameVersionPicker } from '../../ui/GameVersionPicker/GameVersionPicker'
@@ -60,7 +61,8 @@ export function Sidebar({
   }, [open])
   return (
     <aside className="sidebar">
-      <button
+      <Button
+        variant="plain"
         className="brand"
         type="button"
         ref={brandRef}
@@ -76,7 +78,7 @@ export function Sidebar({
           <strong>CraftCalc</strong>
           <small>{GAME_VERSION_REGISTRY[gameVersion].name}</small>
         </div>
-      </button>
+      </Button>
       {open ? (
         <div id="sidebar-game-version" className="brand__versions" ref={menuRef}>
           <GameVersionPicker
@@ -91,7 +93,8 @@ export function Sidebar({
       ) : null}
       <nav aria-label="Разделы калькулятора">
         {tabs.map((tab) => (
-          <button
+          <Button
+            variant="plain"
             key={tab.id}
             type="button"
             className={
@@ -104,7 +107,7 @@ export function Sidebar({
           >
             <span>{tab.label}</span>
             {tab.available ? null : <small>скоро</small>}
-          </button>
+          </Button>
         ))}
       </nav>
       <p className="sidebar__note">Данные хранятся только в этом браузере.</p>

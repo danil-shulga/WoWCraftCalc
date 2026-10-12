@@ -1,7 +1,7 @@
+import { IconButton } from '../IconButton/IconButton'
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 
-import '../IconButton.css'
 import './Toast.css'
 
 interface ToastProps {
@@ -47,14 +47,14 @@ export function Toast({ message, onClose, duration = 6000 }: ToastProps) {
       <p className="toast__message" role="status" aria-atomic="true">
         {message}
       </p>
-      <button
-        className="icon-button toast__close"
+      <IconButton
+        className="toast__close"
         type="button"
         aria-label="Закрыть уведомление"
         onClick={onClose}
       >
         ×
-      </button>
+      </IconButton>
     </div>,
     document.body,
   )

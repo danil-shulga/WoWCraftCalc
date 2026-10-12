@@ -1,3 +1,4 @@
+import { Button } from '../components/ui/Button/Button'
 import { useDraftGuard } from '../app/draft-guard'
 import { selectActiveItems, selectActiveProfessions } from '../store/craft.selectors'
 import { useCallback, useMemo, useState } from 'react'
@@ -14,7 +15,6 @@ import { ItemAddModal } from '../features/item-editor/ItemAddModal'
 import { ItemEditModal } from '../features/item-editor/ItemEditModal'
 import { selectItemsBySection } from '../store/craft.selectors'
 import { useCraftStore } from '../store/useCraftStore'
-import '../components/ui/Button.css'
 import './ItemsPage.css'
 import './PageLayout.css'
 
@@ -153,42 +153,34 @@ export function ItemsPage({ section }: ItemsPageProps) {
           {priceDrafts === null ? (
             <>
               {sectionItems.length === 0 ? null : (
-                <button
-                  className="button button--secondary"
-                  type="button"
-                  onClick={startPriceEditing}
-                >
+                <Button variant="secondary" type="button" onClick={startPriceEditing}>
                   Редактировать цены
-                </button>
+                </Button>
               )}
-              <button
-                className="button button--primary"
+              <Button
+                variant="primary"
                 type="button"
                 onClick={() => {
                   setIsCreating(true)
                 }}
               >
                 + {content.addLabel}
-              </button>
+              </Button>
             </>
           ) : (
             <>
-              <button
-                className="button button--secondary"
+              <Button
+                variant="secondary"
                 type="button"
                 onClick={() => {
                   setPriceDrafts(null)
                 }}
               >
                 Отмена
-              </button>
-              <button
-                className="button button--primary"
-                type="button"
-                onClick={savePriceDrafts}
-              >
+              </Button>
+              <Button variant="primary" type="button" onClick={savePriceDrafts}>
                 Сохранить все
-              </button>
+              </Button>
             </>
           )}
         </div>
@@ -198,15 +190,15 @@ export function ItemsPage({ section }: ItemsPageProps) {
         <div className="empty-state">
           <strong>Здесь пока ничего нет</strong>
           <p>Создайте первый предмет, затем добавьте ему рецепт и цены.</p>
-          <button
-            className="button button--primary"
+          <Button
+            variant="primary"
             type="button"
             onClick={() => {
               setIsCreating(true)
             }}
           >
             {content.addLabel}
-          </button>
+          </Button>
         </div>
       ) : (
         <div className="items-content">

@@ -1,3 +1,4 @@
+import { Button } from '../Button/Button'
 import type { AcquisitionMethod } from '../../../domain/item.types'
 import { MoneyDisplay } from '../MoneyDisplay/MoneyDisplay'
 import './AcquisitionMethodPicker.css'
@@ -27,7 +28,8 @@ export function AcquisitionMethodPicker({
     <fieldset className="acquisition-method-picker">
       <legend className={showLegend ? undefined : 'visually-hidden'}>Получать</legend>
       <div className="acquisition-method-picker__options">
-        <button
+        <Button
+          variant="plain"
           type="button"
           aria-pressed={value === 'auto'}
           onClick={() => {
@@ -36,8 +38,9 @@ export function AcquisitionMethodPicker({
         >
           <span>Авто</span>
           <small>{automaticMethod === 'craft' ? 'Крафтить' : 'Купить'}</small>
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="plain"
           type="button"
           aria-pressed={value === 'buy'}
           disabled={!canBuy}
@@ -49,8 +52,9 @@ export function AcquisitionMethodPicker({
           <small>
             <MoneyDisplay value={purchasePrice} />
           </small>
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="plain"
           type="button"
           aria-pressed={value === 'craft'}
           disabled={!canCraft}
@@ -62,7 +66,7 @@ export function AcquisitionMethodPicker({
           <small>
             <MoneyDisplay value={craftPrice} />
           </small>
-        </button>
+        </Button>
       </div>
     </fieldset>
   )

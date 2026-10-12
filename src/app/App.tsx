@@ -1,3 +1,4 @@
+import { Button } from '../components/ui/Button/Button'
 import { selectActiveItems, selectActiveProfessions } from '../store/craft.selectors'
 import { useLayoutEffect, useState } from 'react'
 import { DraftContext } from './draft-guard'
@@ -11,7 +12,6 @@ import { UserSettingsModal } from '../features/user-settings/UserSettingsModal'
 import { ItemsPage } from '../pages/ItemsPage'
 import { PlaceholderPage } from '../pages/PlaceholderPage'
 import { useCraftStore, usePersistenceStatusStore } from '../store/useCraftStore'
-import '../components/ui/Button.css'
 import './App.css'
 
 function CurrentPage({ activeTab }: { activeTab: AppTab }) {
@@ -90,8 +90,9 @@ export function App() {
             </div>
           ) : null}
           <div className="utility-bar">
-            <button
-              className="button button--secondary settings-button"
+            <Button
+              variant="secondary"
+              className="settings-button"
               type="button"
               onClick={() => {
                 setAreSettingsOpen(true)
@@ -99,7 +100,7 @@ export function App() {
             >
               <span aria-hidden="true">⚙</span>
               Настройки
-            </button>
+            </Button>
             <DataTransferControls
               data={{ activeVersion, workspaces, currencyDisplay, itemLanguage }}
               onImport={replaceData}
@@ -112,7 +113,8 @@ export function App() {
             activeTab={activeTab}
           />
         </main>
-        <button
+        <Button
+          variant="plain"
           className="scroll-to-top"
           type="button"
           aria-label="Наверх страницы"
@@ -127,7 +129,7 @@ export function App() {
           }}
         >
           <span aria-hidden="true">↑</span>
-        </button>
+        </Button>
         {areSettingsOpen ? (
           <UserSettingsModal
             gameVersion={activeVersion}

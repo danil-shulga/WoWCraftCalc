@@ -40,12 +40,3 @@
 .actions-spacer {
   flex: 1;
 }
-
-.form-error {
-  margin: 0;
-  padding: 10px 12px;
-  border: 1px solid rgb(242 119 119 / 35%);
-  border-radius: 8px;
-  color: #ffaaaa;
-  background: rgb(242 119 119 / 8%);
-}

@@ -5,4 +5,17 @@
   border-radius: 9px;
   background: var(--panel-raised);
   object-fit: cover;
+  flex-shrink: 0;
+}
+
+.item-icon--medium {
+  width: 40px;
+  height: 40px;
+  border-radius: 7px;
+}
+
+.item-icon--small {
+  width: 28px;
+  height: 28px;
+  border-radius: 5px;
 }

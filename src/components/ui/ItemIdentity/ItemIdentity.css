@@ -1,0 +1,23 @@
+.item-identity {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+  overflow-wrap: anywhere;
+}
+
+.item-identity--heading {
+  gap: 12px;
+}
+
+.item-identity__text {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 7px;
+}
+
+.item-identity--truncate .item-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

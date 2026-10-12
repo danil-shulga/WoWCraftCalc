@@ -1,3 +1,4 @@
+import { Button } from '../Button/Button'
 import './Tabs.css'
 
 interface TabsProps<Value extends string> {
@@ -10,7 +11,8 @@ export function Tabs<Value extends string>({ tabs, value, onChange }: TabsProps<
   return (
     <div className="tabs">
       {tabs.map((tab) => (
-        <button
+        <Button
+          variant="plain"
           key={tab.value}
           className={`tabs__button${tab.value === value ? ' tabs__button--active' : ''}`}
           type="button"
@@ -19,7 +21,7 @@ export function Tabs<Value extends string>({ tabs, value, onChange }: TabsProps<
           }}
         >
           {tab.label}
-        </button>
+        </Button>
       ))}
     </div>
   )

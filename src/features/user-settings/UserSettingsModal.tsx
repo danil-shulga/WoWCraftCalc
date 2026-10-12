@@ -1,3 +1,4 @@
+import { Button } from '../../components/ui/Button/Button'
 import { Checkbox } from '../../components/ui/Checkbox/Checkbox'
 import { MoneyDisplay } from '../../components/ui/MoneyDisplay/MoneyDisplay'
 import { Modal } from '../../components/ui/Modal/Modal'
@@ -8,7 +9,6 @@ import { GameVersionPicker } from '../../components/ui/GameVersionPicker/GameVer
 import type { ItemCatalog, ItemNamesUpdate } from '../../domain/item.types'
 import { ItemNamesLoader } from '../wowhead-import/ItemNamesLoader'
 import type { CurrencyDisplayMode, ItemLanguage } from '../../domain/user-settings'
-import '../../components/ui/Button.css'
 import './UserSettingsModal.css'
 
 interface UserSettingsModalProps {
@@ -65,17 +65,17 @@ export function UserSettingsModal({
             aria-label="RU / EN"
           >
             {(['ru', 'en'] as const).map((language) => (
-              <button
+              <Button
                 key={language}
                 type="button"
-                className={`button ${itemLanguage === language ? 'button--primary' : 'button--secondary'}`}
+                variant={itemLanguage === language ? 'primary' : 'secondary'}
                 aria-pressed={itemLanguage === language}
                 onClick={() => {
                   onItemLanguageChange(language)
                 }}
               >
                 {language.toUpperCase()}
-              </button>
+              </Button>
             ))}
           </div>
         </fieldset>
@@ -144,9 +144,9 @@ export function UserSettingsModal({
           </div>
         </fieldset>
         <footer className="user-settings__actions">
-          <button className="button button--primary" type="button" onClick={onClose}>
+          <Button variant="primary" type="button" onClick={onClose}>
             Готово
-          </button>
+          </Button>
         </footer>
       </div>
     </Modal>

@@ -14,36 +14,8 @@
   margin-top: 7px;
 }
 
-.expand-button {
-  display: grid;
-  width: 30px;
-  height: 30px;
-  padding: 0;
-  place-items: center;
-  border: 1px solid transparent;
-  border-radius: 7px;
-  color: var(--accent-strong);
-  background: transparent;
-  font-size: 1.15rem;
-  cursor: pointer;
-}
-
-.expand-button:disabled {
-  color: var(--muted);
-  cursor: default;
-}
-
 .item-row__identity {
-  display: flex;
-  min-width: 0;
-  align-items: baseline;
-  gap: 7px;
-}
-
-.item-row__identity strong {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  grid-column: span 2;
 }
 
 .item-row__prices {
