@@ -233,6 +233,28 @@ function ReferenceBrowser(
   )
   const [profession, setProfession] = useState('')
   const [page, setPage] = useState(0)
+  const resultsRef = useRef<HTMLDivElement>(null)
+  const scrollFrameRef = useRef<number | null>(null)
+  useEffect(
+    () => () => {
+      if (scrollFrameRef.current !== null) cancelAnimationFrame(scrollFrameRef.current)
+    },
+    [],
+  )
+  const changePage = (nextPage: number) => {
+    setPage(nextPage)
+    if (scrollFrameRef.current !== null) cancelAnimationFrame(scrollFrameRef.current)
+    const list = resultsRef.current
+    if (!list) return
+    const startTop = list.scrollTop
+    const startTime = performance.now()
+    const animate = (time: number) => {
+      const progress = Math.min(1, Math.max(0, (time - startTime) / 150))
+      list.scrollTop = startTop * (1 - progress) ** 3
+      scrollFrameRef.current = progress < 1 ? requestAnimationFrame(animate) : null
+    }
+    scrollFrameRef.current = requestAnimationFrame(animate)
+  }
   const [selectedId, setSelectedId] = useState<number | null>(initialItem?.itemId ?? null)
   const [recipeId, setRecipeId] = useState(() => {
     const recipe =
@@ -292,6 +314,7 @@ function ReferenceBrowser(
             }}
           />
           <div
+            ref={resultsRef}
             className="reference-db__results"
             role="group"
             aria-label="Результаты поиска в базе"
@@ -336,7 +359,7 @@ function ReferenceBrowser(
               type="button"
               disabled={page === 0}
               onClick={() => {
-                setPage(page - 1)
+                changePage(page - 1)
               }}
             >
               Назад
@@ -350,7 +373,7 @@ function ReferenceBrowser(
               type="button"
               disabled={(page + 1) * 50 >= results.length}
               onClick={() => {
-                setPage(page + 1)
+                changePage(page + 1)
               }}
             >
               Далее

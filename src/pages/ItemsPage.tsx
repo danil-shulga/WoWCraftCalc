@@ -5,7 +5,7 @@ import { useCallback, useMemo, useState } from 'react'
 
 import { ItemTree } from '../components/item-tree/ItemTree/ItemTree'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog/ConfirmDialog'
-import { ItemName } from '../components/ui/ItemName/ItemName'
+import { ItemIdentity } from '../components/ui/ItemIdentity/ItemIdentity'
 import { SearchField } from '../components/ui/SearchField/SearchField'
 import { Toast } from '../components/ui/Toast/Toast'
 import { createCatalogCalculationSnapshot } from '../domain/calculations'
@@ -297,8 +297,10 @@ export function ItemsPage({ section }: ItemsPageProps) {
           title="Удалить предмет?"
           message={
             <>
-              <ItemName item={deletingItem} language={itemLanguage} /> также исчезнет из
-              всех рецептов. Это действие нельзя отменить.
+              <ItemIdentity item={deletingItem} language={itemLanguage} />
+              <span className="items-delete-warning">
+                также исчезнет из всех рецептов. Это действие нельзя отменить.
+              </span>
             </>
           }
           confirmLabel="Удалить"

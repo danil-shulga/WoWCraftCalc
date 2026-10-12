@@ -479,8 +479,29 @@ describe('вкладка базы', () => {
     renderForm()
     const group = await screen.findByRole('group', { name: 'Результаты поиска в базе' })
     expect(within(group).getAllByRole('button')).toHaveLength(50)
+    const frames: FrameRequestCallback[] = []
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+      frames.push(callback)
+      return frames.length
+    })
+    vi.spyOn(performance, 'now').mockReturnValue(1000)
+    group.scrollTop = 400
     await user.click(screen.getByRole('button', { name: 'Далее' }))
     expect(screen.getByRole('status')).toHaveTextContent('Страница 2')
+    expect(group.scrollTop).toBe(400)
+    frames.shift()?.(1075)
+    expect(group.scrollTop).toBeGreaterThan(0)
+    expect(group.scrollTop).toBeLessThan(400)
+    frames.shift()?.(1150)
+    expect(group.scrollTop).toBe(0)
+    expect(frames).toHaveLength(0)
+    group.scrollTop = 300
+    await user.click(screen.getByRole('button', { name: 'Назад' }))
+    expect(screen.getByRole('status')).toHaveTextContent('Страница 1')
+    frames.shift()?.(1150)
+    expect(group.scrollTop).toBe(0)
+    await user.click(screen.getByRole('button', { name: 'Далее' }))
+    frames.shift()?.(1150)
     await user.type(screen.getByRole('searchbox'), 'Dreamweave Circlet')
     expect(within(group).getAllByRole('button')).toHaveLength(1)
     expect(screen.getByRole('status')).toHaveTextContent('Страница 1')
