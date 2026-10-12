@@ -1,3 +1,4 @@
+import { testCraftData, setTestCraftState } from '../../test/craft-state'
 import { readFileSync } from 'node:fs'
 import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -20,7 +21,9 @@ function renderForm(props: Partial<ComponentProps<typeof ReferenceDatabaseForm>>
   }
   const rendered = render(
     <ReferenceDatabaseForm
-      catalog={useCraftStore.getState().items}
+      catalog={
+        useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items
+      }
       section="crafts"
       itemLanguage="ru"
       isActive
@@ -35,7 +38,9 @@ describe('вкладка базы', () => {
   beforeEach(() => {
     useCraftStore
       .getState()
-      .replaceData({ items: {}, ownedProfessions: [], currencyDisplay: 'icons' })
+      .replaceData(
+        testCraftData({ items: {}, ownedProfessions: [], currencyDisplay: 'icons' }),
+      )
     vi.spyOn(loader, 'loadReferenceDatabase').mockResolvedValue(
       buildReferenceDatabaseIndex(parseReferenceDatabase(referenceFixture())),
     )
@@ -50,11 +55,14 @@ describe('вкладка базы', () => {
     const search = await screen.findByRole('searchbox')
     await user.type(search, 'DREAM')
     await user.click(screen.getByRole('button', { name: /Венец Грёз/ }))
-    expect(screen.getByLabelText('Предметов за один крафт')).toHaveValue(3)
+    expect(screen.getByLabelText('Предметов за один крафт')).toHaveValue(null)
     expect(screen.getByRole('combobox', { name: 'Рецепт' })).toHaveValue(
       'Портняжное дело (Tailoring)',
     )
     expect(screen.queryByText(/Качество:|Привязка:|Рецепт #/)).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Подтвердить импорт' }))
+    expect(onImport).not.toHaveBeenCalled()
+    expect(screen.getByRole('alert')).toHaveTextContent('положительное целое')
     expect(
       screen.queryByText(/Предположение из базы|Подтвердите фиксированное|Кандидат/),
     ).not.toBeInTheDocument()
@@ -67,7 +75,9 @@ describe('вкладка базы', () => {
         'listitem',
       ),
     ).toHaveLength(1)
-    expect(useCraftStore.getState().items).toEqual({})
+    expect(
+      useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items,
+    ).toEqual({})
     fireEvent.change(screen.getByLabelText('Предметов за один крафт'), {
       target: { value: '2.5' },
     })
@@ -112,14 +122,14 @@ describe('вкладка базы', () => {
     renderForm()
     await user.click(await screen.findByRole('button', { name: /Венец Грёз/ }))
     expect(screen.getByRole('button', { name: 'Подтвердить импорт' })).toBeVisible()
-    expect(screen.getByLabelText('Предметов за один крафт')).toHaveValue(3)
+    expect(screen.getByLabelText('Предметов за один крафт')).toHaveValue(null)
     await user.click(screen.getByRole('combobox', { name: 'Рецепт' }))
     const options = screen.getAllByRole('option', { name: 'Портняжное дело (Tailoring)' })
     expect(options).toHaveLength(2)
     const alternative = options[1]
     if (!alternative) throw new Error('Нет альтернативного рецепта')
     await user.click(alternative)
-    expect(screen.getByLabelText('Предметов за один крафт')).toHaveValue(1)
+    expect(screen.getByLabelText('Предметов за один крафт')).toHaveValue(null)
     expect(screen.queryByText(/По умолчанию|Переменный выход/)).not.toBeInTheDocument()
   })
 
@@ -169,10 +179,14 @@ describe('вкладка базы', () => {
     await user.click(screen.getByRole('button', { name: 'Добавить реагент' }))
     expect(onAddItem).toHaveBeenCalledOnce()
     expect(onImport).not.toHaveBeenCalled()
-    expect(Object.values(useCraftStore.getState().items)[0]).toMatchObject({
+    expect(
+      Object.values(
+        useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items,
+      )[0],
+    ).toMatchObject({
       sections: ['reagents'],
       recipe: null,
-      purchasePriceCopper: 0,
+      purchasePriceCopper: null,
     })
   })
 
@@ -216,17 +230,24 @@ describe('вкладка базы', () => {
     expect(screen.getByRole('button', { name: 'Добавить реагент' })).toBeVisible()
     await user.click(screen.getByRole('button', { name: 'Добавить реагент' }))
     expect(onAddItem).toHaveBeenCalledOnce()
-    expect(Object.values(useCraftStore.getState().items)[0]).toMatchObject({
+    expect(
+      Object.values(
+        useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items,
+      )[0],
+    ).toMatchObject({
       sections: ['reagents'],
       recipe: null,
     })
     await user.click(screen.getByRole('combobox', { name: 'Рецепт' }))
     await user.click(screen.getByRole('option', { name: 'Портняжное дело (Tailoring)' }))
+    fireEvent.change(screen.getByLabelText('Предметов за один крафт'), {
+      target: { value: '3' },
+    })
     await user.click(screen.getByRole('button', { name: 'Подтвердить импорт' }))
     expect(
-      Object.values(useCraftStore.getState().items).find(
-        (item) => item.source?.wowheadItemId === 1,
-      ),
+      Object.values(
+        useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items,
+      ).find((item) => item.source?.wowheadItemId === 1),
     ).toMatchObject({ sections: ['reagents', 'crafts'], recipe: { outputQuantity: 3 } })
   })
 
@@ -274,12 +295,15 @@ describe('вкладка базы', () => {
     expect(screen.getByRole('searchbox')).toBeVisible()
     expect(first.onImport).not.toHaveBeenCalled()
     expect(second.onImport).not.toHaveBeenCalled()
-    expect(useCraftStore.getState().items).toEqual({})
+    expect(
+      useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items,
+    ).toEqual({})
   })
 
   it('сохраняет предпросмотр при ошибке графа и заменяет сломанную картинку заглушкой', async () => {
     const fixture = referenceFixture()
-    fixture.items['1'].iconUrl = 'https://example.com/broken.jpg'
+    fixture.items['1'].iconUrl =
+      'https://wow.zamimg.com/images/wow/icons/large/broken.jpg'
     vi.mocked(loader.loadReferenceDatabase).mockResolvedValue(
       buildReferenceDatabaseIndex(parseReferenceDatabase(fixture)),
     )
@@ -294,6 +318,9 @@ describe('вкладка базы', () => {
       screen.getByRole('region', { name: 'Предпросмотр из базы' }),
     ).getByTitle('Иконка: Венец Грёз')
     expect(icon).toHaveAttribute('loading', 'lazy')
+    fireEvent.change(screen.getByLabelText('Предметов за один крафт'), {
+      target: { value: '3' },
+    })
     fireEvent.error(icon)
     expect(icon.getAttribute('src')).toMatch(/item-placeholder.svg$/)
     await user.click(screen.getByRole('button', { name: 'Подтвердить импорт' }))
@@ -304,7 +331,7 @@ describe('вкладка базы', () => {
   it('ограничивает выдачу страницами по 50 и сбрасывает страницу при поиске', async () => {
     const db = parseReferenceDatabase(
       JSON.parse(
-        readFileSync('public/data/craftcalc-db.1.60.1.70338.json', 'utf8'),
+        readFileSync('public/data/forever/craftcalc-db.1.60.1.70338.json', 'utf8'),
       ) as unknown,
     )
     vi.mocked(loader.loadReferenceDatabase).mockResolvedValue(
@@ -324,7 +351,7 @@ describe('вкладка базы', () => {
   it('проводит сценарий реальной базы: импорт, цены, повтор и восстановление', async () => {
     const db = parseReferenceDatabase(
       JSON.parse(
-        readFileSync('public/data/craftcalc-db.1.60.1.70338.json', 'utf8'),
+        readFileSync('public/data/forever/craftcalc-db.1.60.1.70338.json', 'utf8'),
       ) as unknown,
     )
     vi.mocked(loader.loadReferenceDatabase).mockResolvedValue(
@@ -342,12 +369,15 @@ describe('вкладка базы', () => {
       await user.click(screen.getByRole('button', { name: /Венец из ткани Грез/ }))
     }
     await choose()
+    fireEvent.change(screen.getByLabelText('Предметов за один крафт'), {
+      target: { value: '1' },
+    })
     await user.click(screen.getByRole('button', { name: 'Подтвердить импорт' }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(opener).toHaveFocus()
-    const item = Object.values(useCraftStore.getState().items).find(
-      (entry) => entry.source?.wowheadItemId === 10041,
-    )
+    const item = Object.values(
+      useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items,
+    ).find((entry) => entry.source?.wowheadItemId === 10041)
     if (!item) throw new Error('Нет венца')
     expect(item.recipe?.reagents).toHaveLength(6)
     act(() => {
@@ -362,20 +392,28 @@ describe('вкладка базы', () => {
       item.recipe?.outputQuantity,
     )
     await user.click(screen.getByRole('button', { name: 'Подтвердить импорт' }))
-    expect(useCraftStore.getState().items[item.id]).toMatchObject({
+    expect(
+      useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items[
+        item.id
+      ],
+    ).toMatchObject({
       purchasePriceCopper: 0,
       salePriceCopper: 999,
     })
-    const saved = localStorage.getItem('craft-calc-data')
+    const saved = localStorage.getItem('craft-calc-versioned-data')
     expect(saved).not.toContain('craftcalc-reference-database')
     act(() => {
-      useCraftStore.setState({ items: {} })
+      setTestCraftState({ items: {} })
     })
-    localStorage.setItem('craft-calc-data', saved ?? '')
+    localStorage.setItem('craft-calc-versioned-data', saved ?? '')
     await act(async () => {
       await useCraftStore.persist.rehydrate()
     })
     expect(screen.getByText('Венец из ткани Грез')).toBeVisible()
-    expect(Object.keys(useCraftStore.getState().items)).toHaveLength(7)
+    expect(
+      Object.keys(
+        useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items,
+      ),
+    ).toHaveLength(7)
   })
 })

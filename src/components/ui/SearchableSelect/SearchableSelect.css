@@ -55,7 +55,7 @@
   list-style: none;
   border: 1px solid var(--border);
   border-radius: 8px;
-  background: #101724;
+  background: var(--field);
   box-shadow: 0 12px 30px rgb(0 0 0 / 35%);
 }
 
@@ -70,7 +70,7 @@
 }
 
 .searchable-select__option[data-highlighted='true'] {
-  background: rgb(159 176 202 / 22%);
+  background: var(--hover);
 }
 
 .searchable-select__empty {

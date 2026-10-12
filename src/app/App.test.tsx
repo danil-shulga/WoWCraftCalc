@@ -1,3 +1,4 @@
+import { testCraftData } from '../test/craft-state'
 import { act, cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
@@ -6,15 +7,15 @@ import { createExportJson } from '../store/persistence'
 import { useCraftStore, usePersistenceStatusStore } from '../store/useCraftStore'
 import { App } from './App'
 
-const storageKey = 'craft-calc-data'
+const storageKey = 'craft-calc-versioned-data'
 const originalRecord = '{broken'
-const emptyData: PersistedCraftData = {
+const emptyData: PersistedCraftData = testCraftData({
   items: {},
   ownedProfessions: [],
   currencyDisplay: 'icons',
   itemLanguage: 'ru',
-}
-const backupData: PersistedCraftData = {
+})
+const backupData: PersistedCraftData = testCraftData({
   items: {
     cloth: {
       id: 'cloth',
@@ -30,7 +31,7 @@ const backupData: PersistedCraftData = {
   ownedProfessions: ['tailoring'],
   currencyDisplay: 'text',
   itemLanguage: 'ru',
-}
+})
 
 describe('возврат наверх страницы', () => {
   afterEach(() => {
@@ -131,7 +132,9 @@ describe('восстановление сохранения в App', () => {
     }
     expect(confirm).toHaveBeenCalledWith(expect.stringContaining('исходную запись'))
     expect(localStorage.getItem(storageKey)).toBe(originalRecord)
-    expect(useCraftStore.getState().items).toEqual({})
+    expect(
+      useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items,
+    ).toEqual({})
     expect(screen.getByRole('alert')).toBeVisible()
     expect(screen.queryByRole('status')).not.toBeInTheDocument()
   })
@@ -149,7 +152,7 @@ describe('восстановление сохранения в App', () => {
     ).not.toBeInTheDocument()
     expect(JSON.parse(localStorage.getItem(storageKey) ?? 'null') as unknown).toEqual({
       state: backupData,
-      version: 5,
+      version: 1,
     })
   })
 
@@ -170,7 +173,9 @@ describe('восстановление сохранения в App', () => {
         'не выполнен: Хранилище переполнено',
       )
       expect(localStorage.getItem(storageKey)).toBe(originalRecord)
-      expect(useCraftStore.getState().items).toEqual({})
+      expect(
+        useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items,
+      ).toEqual({})
       expect(screen.getByRole('alert')).toBeVisible()
     },
   )
@@ -184,7 +189,7 @@ describe('восстановление сохранения в App', () => {
     expect(usePersistenceStatusStore.getState().recoveryRequired).toBe(false)
     expect(JSON.parse(localStorage.getItem(storageKey) ?? 'null') as unknown).toEqual({
       state: emptyData,
-      version: 5,
+      version: 1,
     })
   })
 

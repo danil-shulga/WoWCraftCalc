@@ -22,7 +22,7 @@
   border: 1px solid var(--border);
   border-radius: 10px;
   color: var(--text);
-  background: #101724;
+  background: var(--field);
   transition:
     border-color 140ms ease,
     background 140ms ease;

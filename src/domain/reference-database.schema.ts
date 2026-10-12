@@ -2,6 +2,8 @@ import { z } from 'zod'
 
 import { itemNamesSchema } from './item.schema'
 import { PROFESSION_IDS } from './professions'
+import { GAME_VERSIONS, GAME_VERSION_REGISTRY } from './game-version'
+import type { GameVersion } from './game-version'
 
 const id = z.number().int().positive()
 const copper = z.number().int().nonnegative().nullable()
@@ -9,10 +11,20 @@ const copper = z.number().int().nonnegative().nullable()
 export const referenceItemSchema = z.object({
   itemId: id,
   names: itemNamesSchema.refine((names) => names.ru !== null || names.en !== null),
-  iconUrl: z.union([z.literal(''), z.url()]),
+  iconUrl: z.union([
+    z.literal(''),
+    z
+      .url()
+      .regex(/^https:\/\/wow\.zamimg\.com\/images\/wow\/icons\/large\/[a-z0-9_-]+\.jpg$/),
+  ]),
   qualityId: z.number().int().nonnegative(),
   recipeSpellIds: z.array(id),
-  vendor: z.object({ baseBuyPriceCopper: copper, sellPriceCopper: copper }),
+  vendor: z.object({
+    baseBuyPriceCopper: copper,
+    sellPriceCopper: copper,
+    stackCount: copper,
+    availability: z.null(),
+  }),
   bondingId: z.number().int().nonnegative(),
 })
 
@@ -34,11 +46,29 @@ export const referenceRecipeSchema = z.object({
 export const referenceDatabaseSchema = z
   .object({
     format: z.literal('craftcalc-reference-database'),
-    schemaVersion: z.literal(1),
-    build: z.literal('1.60.1.70338'),
+    schemaVersion: z.literal(2),
+    gameVersion: z.enum(GAME_VERSIONS),
+    mode: z.string(),
+    product: z.string(),
+    build: z.string(),
+    sources: z
+      .array(
+        z.object({
+          table: z.string().min(1),
+          locale: z.enum(['ruRU', 'enUS']),
+          fileName: z.string().min(1),
+          url: z.url(),
+          product: z.string(),
+          build: z.string(),
+          sha256: z.string().regex(/^[a-f0-9]{64}$/),
+        }),
+      )
+      .length(8),
     iconSource: z.object({
       provider: z.literal('Wowhead'),
-      version: z.literal('forever'),
+      version: z.enum(GAME_VERSIONS),
+      endpoint: z.string(),
+      imagesDownloaded: z.literal(false),
     }),
     professions: z.record(
       z.string(),
@@ -55,7 +85,45 @@ export const referenceDatabaseSchema = z
     const issue = (path: (string | number)[], message: string) => {
       ctx.addIssue({ code: 'custom', path, message })
     }
+    const definition = GAME_VERSION_REGISTRY[db.gameVersion]
+    for (const field of ['mode', 'product', 'build'] as const) {
+      if (db[field] !== definition[field])
+        issue([field], 'База не соответствует версии игры')
+    }
+    if (
+      db.iconSource.version !== definition.wowheadVersion ||
+      db.iconSource.endpoint !==
+        `https://nether.wowhead.com/${definition.wowheadVersion}/tooltip/item/{itemId}`
+    )
+      issue(['iconSource'], 'Неверное происхождение иконок')
+    const sourceIds = db.sources
+      .map((source) => `${source.table}:${source.locale}`)
+      .sort()
+    const expectedSources = [
+      'Item:enUS',
+      'ItemSparse:ruRU',
+      'ItemSparse:enUS',
+      'SpellReagents:enUS',
+      'SpellEffect:enUS',
+      'SkillLineAbility:enUS',
+      'SkillLine:ruRU',
+      'SpellTotems:enUS',
+    ].sort()
+    if (sourceIds.join(',') !== expectedSources.join(','))
+      issue(['sources'], 'Неверные таблицы источников')
+    for (const source of db.sources) {
+      if (
+        source.build !== db.build ||
+        source.product !== db.product ||
+        source.fileName !== `${source.table}.${source.locale}.${db.build}.csv` ||
+        source.url !==
+          `https://wago.tools/db2/${source.table}/csv?build=${db.build}&locale=${source.locale}`
+      )
+        issue(['sources'], 'Смешанные или неверные источники базы')
+    }
     for (const [key, profession] of Object.entries(db.professions)) {
+      if (!definition.professions.includes(profession.id))
+        issue(['professions', key], 'Профессия недоступна в этой версии')
       if (key !== String(profession.skillLineId))
         issue(['professions', key], 'Ключ профессии не совпадает с ID')
     }
@@ -87,6 +155,9 @@ export const referenceDatabaseSchema = z
     }
   })
 
-export function parseReferenceDatabase(value: unknown) {
-  return referenceDatabaseSchema.parse(value)
+export function parseReferenceDatabase(value: unknown, expectedVersion?: GameVersion) {
+  const database = referenceDatabaseSchema.parse(value)
+  if (expectedVersion && database.gameVersion !== expectedVersion)
+    throw new Error('Версия справочника не совпадает с выбранной версией игры')
+  return database
 }

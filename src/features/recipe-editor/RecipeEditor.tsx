@@ -1,3 +1,4 @@
+import { useDraftSnapshot } from '../../app/draft-guard'
 import { useMemo, useState, type SyntheticEvent } from 'react'
 
 import { AcquisitionMethodPicker } from '../../components/ui/AcquisitionMethodPicker/AcquisitionMethodPicker'
@@ -9,7 +10,9 @@ import {
   getCraftUnitCost,
 } from '../../domain/calculations'
 import type { Item, ItemCatalog, Recipe, RecipeLine } from '../../domain/item.types'
-import { PROFESSION_OPTIONS, type Profession } from '../../domain/professions'
+import type { Profession } from '../../domain/professions'
+import { professionOptionsFor } from '../../domain/game-version'
+import type { GameVersion } from '../../domain/game-version'
 import { selectAvailableReagents } from '../../store/craft.selectors'
 import {
   getItemName,
@@ -22,6 +25,7 @@ import '../EditorForm.css'
 import './RecipeEditor.css'
 
 interface RecipeEditorProps {
+  gameVersion?: GameVersion
   item: Item
   itemLanguage?: ItemLanguage
   catalog: ItemCatalog
@@ -33,6 +37,7 @@ interface RecipeEditorProps {
 
 export function RecipeEditor({
   item,
+  gameVersion = 'forever',
   itemLanguage = 'ru',
   catalog,
   ownedProfessions,
@@ -40,6 +45,7 @@ export function RecipeEditor({
   onRemove,
   onCancel,
 }: RecipeEditorProps) {
+  const PROFESSION_OPTIONS = professionOptionsFor(gameVersion)
   const [outputQuantity, setOutputQuantity] = useState(item.recipe?.outputQuantity ?? 1)
   const [profession, setProfession] = useState<Profession | ''>(
     item.recipe?.profession ?? '',
@@ -48,6 +54,7 @@ export function RecipeEditor({
     item.recipe?.reagents.map((line) => ({ ...line })) ?? [],
   )
   const [selectedItemId, setSelectedItemId] = useState('')
+  useDraftSnapshot({ outputQuantity, profession, reagents, selectedItemId })
   const [error, setError] = useState<string | null>(null)
   const ownedProfessionSet = useMemo(() => new Set(ownedProfessions), [ownedProfessions])
 

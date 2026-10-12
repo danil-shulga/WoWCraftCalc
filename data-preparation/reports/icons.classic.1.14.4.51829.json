@@ -1,0 +1,14 @@
+{
+  "gameVersion": "classic",
+  "build": "1.14.4.51829",
+  "endpoint": "https://nether.wowhead.com/classic/tooltip/item/{itemId}",
+  "workers": 2,
+  "pauseSecondsPerWorker": 0.2,
+  "timeoutSeconds": 20,
+  "maximumAttempts": 3,
+  "statistics": {
+    "ok": 1436
+  },
+  "failures": [],
+  "responseIdentityLimitation": "Many tooltip responses do not echo an item ID. Those are checked by unchanged endpoint URL and exact English name, not by an independent echoed ID."
+}

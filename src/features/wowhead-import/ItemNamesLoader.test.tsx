@@ -43,7 +43,7 @@ describe('заполнение недостающих названий', () => {
     vi.restoreAllMocks()
   })
 
-  it('определяет версию старой записи и применяет названия только после проверки', async () => {
+  it('использует версию workspace для предмета без версии и применяет названия только после проверки', async () => {
     const user = userEvent.setup()
     const mock = mockNames()
     const onApply = vi.fn(() => null)
@@ -58,14 +58,15 @@ describe('заполнение недостающих названий', () => {
     expect(onApply).not.toHaveBeenCalled()
     expect(catalog.jade?.names).toEqual({ ru: 'Мой нефрит', en: null })
     expect(mock).toHaveBeenCalledWith(
-      'https://nether.wowhead.com/classic/tooltip/item/1529',
+      'https://nether.wowhead.com/forever/tooltip/item/1529',
     )
     await user.click(screen.getByRole('button', { name: 'Сохранить названия' }))
     expect(onApply).toHaveBeenCalledWith([
       {
         itemId: 'jade',
+        expectedItem: catalog.jade,
         wowheadItemId: 1529,
-        wowheadVersion: 'classic',
+        wowheadVersion: 'forever',
         names: { ru: 'Нефрит', en: 'Jade' },
       },
     ])
@@ -153,4 +154,19 @@ describe('заполнение недостающих названий', () => {
     expect(result.every((update) => update.wowheadVersion === 'forever')).toBe(true)
     expect(mock).toHaveBeenCalledTimes(2)
   })
+})
+
+it('не перебирает версии Wowhead при ошибке', async () => {
+  const mock = vi
+    .spyOn(globalThis, 'fetch')
+    .mockResolvedValue(new Response(null, { status: 404 }))
+  await expect(fetchMissingItemNames(catalog, 'tbc')).rejects.toThrow()
+  expect(
+    mock.mock.calls.every(([url]) =>
+      (typeof url === 'string' ? url : url instanceof URL ? url.href : url.url).includes(
+        '/tbc/',
+      ),
+    ),
+  ).toBe(true)
+  mock.mockRestore()
 })

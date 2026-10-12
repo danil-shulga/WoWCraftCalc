@@ -4,6 +4,7 @@ import { Modal } from '../../components/ui/Modal/Modal'
 import { Tabs } from '../../components/ui/Tabs/Tabs'
 import type { ItemCatalog, ItemSection } from '../../domain/item.types'
 import type { ItemLanguage } from '../../domain/user-settings'
+import type { GameVersion } from '../../domain/game-version'
 import type {
   ItemInput,
   RecipeImportData,
@@ -24,6 +25,7 @@ const addMethods: readonly { value: AddMethod; label: string }[] = [
 ]
 
 interface ItemAddModalProps {
+  gameVersion?: GameVersion
   title: string
   itemLanguage?: ItemLanguage
   defaultSection: ItemSection
@@ -37,6 +39,7 @@ interface ItemAddModalProps {
 
 export function ItemAddModal({
   title,
+  gameVersion = 'forever',
   itemLanguage = 'ru',
   defaultSection,
   catalog,
@@ -71,6 +74,7 @@ export function ItemAddModal({
       />
       <div hidden={method !== 'database'} inert={method !== 'database'}>
         <ReferenceDatabaseForm
+          gameVersion={gameVersion}
           catalog={catalog}
           section={defaultSection}
           itemLanguage={itemLanguage}
@@ -83,6 +87,7 @@ export function ItemAddModal({
       </div>
       <div hidden={method !== 'wowhead'} inert={method !== 'wowhead'}>
         <WowheadImportForm
+          gameVersion={gameVersion}
           itemLanguage={itemLanguage}
           catalog={catalog}
           onImport={onImport}

@@ -1,18 +1,22 @@
+import { useDraftGuard } from '../../app/draft-guard'
 import { useEffect, useRef, useState } from 'react'
 
 import type { ItemCatalog, ItemNamesUpdate } from '../../domain/item.types'
 import type { ItemLanguage } from '../../domain/user-settings'
+import type { GameVersion } from '../../domain/game-version'
 import { ItemName } from '../../components/ui/ItemName/ItemName'
 import { fetchMissingItemNames, selectItemsMissingNames } from './item-names-loader'
 
 interface ItemNamesLoaderProps {
+  gameVersion?: GameVersion
   catalog: ItemCatalog
   itemLanguage?: ItemLanguage
   onApply: (updates: readonly ItemNamesUpdate[]) => string | null
 }
 
-export function ItemNamesLoader({
+function ItemNamesLoaderForVersion({
   catalog,
+  gameVersion = 'forever',
   itemLanguage = 'ru',
   onApply,
 }: ItemNamesLoaderProps) {
@@ -21,6 +25,7 @@ export function ItemNamesLoader({
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const active = useRef(true)
+  useDraftGuard(updates !== null)
   useEffect(() => {
     active.current = true
     return () => {
@@ -37,7 +42,7 @@ export function ItemNamesLoader({
     setError(null)
     setMessage(null)
     try {
-      const loaded = await fetchMissingItemNames(catalog)
+      const loaded = await fetchMissingItemNames(catalog, gameVersion)
       if (active.current) setUpdates(loaded)
     } catch (caughtError) {
       if (active.current)
@@ -127,4 +132,8 @@ export function ItemNamesLoader({
       )}
     </fieldset>
   )
+}
+
+export function ItemNamesLoader(props: ItemNamesLoaderProps) {
+  return <ItemNamesLoaderForVersion key={props.gameVersion ?? 'forever'} {...props} />
 }

@@ -29,7 +29,7 @@
 }
 
 .expand-button:disabled {
-  color: #657289;
+  color: var(--muted);
   cursor: default;
 }
 

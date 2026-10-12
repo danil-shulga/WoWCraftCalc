@@ -1,0 +1,28 @@
+{
+  "typecheck": "passed",
+  "eslint": "passed",
+  "dataTests": 18,
+  "applicationTests": 239,
+  "testFiles": 28,
+  "viteBuild": "passed outside sandbox after EPERM realpath",
+  "formatCheck": "failed on 16 unchanged files from HEAD",
+  "unchangedFormattingWarnings": [
+    "README.md",
+    "src/components/ui/MoneyDisplay/MoneyDisplay.tsx",
+    "src/components/ui/MoneyInput/MoneyInput.css",
+    "src/components/ui/MoneyInput/MoneyInput.tsx",
+    "src/components/ui/NumberInput/NumberInput.tsx",
+    "src/components/ui/Tabs/Tabs.css",
+    "src/components/ui/Tabs/Tabs.test.tsx",
+    "src/components/ui/Tabs/Tabs.tsx",
+    "src/components/ui/Toast/Toast.test.tsx",
+    "src/components/ui/Toast/Toast.tsx",
+    "src/domain/calculations.test.ts",
+    "src/domain/calculations.ts",
+    "src/features/data-transfer/DataTransferControls.tsx",
+    "src/features/wowhead-import/fixtures/classic-25146.json",
+    "src/features/wowhead-import/fixtures/forever-1257390.json",
+    "src/features/wowhead-import/fixtures/tbc-44391.json"
+  ],
+  "gitDiffCheck": "passed"
+}

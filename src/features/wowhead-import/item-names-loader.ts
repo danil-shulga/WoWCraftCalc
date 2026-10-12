@@ -1,5 +1,6 @@
 import type { ItemCatalog, ItemNames, ItemNamesUpdate } from '../../domain/item.types'
-import { WOWHEAD_VERSIONS } from '../../domain/user-settings'
+import { GAME_VERSION_REGISTRY } from '../../domain/game-version'
+import type { GameVersion } from '../../domain/game-version'
 import { fetchWowheadItemNames } from './wowhead-import'
 
 export function selectItemsMissingNames(catalog: ItemCatalog) {
@@ -10,6 +11,7 @@ export function selectItemsMissingNames(catalog: ItemCatalog) {
 
 export async function fetchMissingItemNames(
   catalog: ItemCatalog,
+  gameVersion: GameVersion = 'forever',
 ): Promise<ItemNamesUpdate[]> {
   const targets = selectItemsMissingNames(catalog)
   const cache = new Map<string, Promise<ItemNames>>()
@@ -20,28 +22,22 @@ export async function fetchMissingItemNames(
       targets.slice(offset, offset + 4).map(async (target) => {
         const source = target.source
         if (source === undefined) throw new Error('Missing Wowhead ID')
-        const versions = source.wowheadVersion
-          ? [source.wowheadVersion]
-          : WOWHEAD_VERSIONS
-        for (const version of versions) {
-          const key = `${version}:${source.wowheadItemId.toString()}`
-          let request = cache.get(key)
-          if (request === undefined) {
-            request = fetchWowheadItemNames(source.wowheadItemId, version)
-            cache.set(key, request)
-          }
-          try {
-            return {
-              itemId: target.id,
-              wowheadItemId: source.wowheadItemId,
-              wowheadVersion: version,
-              names: await request,
-            }
-          } catch (error) {
-            if (version === versions.at(-1)) throw error
-          }
+        const version = GAME_VERSION_REGISTRY[gameVersion].wowheadVersion
+        if (source.wowheadVersion !== undefined && source.wowheadVersion !== version)
+          throw new Error('Источник предмета относится к другой версии игры')
+        const key = `${version}:${source.wowheadItemId.toString()}`
+        let request = cache.get(key)
+        if (request === undefined) {
+          request = fetchWowheadItemNames(source.wowheadItemId, version)
+          cache.set(key, request)
         }
-        throw new Error('Wowhead item names unavailable')
+        return {
+          expectedItem: target,
+          itemId: target.id,
+          wowheadItemId: source.wowheadItemId,
+          wowheadVersion: version,
+          names: await request,
+        }
       }),
     )
     updates.push(...batch)

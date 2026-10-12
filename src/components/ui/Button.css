@@ -13,19 +13,19 @@
 }
 
 .button--primary {
-  border-color: #d29b35;
+  border-color: var(--accent);
   color: var(--accent-ink);
-  background: linear-gradient(180deg, var(--accent-strong), var(--accent));
-  font-weight: 700;
+  background: var(--accent);
+  font-weight: 600;
 }
 
-.button--primary:hover {
-  filter: brightness(1.08);
+.button--primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 88%, var(--text));
 }
 
 .button--secondary:hover {
-  border-color: #70809c;
-  background: #243149;
+  border-color: var(--border-strong);
+  background: var(--hover);
 }
 
 .button--danger-text {

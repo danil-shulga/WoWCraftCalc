@@ -1,3 +1,4 @@
+import { useDraftGuard } from '../../app/draft-guard'
 import { useEffect, useId, useRef, useState, type SyntheticEvent } from 'react'
 
 import { NumberInput } from '../../components/ui/NumberInput/NumberInput'
@@ -6,7 +7,8 @@ import { SearchableSelect } from '../../components/ui/SearchableSelect/Searchabl
 import type { ItemCatalog } from '../../domain/item.types'
 import { getItemName } from '../../domain/item-names'
 import type { ItemLanguage } from '../../domain/user-settings'
-import { PROFESSION_OPTIONS } from '../../domain/professions'
+import { GAME_VERSION_REGISTRY, professionOptionsFor } from '../../domain/game-version'
+import type { GameVersion } from '../../domain/game-version'
 import {
   findImportedItem,
   type RecipeImportData,
@@ -18,6 +20,7 @@ import { fetchWowheadRecipe, type WowheadRecipeImport } from './wowhead-import'
 import './WowheadImportForm.css'
 
 interface WowheadImportFormProps {
+  gameVersion?: GameVersion
   catalog: ItemCatalog
   itemLanguage?: ItemLanguage
   onImport: (data: RecipeImportData) => RecipeImportResult
@@ -43,6 +46,7 @@ interface RecipeReviewProps extends WowheadImportFormProps {
 
 function RecipeReview({
   recipe,
+  gameVersion = 'forever',
   catalog,
   itemLanguage = 'ru',
   onImport,
@@ -50,6 +54,7 @@ function RecipeReview({
   onSuccess,
   isActive = true,
 }: RecipeReviewProps) {
+  const PROFESSION_OPTIONS = professionOptionsFor(gameVersion)
   const otherLanguage = itemLanguage === 'ru' ? 'en' : 'ru'
   const outputId = useId()
   const [savedRecipe] = useState(
@@ -179,7 +184,8 @@ function RecipeReview({
   )
 }
 
-export function WowheadImportForm({
+function WowheadImportFormForVersion({
+  gameVersion = 'forever',
   catalog,
   itemLanguage = 'ru',
   onImport,
@@ -192,6 +198,7 @@ export function WowheadImportForm({
   const [error, setError] = useState<string | null>(null)
   const [recipe, setRecipe] = useState<WowheadRecipeImport | null>(null)
   const active = useRef(true)
+  useDraftGuard(url.trim() !== '' || recipe !== null)
 
   useEffect(() => {
     active.current = true
@@ -210,7 +217,10 @@ export function WowheadImportForm({
     setError(null)
     setIsLoading(true)
     try {
-      const fetchedRecipe = await fetchWowheadRecipe(url)
+      const fetchedRecipe = await fetchWowheadRecipe(
+        url,
+        GAME_VERSION_REGISTRY[gameVersion].wowheadVersion,
+      )
       if (active.current) setRecipe(fetchedRecipe)
     } catch (caughtError) {
       if (active.current)
@@ -228,6 +238,7 @@ export function WowheadImportForm({
     <>
       {recipe !== null ? (
         <RecipeReview
+          gameVersion={gameVersion}
           recipe={recipe}
           catalog={catalog}
           itemLanguage={itemLanguage}
@@ -284,4 +295,8 @@ export function WowheadImportForm({
       )}
     </>
   )
+}
+
+export function WowheadImportForm(props: WowheadImportFormProps) {
+  return <WowheadImportFormForVersion key={props.gameVersion ?? 'forever'} {...props} />
 }

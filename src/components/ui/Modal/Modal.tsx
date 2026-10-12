@@ -18,6 +18,8 @@ const focusableSelector = [
   'textarea:not([disabled])',
   '[tabindex]:not([tabindex="-1"])',
 ].join(',')
+const dialogStack: HTMLElement[] = []
+const dialogFocus = new WeakMap<HTMLElement, HTMLElement>()
 
 export function Modal({ title, subtitle, children, onClose }: ModalProps) {
   const titleId = useId()
@@ -25,7 +27,11 @@ export function Modal({ title, subtitle, children, onClose }: ModalProps) {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (
+        event.key === 'Escape' &&
+        dialogStack.at(-1) === dialogRef.current &&
+        !event.defaultPrevented
+      ) {
         onClose()
       }
     }
@@ -44,6 +50,12 @@ export function Modal({ title, subtitle, children, onClose }: ModalProps) {
     if (dialog === null) {
       return
     }
+    dialogStack.push(dialog)
+    const rememberFocus = (event: FocusEvent) => {
+      if (event.target instanceof HTMLElement && dialog.contains(event.target))
+        dialogFocus.set(dialog, event.target)
+    }
+    dialog.addEventListener('focusin', rememberFocus)
 
     if (!dialog.contains(document.activeElement)) {
       const firstFocusable = dialog.querySelector<HTMLElement>(focusableSelector)
@@ -51,7 +63,7 @@ export function Modal({ title, subtitle, children, onClose }: ModalProps) {
     }
 
     const keepFocusInside = (event: KeyboardEvent) => {
-      if (event.key !== 'Tab') {
+      if (event.key !== 'Tab' || dialogStack.at(-1) !== dialog) {
         return
       }
 
@@ -85,7 +97,15 @@ export function Modal({ title, subtitle, children, onClose }: ModalProps) {
 
     return () => {
       document.removeEventListener('keydown', keepFocusInside)
-      previouslyFocused?.focus()
+      dialog.removeEventListener('focusin', rememberFocus)
+      const index = dialogStack.indexOf(dialog)
+      if (index >= 0) dialogStack.splice(index, 1)
+      const underlying = dialogStack.at(-1)
+      const restore =
+        underlying && !underlying.contains(previouslyFocused)
+          ? (dialogFocus.get(underlying) ?? underlying)
+          : previouslyFocused
+      if (restore?.isConnected) restore.focus()
     }
   }, [])
 

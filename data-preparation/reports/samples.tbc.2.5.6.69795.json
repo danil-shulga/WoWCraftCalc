@@ -1,0 +1,139 @@
+{
+  "gameVersion": "tbc",
+  "build": "2.5.6.69795",
+  "recipes": [
+    {
+      "spellId": 28555,
+      "source": "https://www.wowhead.com/tbc/spell=28555",
+      "endpoint": "https://nether.wowhead.com/tbc/tooltip/spell/28555",
+      "checkedOn": "2026-10-12",
+      "matches": true,
+      "parsed": {
+        "productItemId": 22832,
+        "productNameEn": "Super Mana Potion",
+        "reagents": [
+          {
+            "itemId": 22786,
+            "quantity": 2
+          },
+          {
+            "itemId": 22785,
+            "quantity": 1
+          },
+          {
+            "itemId": 18256,
+            "quantity": 1
+          }
+        ],
+        "toolReferences": [],
+        "explicitOutputQuantity": null
+      },
+      "sourceToolReferences": {
+        "itemIds": [],
+        "categoryIds": []
+      },
+      "storedOutputQuantity": null,
+      "note": "Sample confirms product and composition for the same game version. Output remains unknown in the database; current tooltip is not pinned to the historical client build. Tool category mapping is not confirmed by this sample."
+    },
+    {
+      "spellId": 31048,
+      "source": "https://www.wowhead.com/tbc/spell=31048",
+      "endpoint": "https://nether.wowhead.com/tbc/tooltip/spell/31048",
+      "checkedOn": "2026-10-12",
+      "matches": true,
+      "parsed": {
+        "productItemId": 24074,
+        "productNameEn": "Fel Iron Blood Ring",
+        "reagents": [
+          {
+            "itemId": 23445,
+            "quantity": 1
+          },
+          {
+            "itemId": 23077,
+            "quantity": 2
+          }
+        ],
+        "toolReferences": [
+          {
+            "href": "/tbc/item=20815/jewelers-kit",
+            "itemId": 20815
+          }
+        ],
+        "explicitOutputQuantity": null
+      },
+      "sourceToolReferences": {
+        "itemIds": [20815],
+        "categoryIds": []
+      },
+      "storedOutputQuantity": null,
+      "note": "Sample confirms product and composition for the same game version. Output remains unknown in the database; current tooltip is not pinned to the historical client build. Tool category mapping is not confirmed by this sample."
+    },
+    {
+      "spellId": 2675,
+      "source": "https://www.wowhead.com/tbc/spell=2675",
+      "endpoint": "https://nether.wowhead.com/tbc/tooltip/spell/2675",
+      "checkedOn": "2026-10-12",
+      "matches": true,
+      "parsed": {
+        "productItemId": 2870,
+        "productNameEn": "Shining Silver Breastplate",
+        "reagents": [
+          {
+            "itemId": 2841,
+            "quantity": 20
+          },
+          {
+            "itemId": 1206,
+            "quantity": 2
+          },
+          {
+            "itemId": 1705,
+            "quantity": 2
+          },
+          {
+            "itemId": 5500,
+            "quantity": 2
+          },
+          {
+            "itemId": 2842,
+            "quantity": 4
+          }
+        ],
+        "toolReferences": [
+          {
+            "href": "/tbc/items?filter=91;13;0",
+            "itemId": null
+          }
+        ],
+        "explicitOutputQuantity": null
+      },
+      "sourceToolReferences": {
+        "itemIds": [],
+        "categoryIds": [13]
+      },
+      "storedOutputQuantity": null,
+      "note": "Sample confirms product and composition for the same game version. Output remains unknown in the database; current tooltip is not pinned to the historical client build. Tool category mapping is not confirmed by this sample."
+    }
+  ],
+  "iconHttpChecks": [
+    {
+      "itemId": 118,
+      "url": "https://wow.zamimg.com/images/wow/icons/large/inv_potion_49.jpg",
+      "httpStatus": 200,
+      "contentType": "image/jpeg"
+    },
+    {
+      "itemId": 2589,
+      "url": "https://wow.zamimg.com/images/wow/icons/large/inv_fabric_linen_01.jpg",
+      "httpStatus": 200,
+      "contentType": "image/jpeg"
+    },
+    {
+      "itemId": 22832,
+      "url": "https://wow.zamimg.com/images/wow/icons/large/inv_potion_137.jpg",
+      "httpStatus": 200,
+      "contentType": "image/jpeg"
+    }
+  ]
+}

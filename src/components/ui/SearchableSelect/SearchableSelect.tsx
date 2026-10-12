@@ -211,6 +211,10 @@ export function SearchableSelect({
                 selectOption(highlightedOption)
               }
             } else if (event.key === 'Escape') {
+              if (isOpen) {
+                event.preventDefault()
+                event.stopPropagation()
+              }
               setIsOpen(false)
             }
           }}

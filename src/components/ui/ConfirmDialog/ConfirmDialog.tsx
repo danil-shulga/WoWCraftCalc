@@ -7,6 +7,7 @@ interface ConfirmDialogProps {
   title: string
   message: ReactNode
   confirmLabel: string
+  cancelLabel?: string
   onCancel: () => void
   onConfirm: () => void
 }
@@ -15,6 +16,7 @@ export function ConfirmDialog({
   title,
   message,
   confirmLabel,
+  cancelLabel = 'Отмена',
   onCancel,
   onConfirm,
 }: ConfirmDialogProps) {
@@ -29,7 +31,7 @@ export function ConfirmDialog({
             autoFocus
             onClick={onCancel}
           >
-            Отмена
+            {cancelLabel}
           </button>
           <button
             className="button confirm-dialog__danger-button"

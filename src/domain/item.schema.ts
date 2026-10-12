@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import { PROFESSION_IDS } from './professions'
+import { GAME_VERSIONS } from './game-version'
 import { CURRENCY_DISPLAY_MODES, ITEM_LANGUAGES, WOWHEAD_VERSIONS } from './user-settings'
 
 export const itemNamesSchema = z.object({
@@ -43,9 +44,18 @@ export const itemSchema = z.object({
   recipe: recipeSchema.nullable(),
 })
 
-export const persistedCraftDataSchema = z.object({
+export const versionWorkspaceSchema = z.object({
   items: z.record(z.string(), itemSchema),
-  ownedProfessions: z.array(z.enum(PROFESSION_IDS)).default([]),
-  currencyDisplay: z.enum(CURRENCY_DISPLAY_MODES).default('icons'),
-  itemLanguage: z.enum(ITEM_LANGUAGES).default('ru'),
+  ownedProfessions: z.array(z.enum(PROFESSION_IDS)),
+})
+
+export const persistedCraftDataSchema = z.object({
+  activeVersion: z.enum(GAME_VERSIONS),
+  workspaces: z.object({
+    forever: versionWorkspaceSchema,
+    tbc: versionWorkspaceSchema,
+    classic: versionWorkspaceSchema,
+  }),
+  currencyDisplay: z.enum(CURRENCY_DISPLAY_MODES),
+  itemLanguage: z.enum(ITEM_LANGUAGES),
 })

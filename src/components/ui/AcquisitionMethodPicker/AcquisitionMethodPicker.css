@@ -19,7 +19,7 @@
   padding: 2px;
   border: 1px solid var(--border);
   border-radius: 8px;
-  background: #101724;
+  background: var(--field);
 }
 
 .acquisition-method-picker__options button {
@@ -46,7 +46,7 @@
 }
 
 .acquisition-method-picker__options button[aria-pressed='true'] .currency-icon {
-  box-shadow: 0 0 0 1px rgb(30 22 8 / 60%);
+  box-shadow: 0 0 0 1px var(--accent-ink);
 }
 
 .acquisition-method-picker__options button:disabled {

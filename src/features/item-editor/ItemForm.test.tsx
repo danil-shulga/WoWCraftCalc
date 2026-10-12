@@ -98,7 +98,7 @@ describe('ItemForm', () => {
     )
   })
 
-  it('сохраняет существующие нулевые цены как неизвестные без изменения полей', async () => {
+  it('сохраняет существующие нулевые цены как ноль без изменения полей', async () => {
     const user = userEvent.setup()
     const onSave = vi.fn()
     render(
@@ -113,8 +113,8 @@ describe('ItemForm', () => {
 
     expect(onSave).toHaveBeenCalledWith(
       expect.objectContaining({
-        purchasePriceCopper: null,
-        salePriceCopper: null,
+        purchasePriceCopper: 0,
+        salePriceCopper: 0,
       }),
     )
   })

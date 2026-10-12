@@ -1,3 +1,4 @@
+import { testCraftData, setTestCraftState } from '../test/craft-state'
 import { persistedCraftDataSchema } from '../domain/item.schema'
 import { getAutomaticAcquisitionMethod, getCraftUnitCost } from '../domain/calculations'
 import type { ItemCatalog } from '../domain/item.types'
@@ -10,19 +11,18 @@ import {
 describe('настройки CraftStore', () => {
   beforeEach(() => {
     localStorage.clear()
-    useCraftStore.getState().replaceData({
-      items: {},
-      ownedProfessions: [],
-      currencyDisplay: 'icons',
-    })
+    useCraftStore.getState().replaceData(
+      testCraftData({
+        items: {},
+        ownedProfessions: [],
+        currencyDisplay: 'icons',
+      }),
+    )
     usePersistenceStatusStore.getState().setHydrationError(null)
   })
 
   it('использует иконки для сохранённых данных без настройки валют', () => {
-    const parsed = persistedCraftDataSchema.parse({
-      items: {},
-      ownedProfessions: [],
-    })
+    const parsed = persistedCraftDataSchema.parse(testCraftData())
 
     expect(parsed.currencyDisplay).toBe('icons')
   })
@@ -30,7 +30,9 @@ describe('настройки CraftStore', () => {
   it('сохраняет выбранное отображение валют', () => {
     useCraftStore.getState().setCurrencyDisplay('text')
 
-    const persisted = JSON.parse(localStorage.getItem('craft-calc-data') ?? '{}') as {
+    const persisted = JSON.parse(
+      localStorage.getItem('craft-calc-versioned-data') ?? '{}',
+    ) as {
       state?: { currencyDisplay?: string }
     }
 
@@ -40,13 +42,13 @@ describe('настройки CraftStore', () => {
 
   it('сохраняет EN и восстанавливает настройку после повторной загрузки', async () => {
     useCraftStore.getState().setItemLanguage('en')
-    const saved = localStorage.getItem('craft-calc-data')
+    const saved = localStorage.getItem('craft-calc-versioned-data')
     expect(JSON.parse(saved ?? 'null') as unknown).toMatchObject({
       state: { itemLanguage: 'en' },
-      version: 5,
+      version: 1,
     })
-    useCraftStore.setState({ itemLanguage: 'ru' })
-    localStorage.setItem('craft-calc-data', saved ?? 'null')
+    setTestCraftState({ itemLanguage: 'ru' })
+    localStorage.setItem('craft-calc-versioned-data', saved ?? 'null')
     await useCraftStore.persist.rehydrate()
     expect(useCraftStore.getState().itemLanguage).toBe('en')
   })
@@ -82,11 +84,13 @@ describe('целостность CraftStore', () => {
 
   beforeEach(() => {
     localStorage.clear()
-    useCraftStore.getState().replaceData({
-      items: linkedCatalog,
-      ownedProfessions: [],
-      currencyDisplay: 'icons',
-    })
+    useCraftStore.getState().replaceData(
+      testCraftData({
+        items: linkedCatalog,
+        ownedProfessions: [],
+        currencyDisplay: 'icons',
+      }),
+    )
     usePersistenceStatusStore.getState().setHydrationError(null)
   })
 
@@ -95,7 +99,9 @@ describe('целостность CraftStore', () => {
   })
 
   it('сопоставляет ручной предмет по EN и не объединяет разные версии игры', () => {
-    const item = useCraftStore.getState().items.reagent
+    const item =
+      useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items
+        .reagent
     if (item === undefined) throw new Error('Нет тестового предмета')
     const catalog = { reagent: { ...item, names: { ru: 'Нефрит', en: 'Jade' } } }
     expect(
@@ -109,7 +115,7 @@ describe('целостность CraftStore', () => {
     const sourced = {
       reagent: {
         ...catalog.reagent,
-        source: { wowheadItemId: 1529, wowheadVersion: 'classic' as const },
+        source: { wowheadItemId: 1529, wowheadVersion: 'forever' as const },
       },
     }
     expect(
@@ -133,7 +139,7 @@ describe('целостность CraftStore', () => {
     const data = {
       product: {
         wowheadItemId: 2,
-        wowheadVersion: 'classic' as const,
+        wowheadVersion: 'forever' as const,
         name: 'Изделие',
         names: { ru: 'Изделие', en: 'Product' },
         iconUrl: '',
@@ -141,7 +147,7 @@ describe('целостность CraftStore', () => {
       reagents: [
         {
           wowheadItemId: 1,
-          wowheadVersion: 'classic' as const,
+          wowheadVersion: 'forever' as const,
           name: 'Реагент',
           names: { ru: 'Реагент', en: 'Reagent' },
           iconUrl: '',
@@ -159,25 +165,41 @@ describe('целостность CraftStore', () => {
     expect(
       store.importRecipe({ ...data, product: { ...data.product, name: 'Product' } }),
     ).toMatchObject({ success: true, productCreated: false, reagentsCreated: 0 })
-    expect(useCraftStore.getState().items.product).toMatchObject({
+    expect(
+      useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items
+        .product,
+    ).toMatchObject({
       names: data.product.names,
       salePriceCopper: 100,
       recipe: { reagents: [{ itemId: 'reagent', quantity: 2, acquisition: 'buy' }] },
     })
-    expect(useCraftStore.getState().items.reagent?.purchasePriceCopper).toBe(10)
-    expect(Object.keys(useCraftStore.getState().items)).toHaveLength(2)
+    expect(
+      useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items
+        .reagent?.purchasePriceCopper,
+    ).toBe(10)
+    expect(
+      Object.keys(
+        useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items,
+      ),
+    ).toHaveLength(2)
   })
 
   it('заполняет только отсутствующие переводы одним обновлением и сохраняет цены и рецепт', () => {
-    const original = useCraftStore.getState().items.reagent
+    const original =
+      useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items
+        .reagent
     if (original === undefined) throw new Error('Нет тестового предмета')
     const item = {
       ...original,
       names: { ru: 'Мой реагент', en: null },
       source: { wowheadItemId: 1 },
     }
-    useCraftStore.setState({
-      items: { ...useCraftStore.getState().items, reagent: item },
+    setTestCraftState({
+      items: {
+        ...useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion]
+          .items,
+        reagent: item,
+      },
     })
     const listener = vi.fn()
     const unsubscribe = useCraftStore.subscribe(listener)
@@ -187,20 +209,24 @@ describe('целостность CraftStore', () => {
         {
           itemId: 'reagent',
           wowheadItemId: 1,
-          wowheadVersion: 'tbc',
+          wowheadVersion: 'forever',
           names: { ru: 'Реагент', en: 'Reagent' },
         },
       ]),
     ).toBeNull()
     expect(listener).toHaveBeenCalledTimes(1)
-    expect(useCraftStore.getState().items.reagent).toMatchObject({
+    expect(
+      useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items
+        .reagent,
+    ).toMatchObject({
       names: { ru: 'Мой реагент', en: 'Reagent' },
       purchasePriceCopper: 10,
-      source: { wowheadItemId: 1, wowheadVersion: 'tbc' },
+      source: { wowheadItemId: 1, wowheadVersion: 'forever' },
     })
-    expect(useCraftStore.getState().items.product?.recipe).toBe(
-      before.items.product?.recipe,
-    )
+    expect(
+      useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items
+        .product?.recipe,
+    ).toBe(before.workspaces[before.activeVersion].items.product?.recipe)
     unsubscribe()
   })
 
@@ -211,7 +237,7 @@ describe('целостность CraftStore', () => {
         {
           itemId: 'reagent',
           wowheadItemId: 1,
-          wowheadVersion: 'classic',
+          wowheadVersion: 'forever',
           names: { ru: 'Реагент', en: 'Reagent' },
         },
       ]),
@@ -235,27 +261,43 @@ describe('целостность CraftStore', () => {
       const after = useCraftStore.getState()
       expect(listener).toHaveBeenCalledTimes(1)
       expect(
-        setItem.mock.calls.filter(([key]) => key === 'craft-calc-data'),
+        setItem.mock.calls.filter(([key]) => key === 'craft-calc-versioned-data'),
       ).toHaveLength(1)
-      expect(after.items).toEqual({
-        reagent: { ...before.items.reagent, purchasePriceCopper: 0 },
-        product: { ...before.items.product, purchasePriceCopper: 50 },
+      expect(after.workspaces[after.activeVersion].items).toEqual({
+        reagent: {
+          ...before.workspaces[before.activeVersion].items.reagent,
+          purchasePriceCopper: 0,
+        },
+        product: {
+          ...before.workspaces[before.activeVersion].items.product,
+          purchasePriceCopper: 50,
+        },
       })
-      expect(before.items.reagent?.purchasePriceCopper).toBe(10)
-      expect(before.items.product?.purchasePriceCopper).toBeNull()
-      expect(after.items.product?.recipe).toBe(before.items.product?.recipe)
-      expect(after.ownedProfessions).toBe(before.ownedProfessions)
+      expect(
+        before.workspaces[before.activeVersion].items.reagent?.purchasePriceCopper,
+      ).toBe(10)
+      expect(
+        before.workspaces[before.activeVersion].items.product?.purchasePriceCopper,
+      ).toBeNull()
+      expect(after.workspaces[after.activeVersion].items.product?.recipe).toBe(
+        before.workspaces[before.activeVersion].items.product?.recipe,
+      )
+      expect(after.workspaces[after.activeVersion].ownedProfessions).toBe(
+        before.workspaces[before.activeVersion].ownedProfessions,
+      )
       expect(after.currencyDisplay).toBe(before.currencyDisplay)
       expect(
-        JSON.parse(localStorage.getItem('craft-calc-data') ?? 'null') as unknown,
+        JSON.parse(
+          localStorage.getItem('craft-calc-versioned-data') ?? 'null',
+        ) as unknown,
       ).toEqual({
         state: {
-          items: after.items,
-          ownedProfessions: before.ownedProfessions,
+          activeVersion: after.activeVersion,
+          workspaces: after.workspaces,
           currencyDisplay: before.currencyDisplay,
           itemLanguage: before.itemLanguage,
         },
-        version: 5,
+        version: 1,
       })
     } finally {
       unsubscribe()
@@ -283,16 +325,26 @@ describe('целостность CraftStore', () => {
   )
 
   it('пропускает неизменённые предметы в смешанном пакете и различает null и ноль', () => {
-    const before = useCraftStore.getState().items
+    const before =
+      useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items
 
     useCraftStore
       .getState()
       .setItemPrices('salePriceCopper', { reagent: null, product: 0 })
 
-    expect(useCraftStore.getState().items.reagent).toBe(before.reagent)
-    expect(useCraftStore.getState().items.product?.salePriceCopper).toBe(0)
+    expect(
+      useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items
+        .reagent,
+    ).toBe(before.reagent)
+    expect(
+      useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items
+        .product?.salePriceCopper,
+    ).toBe(0)
     useCraftStore.getState().setItemPrices('salePriceCopper', { product: null })
-    expect(useCraftStore.getState().items.product?.salePriceCopper).toBeNull()
+    expect(
+      useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items
+        .product?.salePriceCopper,
+    ).toBeNull()
   })
 
   it('не сохраняет пустой рецепт', () => {
@@ -302,14 +354,20 @@ describe('целостность CraftStore', () => {
       reagents: [],
     })
 
-    expect(error).toBe('Добавьте хотя бы один реагент')
-    expect(useCraftStore.getState().items.product?.recipe).not.toBeNull()
+    expect(error).toContain('Добавьте хотя бы один реагент')
+    expect(
+      useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items
+        .product?.recipe,
+    ).not.toBeNull()
   })
 
   it('удаляет рецепт, если вместе с предметом исчез последний реагент', () => {
     useCraftStore.getState().removeItem('reagent')
 
-    expect(useCraftStore.getState().items.product?.recipe).toBeNull()
+    expect(
+      useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items
+        .product?.recipe,
+    ).toBeNull()
   })
 
   it('атомарно обновляет рецепт Wowhead без дублей и сохраняет локальные данные', () => {
@@ -352,11 +410,13 @@ describe('целостность CraftStore', () => {
         },
       },
     }
-    useCraftStore.getState().replaceData({
-      items: catalogWithImportedItems,
-      ownedProfessions: [],
-      currencyDisplay: 'icons',
-    })
+    useCraftStore.getState().replaceData(
+      testCraftData({
+        items: catalogWithImportedItems,
+        ownedProfessions: [],
+        currencyDisplay: 'icons',
+      }),
+    )
 
     const importData = {
       outputQuantity: 2,
@@ -383,7 +443,8 @@ describe('целостность CraftStore', () => {
     }
 
     const firstResult = useCraftStore.getState().importRecipe(importData)
-    const firstItems = useCraftStore.getState().items
+    const firstItems =
+      useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items
     const leather = Object.values(firstItems).find(
       (item) => item.source?.wowheadItemId === 2319,
     )
@@ -412,7 +473,11 @@ describe('целостность CraftStore', () => {
       productCreated: false,
       reagentsCreated: 0,
     })
-    expect(Object.keys(useCraftStore.getState().items)).toHaveLength(4)
+    expect(
+      Object.keys(
+        useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items,
+      ),
+    ).toHaveLength(4)
   })
 
   it('применяет подтверждённый выход и профессию к новому крафту и выбору auto', () => {
@@ -424,7 +489,8 @@ describe('целостность CraftStore', () => {
     })
     expect(result.success).toBe(true)
     if (!result.success) return
-    const catalog = useCraftStore.getState().items
+    const catalog =
+      useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items
     expect(catalog[result.productItemId]?.recipe).toMatchObject({
       outputQuantity: 5,
       profession: 'engineering',
@@ -452,7 +518,10 @@ describe('целостность CraftStore', () => {
         profession: 'alchemy',
       }).success,
     ).toBe(true)
-    expect(useCraftStore.getState().items.product?.recipe).toMatchObject({
+    expect(
+      useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items
+        .product?.recipe,
+    ).toMatchObject({
       outputQuantity: 3,
       profession: 'alchemy',
       reagents: [{ itemId: 'reagent', quantity: 2, acquisition: 'buy' }],
@@ -469,8 +538,9 @@ describe('целостность CraftStore', () => {
     { reagents: [{ wowheadItemId: 1, name: 'Реагент', iconUrl: '', quantity: 0 }] },
     { reagents: [{ wowheadItemId: 1, name: '', iconUrl: '', quantity: 2 }] },
   ])('атомарно отклоняет некорректные данные %j', (updates) => {
-    const before = useCraftStore.getState().items
-    const saved = localStorage.getItem('craft-calc-data')
+    const before =
+      useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items
+    const saved = localStorage.getItem('craft-calc-versioned-data')
     const data = {
       product: { wowheadItemId: 2, name: 'Изделие', iconUrl: '' },
       reagents: [{ wowheadItemId: 1, name: 'Реагент', iconUrl: '', quantity: 2 }],
@@ -481,37 +551,35 @@ describe('целостность CraftStore', () => {
     // @ts-expect-error Deliberately pass invalid runtime data to verify atomic rejection.
     const result = useCraftStore.getState().importRecipe(data)
     expect(result.success).toBe(false)
-    expect(useCraftStore.getState().items).toBe(before)
-    expect(localStorage.getItem('craft-calc-data')).toBe(saved)
+    expect(
+      useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items,
+    ).toBe(before)
+    expect(localStorage.getItem('craft-calc-versioned-data')).toBe(saved)
   })
 
   it('сохраняет текущее состояние и сообщает об ошибке hydration', async () => {
-    localStorage.setItem(
-      'craft-calc-data',
-      JSON.stringify({
-        version: 4,
-        state: {
-          items: {
-            product: {
-              ...linkedCatalog.product,
-              recipe: {
-                outputQuantity: 1,
-                profession: null,
-                reagents: [{ itemId: 'missing', quantity: 1, acquisition: 'buy' }],
-              },
-            },
+    const product = linkedCatalog.product
+    if (!product) throw new Error('Нет результата')
+    const invalid = testCraftData({
+      items: {
+        product: {
+          ...product,
+          recipe: {
+            outputQuantity: 1,
+            profession: null,
+            reagents: [{ itemId: 'missing', quantity: 1, acquisition: 'buy' }],
           },
-          ownedProfessions: [],
-          currencyDisplay: 'icons',
         },
-      }),
+      },
+    })
+    localStorage.setItem(
+      'craft-calc-versioned-data',
+      JSON.stringify({ version: 1, state: invalid }),
     )
-
     await useCraftStore.persist.rehydrate()
-
-    expect(useCraftStore.getState().items).toEqual(linkedCatalog)
+    expect(useCraftStore.getState().workspaces.forever.items).toEqual(linkedCatalog)
     expect(usePersistenceStatusStore.getState().hydrationError).toContain(
-      'Один из реагентов отсутствует в каталоге',
+      'Один из реагентов отсутствует',
     )
   })
 })

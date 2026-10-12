@@ -262,7 +262,10 @@ async function enrichReagent(
   }
 }
 
-export async function fetchWowheadRecipe(value: string): Promise<WowheadRecipeImport> {
+export async function fetchWowheadRecipe(
+  value: string,
+  expectedVersion?: WowheadVersion,
+): Promise<WowheadRecipeImport> {
   const reference = parseWowheadSpellReference(value)
 
   if (reference === null) {
@@ -270,6 +273,10 @@ export async function fetchWowheadRecipe(value: string): Promise<WowheadRecipeIm
       'Введите ссылку на заклинание с сайта Wowhead Classic, TBC или Forever',
     )
   }
+  if (expectedVersion && reference.version !== expectedVersion)
+    throw new Error(
+      'Версия ссылки Wowhead не совпадает с текущей версией игры. Выберите ссылку для активной версии.',
+    )
 
   const parsed = parseWowheadSpellTooltip(
     await fetchTooltip(

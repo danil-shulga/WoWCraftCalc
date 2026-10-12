@@ -1,3 +1,4 @@
+import { setTestCraftState } from '../test/craft-state'
 import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
@@ -33,7 +34,7 @@ describe('ItemsPage', () => {
     'ищет оба названия в разделе %s при любом языке отображения',
     async (section) => {
       const user = userEvent.setup()
-      useCraftStore.setState({
+      setTestCraftState({
         items: Object.fromEntries(
           Object.entries(items).map(([id, item]) => [
             id,
@@ -63,7 +64,7 @@ describe('ItemsPage', () => {
     const bag = items.bag
     if (potion === undefined || bag === undefined)
       throw new Error('Нет тестовых предметов')
-    useCraftStore.setState({
+    setTestCraftState({
       items: {
         potion: {
           ...potion,
@@ -88,7 +89,7 @@ describe('ItemsPage', () => {
   })
 
   beforeEach(() => {
-    useCraftStore.setState({ items, itemLanguage: 'ru' })
+    setTestCraftState({ items, itemLanguage: 'ru' })
   })
 
   afterEach(() => {
@@ -108,7 +109,8 @@ describe('ItemsPage', () => {
       await user.click(opener)
       expect(screen.getAllByRole('dialog')).toHaveLength(1)
       expect(screen.getByText('База Forever')).toBeVisible()
-      const before = useCraftStore.getState().items
+      const before =
+        useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items
       await user.click(screen.getByRole('button', { name: 'Добавить вручную' }))
       expect(screen.getByRole('checkbox', { name: 'Крафты' })).toHaveProperty(
         'checked',
@@ -119,12 +121,19 @@ describe('ItemsPage', () => {
         section === 'reagents',
       )
       await user.type(screen.getByLabelText('Название RU'), 'Новый предмет')
-      expect(useCraftStore.getState().items).toBe(before)
+      expect(
+        useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items,
+      ).toBe(before)
       await user.click(screen.getByRole('button', { name: 'Сохранить' }))
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
       expect(opener).toHaveFocus()
       expect(screen.getByText('Новый предмет')).toBeVisible()
-      expect(Object.values(useCraftStore.getState().items)).toContainEqual(
+      expect(
+        Object.values(
+          useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion]
+            .items,
+        ),
+      ).toContainEqual(
         expect.objectContaining({ name: 'Новый предмет', sections: [section] }),
       )
     },
@@ -133,7 +142,7 @@ describe('ItemsPage', () => {
   it.each(['crafts', 'reagents'] as const)(
     'открывает общую модалку из пустого раздела %s и отменяет без записи',
     async (section) => {
-      useCraftStore.setState({ items: {} })
+      setTestCraftState({ items: {} })
       const before = useCraftStore.getState()
       const user = userEvent.setup()
       render(<ItemsPage section={section} />)
@@ -184,8 +193,9 @@ describe('ItemsPage', () => {
           { ...item, sections: [section], purchasePriceCopper: 300 },
         ]),
       )
-      useCraftStore.setState({ items: catalog })
-      const before = useCraftStore.getState().items
+      setTestCraftState({ items: catalog })
+      const before =
+        useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items
       render(<ItemsPage section={section} />)
       const setItem = vi.spyOn(Storage.prototype, 'setItem')
 
@@ -199,21 +209,29 @@ describe('ItemsPage', () => {
       await user.click(within(first).getByRole('checkbox', { name: 'Указать цену' }))
       await user.click(within(second).getByRole('checkbox', { name: 'Указать цену' }))
       await user.click(within(second).getByRole('checkbox', { name: 'Указать цену' }))
-      expect(useCraftStore.getState().items).toBe(before)
+      expect(
+        useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items,
+      ).toBe(before)
       expect(setItem).not.toHaveBeenCalled()
 
       await user.click(screen.getByRole('button', { name: 'Сохранить все' }))
 
-      expect(useCraftStore.getState().items.potion).toEqual({
+      expect(
+        useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items
+          .potion,
+      ).toEqual({
         ...before.potion,
         [field]: null,
       })
-      expect(useCraftStore.getState().items.bag).toEqual({
+      expect(
+        useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items
+          .bag,
+      ).toEqual({
         ...before.bag,
         [field]: 0,
       })
       expect(
-        setItem.mock.calls.filter(([key]) => key === 'craft-calc-data'),
+        setItem.mock.calls.filter(([key]) => key === 'craft-calc-versioned-data'),
       ).toHaveLength(1)
       expect(screen.getByRole('button', { name: 'Редактировать цены' })).toBeVisible()
     },
@@ -336,7 +354,7 @@ describe('ItemsPage', () => {
           },
         },
       }
-      useCraftStore.setState({ items: catalog, ownedProfessions: ['tailoring'] })
+      setTestCraftState({ items: catalog, ownedProfessions: ['tailoring'] })
       render(<ItemsPage section="crafts" />)
 
       await user.click(screen.getByRole('button', { name: 'Развернуть рецепт' }))

@@ -1,0 +1,109 @@
+{
+  "gameVersion": "tbc",
+  "mode": "anniversary",
+  "product": "wow_anniversary",
+  "build": "2.5.6.69795",
+  "snapshotDate": "2026-10-12",
+  "locales": ["ruRU", "enUS"],
+  "sourceUrl": "https://wago.tools/db2",
+  "buildEvidence": {
+    "product": "wow_anniversary",
+    "version": "2.5.6.69795",
+    "created_at": "2026-09-12 18:58:06",
+    "build_config": "6761dba8cfd072ee16accae41941bd11",
+    "product_config": "92cbb948f8b043dc019e4447149478d5",
+    "cdn_config": "3bf5d9d33331e68f0899bd0e32ebdf4a",
+    "is_bgdl": false
+  },
+  "buildListUrl": "https://wago.tools/api/builds",
+  "sources": [
+    {
+      "table": "Item",
+      "locale": "enUS",
+      "fileName": "Item.enUS.2.5.6.69795.csv",
+      "path": "data-preparation/raw/tbc/2.5.6.69795/Item.enUS.2.5.6.69795.csv",
+      "rows": 30145,
+      "sha256": "ff9690de7bc541e819f20c8b21c844497d5d7c3014ab6393a208b83f11fef8f2",
+      "url": "https://wago.tools/db2/Item/csv?build=2.5.6.69795&locale=enUS",
+      "product": "wow_anniversary",
+      "build": "2.5.6.69795"
+    },
+    {
+      "table": "ItemSparse",
+      "locale": "ruRU",
+      "fileName": "ItemSparse.ruRU.2.5.6.69795.csv",
+      "path": "data-preparation/raw/tbc/2.5.6.69795/ItemSparse.ruRU.2.5.6.69795.csv",
+      "rows": 30132,
+      "sha256": "956631b317a302da4751f22c695fe55a73cff41b776c4ce7089dbe720b61760a",
+      "url": "https://wago.tools/db2/ItemSparse/csv?build=2.5.6.69795&locale=ruRU",
+      "product": "wow_anniversary",
+      "build": "2.5.6.69795"
+    },
+    {
+      "table": "ItemSparse",
+      "locale": "enUS",
+      "fileName": "ItemSparse.enUS.2.5.6.69795.csv",
+      "path": "data-preparation/raw/tbc/2.5.6.69795/ItemSparse.enUS.2.5.6.69795.csv",
+      "rows": 30132,
+      "sha256": "e4af4200fa9a125201038563e810ae766d2e6cd8444969c85d09e846e6ea94d1",
+      "url": "https://wago.tools/db2/ItemSparse/csv?build=2.5.6.69795&locale=enUS",
+      "product": "wow_anniversary",
+      "build": "2.5.6.69795"
+    },
+    {
+      "table": "SpellReagents",
+      "locale": "enUS",
+      "fileName": "SpellReagents.enUS.2.5.6.69795.csv",
+      "path": "data-preparation/raw/tbc/2.5.6.69795/SpellReagents.enUS.2.5.6.69795.csv",
+      "rows": 2659,
+      "sha256": "f4daf5d22d905b9275ec54aaa9a392cfbafee6a59152eecf36b5dcc3b90cec42",
+      "url": "https://wago.tools/db2/SpellReagents/csv?build=2.5.6.69795&locale=enUS",
+      "product": "wow_anniversary",
+      "build": "2.5.6.69795"
+    },
+    {
+      "table": "SpellEffect",
+      "locale": "enUS",
+      "fileName": "SpellEffect.enUS.2.5.6.69795.csv",
+      "path": "data-preparation/raw/tbc/2.5.6.69795/SpellEffect.enUS.2.5.6.69795.csv",
+      "rows": 38365,
+      "sha256": "ad2309425c31dd979e3a8682e794178ddd3540f6090c774a12e1bb8432a8e1d7",
+      "url": "https://wago.tools/db2/SpellEffect/csv?build=2.5.6.69795&locale=enUS",
+      "product": "wow_anniversary",
+      "build": "2.5.6.69795"
+    },
+    {
+      "table": "SkillLineAbility",
+      "locale": "enUS",
+      "fileName": "SkillLineAbility.enUS.2.5.6.69795.csv",
+      "path": "data-preparation/raw/tbc/2.5.6.69795/SkillLineAbility.enUS.2.5.6.69795.csv",
+      "rows": 7018,
+      "sha256": "986b0c3115373ca2b40e005c42aa6a0ca46b8e43435eac48c74b7b32e6d65fcf",
+      "url": "https://wago.tools/db2/SkillLineAbility/csv?build=2.5.6.69795&locale=enUS",
+      "product": "wow_anniversary",
+      "build": "2.5.6.69795"
+    },
+    {
+      "table": "SkillLine",
+      "locale": "ruRU",
+      "fileName": "SkillLine.ruRU.2.5.6.69795.csv",
+      "path": "data-preparation/raw/tbc/2.5.6.69795/SkillLine.ruRU.2.5.6.69795.csv",
+      "rows": 134,
+      "sha256": "f9758eccfc7a2eedca83a64bfd513629d431c1a5a1b25e5544fced94d8b3e980",
+      "url": "https://wago.tools/db2/SkillLine/csv?build=2.5.6.69795&locale=ruRU",
+      "product": "wow_anniversary",
+      "build": "2.5.6.69795"
+    },
+    {
+      "table": "SpellTotems",
+      "locale": "enUS",
+      "fileName": "SpellTotems.enUS.2.5.6.69795.csv",
+      "path": "data-preparation/raw/tbc/2.5.6.69795/SpellTotems.enUS.2.5.6.69795.csv",
+      "rows": 1244,
+      "sha256": "c15cf3596a14af0328d5b81b532f32e8f739f9a34161bc0160f673c417bbc4fd",
+      "url": "https://wago.tools/db2/SpellTotems/csv?build=2.5.6.69795&locale=enUS",
+      "product": "wow_anniversary",
+      "build": "2.5.6.69795"
+    }
+  ]
+}

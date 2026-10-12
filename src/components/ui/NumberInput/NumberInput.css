@@ -6,7 +6,7 @@
   overflow: hidden;
   border: 1px solid var(--border);
   border-radius: 8px;
-  background: #101724;
+  background: var(--field);
   transition:
     border-color 120ms ease,
     box-shadow 120ms ease;
@@ -14,7 +14,7 @@
 
 .number-input:focus-within {
   border-color: var(--accent);
-  box-shadow: 0 0 0 1px rgb(227 173 69 / 28%);
+  box-shadow: 0 0 0 1px var(--focus-ring);
 }
 
 .number-input[data-disabled='true'] {
@@ -54,7 +54,7 @@
   place-items: center;
   border: 0;
   color: var(--muted);
-  background: #182236;
+  background: var(--panel);
   font-size: 0.48rem;
   line-height: 1;
   cursor: pointer;
@@ -66,7 +66,7 @@
 
 .number-input__controls button:hover:not(:disabled) {
   color: var(--accent-strong);
-  background: #24314a;
+  background: var(--hover);
 }
 
 .number-input__controls button:active:not(:disabled) {

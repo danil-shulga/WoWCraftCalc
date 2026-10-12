@@ -1,53 +1,34 @@
 import { z } from 'zod'
 import { createJSONStorage } from 'zustand/middleware'
 
-import {
-  itemSchema,
-  persistedCraftDataSchema,
-  recipeLineSchema,
-  recipeSchema,
-} from '../domain/item.schema'
+import { persistedCraftDataSchema } from '../domain/item.schema'
+import { GAME_VERSIONS, GAME_VERSION_REGISTRY } from '../domain/game-version'
 import { getCatalogValidationError } from '../domain/recipe-validation'
-import type { ItemCatalog, PersistedCraftData } from '../domain/item.types'
+import type { PersistedCraftData } from '../domain/item.types'
 
-const legacyRecipeSchema = recipeSchema.extend({
-  reagents: z.array(recipeLineSchema),
-})
+export const STORAGE_KEY = 'craft-calc-versioned-data'
+export const STORAGE_VERSION = 1
+export const EXPORT_FORMAT = 'craftcalc-versioned-backup'
+export const EXPORT_VERSION = 1
 
-const legacyItemSchema = itemSchema.extend({
-  recipe: legacyRecipeSchema.nullable(),
-})
+export function createEmptyCraftData(): PersistedCraftData {
+  return {
+    activeVersion: 'forever',
+    workspaces: {
+      forever: { items: {}, ownedProfessions: [] },
+      tbc: { items: {}, ownedProfessions: [] },
+      classic: { items: {}, ownedProfessions: [] },
+    },
+    currencyDisplay: 'icons',
+    itemLanguage: 'ru',
+  }
+}
 
-const legacyItemsSchema = z.record(z.string(), legacyItemSchema)
-
-const exportSchema = z.discriminatedUnion('version', [
-  z.object({
-    version: z.literal(1),
-    exportedAt: z.string(),
-    items: legacyItemsSchema,
-  }),
-  z.object({
-    version: z.literal(2),
-    exportedAt: z.string(),
-    items: legacyItemsSchema,
-  }),
-  z.object({
-    version: z.literal(3),
-    exportedAt: z.string(),
-    data: persistedCraftDataSchema,
-  }),
-  z.object({
-    version: z.literal(4),
-    exportedAt: z.string(),
-    data: persistedCraftDataSchema,
-  }),
-])
-
-const legacyPersistedCraftDataSchema = z.object({
-  items: legacyItemsSchema,
-  ownedProfessions: persistedCraftDataSchema.shape.ownedProfessions,
-  currencyDisplay: persistedCraftDataSchema.shape.currencyDisplay,
-  itemLanguage: persistedCraftDataSchema.shape.itemLanguage,
+const exportSchema = z.object({
+  format: z.literal(EXPORT_FORMAT),
+  version: z.literal(EXPORT_VERSION),
+  exportedAt: z.string(),
+  data: persistedCraftDataSchema,
 })
 
 const persistedStorageSchema = z.object({
@@ -57,12 +38,22 @@ const persistedStorageSchema = z.object({
 
 type NormalizedCraftData = z.output<typeof persistedCraftDataSchema>
 
-export function createCraftStorage() {
+export function createCraftStorage(
+  onWriteError: (error: unknown) => void = () => {
+    /* Optional storage status callback. */
+  },
+  onWriteSuccess: () => void = () => {
+    /* Optional storage status callback. */
+  },
+) {
   let writesBlocked = false
   // Resolve localStorage on access so an unavailable browser storage is a load error.
   const storage = createJSONStorage<PersistedCraftData>(
     () => ({
-      getItem: (name) => localStorage.getItem(name),
+      getItem: (name) => {
+        localStorage.removeItem('craft-calc-data')
+        return localStorage.getItem(name)
+      },
       setItem: (name, value) => {
         localStorage.setItem(name, value)
       },
@@ -98,7 +89,13 @@ export function createCraftStorage() {
     getItem: storage.getItem,
     setItem: (...args: Parameters<typeof storage.setItem>) => {
       if (!writesBlocked) {
-        return storage.setItem(...args)
+        try {
+          const result = storage.setItem(...args)
+          onWriteSuccess()
+          return result
+        } catch (error) {
+          onWriteError(error)
+        }
       }
     },
     removeItem: (name: string) => {
@@ -131,44 +128,34 @@ export function createCraftStorage() {
 export type ImportResult =
   { success: true; data: PersistedCraftData } | { success: false; error: string }
 
-function normalizeLegacyItems(
-  items: ItemCatalog,
-  resetAcquisition: boolean,
-): ItemCatalog {
-  return Object.fromEntries(
-    Object.entries(items).map(([itemId, item]) => {
-      if (item.recipe === null || item.recipe.reagents.length === 0) {
-        return [itemId, { ...item, recipe: null }]
-      }
-
-      if (!resetAcquisition) {
-        return [itemId, item]
-      }
-
-      return [
-        itemId,
-        {
-          ...item,
-          recipe: {
-            ...item.recipe,
-            reagents: item.recipe.reagents.map((line) => ({
-              ...line,
-              acquisition: 'auto' as const,
-            })),
-          },
-        },
-      ]
-    }),
-  )
-}
-
 function assertCatalogIsValid(data: NormalizedCraftData): NormalizedCraftData {
-  const validationError = getCatalogValidationError(data.items, data.itemLanguage)
-
-  if (validationError !== null) {
-    throw new Error(validationError)
+  for (const version of GAME_VERSIONS) {
+    const workspace = data.workspaces[version]
+    const definition = GAME_VERSION_REGISTRY[version]
+    const validationError = getCatalogValidationError(workspace.items, data.itemLanguage)
+    if (validationError !== null)
+      throw new Error(`${definition.name}: ${validationError}`)
+    if (
+      workspace.ownedProfessions.some(
+        (profession) => !definition.professions.includes(profession),
+      )
+    )
+      throw new Error(`${definition.name}: недоступная профессия`)
+    for (const item of Object.values(workspace.items)) {
+      if (
+        item.source?.wowheadVersion !== undefined &&
+        item.source.wowheadVersion !== definition.wowheadVersion
+      )
+        throw new Error(
+          `${definition.name}: источник предмета относится к другой версии игры`,
+        )
+      if (
+        item.recipe?.profession &&
+        !definition.professions.includes(item.recipe.profession)
+      )
+        throw new Error(`${definition.name}: профессия рецепта недоступна`)
+    }
   }
-
   return data
 }
 
@@ -182,34 +169,13 @@ export function parseCurrentPersistedData(state: unknown): NormalizedCraftData {
   return assertCatalogIsValid(parsed.data)
 }
 
-export function migratePersistedData(
-  state: unknown,
-  version: number,
-): NormalizedCraftData {
-  if (version >= 4) {
-    return parseCurrentPersistedData(state)
-  }
-
-  const parsed = legacyPersistedCraftDataSchema.safeParse(state)
-
-  if (!parsed.success) {
-    throw new Error('Не удалось преобразовать сохранённые данные CraftCalc')
-  }
-
-  return assertCatalogIsValid(
-    persistedCraftDataSchema.parse({
-      ...parsed.data,
-      items: normalizeLegacyItems(parsed.data.items, version < 2),
-    }),
-  )
-}
-
 export function createExportJson(data: PersistedCraftData): string {
   return JSON.stringify(
     {
-      version: 4,
+      format: EXPORT_FORMAT,
+      version: EXPORT_VERSION,
       exportedAt: new Date().toISOString(),
-      data: persistedCraftDataSchema.parse(data),
+      data: parseCurrentPersistedData(data),
     },
     null,
     2,
@@ -230,24 +196,17 @@ export function parseImportedData(rawJson: string): ImportResult {
   if (!parsed.success) {
     return {
       success: false,
-      error: 'Структура файла не соответствует формату CraftCalc',
+      error:
+        'Неподдерживаемый или повреждённый формат. Нужна полная резервная копия CraftCalc для трёх версий игры; старые копии не поддерживаются',
     }
   }
 
-  const data =
-    parsed.data.version === 3 || parsed.data.version === 4
-      ? parsed.data.data
-      : {
-          items: normalizeLegacyItems(parsed.data.items, parsed.data.version === 1),
-          ownedProfessions: [],
-          currencyDisplay: 'icons' as const,
-          itemLanguage: 'ru' as const,
-        }
-  const validationError = getCatalogValidationError(data.items, data.itemLanguage)
-
-  if (validationError !== null) {
-    return { success: false, error: validationError }
+  try {
+    return { success: true, data: assertCatalogIsValid(parsed.data.data) }
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Некорректная резервная копия',
+    }
   }
-
-  return { success: true, data }
 }

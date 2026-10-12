@@ -1,4 +1,5 @@
 import type { Profession } from './professions'
+import type { GameVersion } from './game-version'
 import type { CurrencyDisplayMode, ItemLanguage, WowheadVersion } from './user-settings'
 
 export type ItemId = string
@@ -51,11 +52,17 @@ export interface ItemNamesUpdate {
   wowheadItemId: number
   wowheadVersion: WowheadVersion
   names: ItemNames
+  expectedItem?: Item | undefined
+}
+
+export interface VersionWorkspace {
+  items: ItemCatalog
+  ownedProfessions: Profession[]
 }
 
 export interface PersistedCraftData {
-  items: ItemCatalog
-  ownedProfessions: Profession[]
+  activeVersion: GameVersion
+  workspaces: Record<GameVersion, VersionWorkspace>
   currencyDisplay: CurrencyDisplayMode
-  itemLanguage?: ItemLanguage | undefined
+  itemLanguage: ItemLanguage
 }

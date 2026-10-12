@@ -1,3 +1,4 @@
+import { testCraftData } from '../../test/craft-state'
 import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { ComponentProps } from 'react'
@@ -17,6 +18,7 @@ function ImportHarness(
 ) {
   return (
     <ItemAddModal
+      gameVersion={useCraftStore.getState().activeVersion}
       title="Добавить крафт"
       defaultSection="crafts"
       onSave={vi.fn()}
@@ -57,7 +59,12 @@ describe('проверка импорта Wowhead', () => {
     localStorage.clear()
     useCraftStore
       .getState()
-      .replaceData({ items: {}, ownedProfessions: [], currencyDisplay: 'icons' })
+      .replaceData(
+        testCraftData(
+          { items: {}, ownedProfessions: [], currencyDisplay: 'icons' },
+          'tbc',
+        ),
+      )
   })
 
   afterEach(() => {
@@ -147,7 +154,9 @@ describe('проверка импорта Wowhead', () => {
     await loadRecipe(user)
 
     expect(onImport).not.toHaveBeenCalled()
-    expect(useCraftStore.getState().items).toEqual({})
+    expect(
+      useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items,
+    ).toEqual({})
     expect(screen.getByLabelText('Предметов за один крафт')).toHaveValue(5)
     expect(screen.queryByText(/Выход из Wowhead/)).not.toBeInTheDocument()
     expect(screen.queryByText(/Профессия крафта не распознана/)).not.toBeInTheDocument()
@@ -176,9 +185,9 @@ describe('проверка импорта Wowhead', () => {
     expect(onSuccess).toHaveBeenCalledWith('Крафт создан. Добавлено реагентов: 3.')
     expect(onClose).toHaveBeenCalledOnce()
     expect(
-      Object.values(useCraftStore.getState().items).find(
-        (item) => item.source?.wowheadItemId === 34113,
-      )?.recipe,
+      Object.values(
+        useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items,
+      ).find((item) => item.source?.wowheadItemId === 34113)?.recipe,
     ).toMatchObject({ outputQuantity: 5, profession: 'engineering' })
   })
 
@@ -211,7 +220,12 @@ describe('проверка импорта Wowhead', () => {
       expect(screen.getByRole('status')).toHaveTextContent(
         'Крафт обновлён. Новые реагенты не потребовались.',
       )
-      expect(Object.keys(useCraftStore.getState().items)).toHaveLength(4)
+      expect(
+        Object.keys(
+          useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion]
+            .items,
+        ),
+      ).toHaveLength(4)
       await user.click(screen.getByRole('button', { name: 'Закрыть уведомление' }))
       expect(screen.queryByRole('status')).not.toBeInTheDocument()
     },
@@ -294,7 +308,12 @@ describe('проверка импорта Wowhead', () => {
     }
     useCraftStore
       .getState()
-      .replaceData({ items: catalog, ownedProfessions: [], currencyDisplay: 'icons' })
+      .replaceData(
+        testCraftData(
+          { items: catalog, ownedProfessions: [], currencyDisplay: 'icons' },
+          'tbc',
+        ),
+      )
     const user = userEvent.setup()
     const onImport = vi.fn(useCraftStore.getState().importRecipe)
     const first = render(
@@ -307,12 +326,20 @@ describe('проверка импорта Wowhead', () => {
     )
     await user.click(screen.getByRole('button', { name: 'Подтвердить импорт' }))
     first.unmount()
-    const afterFirst = useCraftStore.getState().items
+    const afterFirst =
+      useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items
     render(<ImportHarness catalog={afterFirst} onImport={onImport} onClose={vi.fn()} />)
     await loadRecipe(user)
     await user.click(screen.getByRole('button', { name: 'Подтвердить импорт' }))
-    expect(Object.keys(useCraftStore.getState().items)).toHaveLength(4)
-    expect(useCraftStore.getState().items.robot).toMatchObject({
+    expect(
+      Object.keys(
+        useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items,
+      ),
+    ).toHaveLength(4)
+    expect(
+      useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items
+        .robot,
+    ).toMatchObject({
       purchasePriceCopper: 15,
       salePriceCopper: 30,
       recipe: {
@@ -320,18 +347,25 @@ describe('проверка импорта Wowhead', () => {
         profession: 'engineering',
       },
     })
-    expect(useCraftStore.getState().items.robot?.recipe?.reagents).toContainEqual({
+    expect(
+      useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items
+        .robot?.recipe?.reagents,
+    ).toContainEqual({
       itemId: 'metal',
       quantity: 8,
       acquisition: 'buy',
     })
-    expect(useCraftStore.getState().items.metal?.purchasePriceCopper).toBe(7)
+    expect(
+      useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items
+        .metal?.purchasePriceCopper,
+    ).toBe(7)
   })
 
   it('отмена проверки не меняет каталог и сохранение', async () => {
     mockTooltip()
-    const before = useCraftStore.getState().items
-    const saved = localStorage.getItem('craft-calc-data')
+    const before =
+      useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items
+    const saved = localStorage.getItem('craft-calc-versioned-data')
     const user = userEvent.setup()
     const onImport = vi.fn(useCraftStore.getState().importRecipe)
     const onClose = vi.fn()
@@ -340,8 +374,10 @@ describe('проверка импорта Wowhead', () => {
     await user.click(screen.getByRole('button', { name: 'Отмена' }))
     expect(onClose).toHaveBeenCalledOnce()
     expect(onImport).not.toHaveBeenCalled()
-    expect(useCraftStore.getState().items).toBe(before)
-    expect(localStorage.getItem('craft-calc-data')).toBe(saved)
+    expect(
+      useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items,
+    ).toBe(before)
+    expect(localStorage.getItem('craft-calc-versioned-data')).toBe(saved)
   })
 
   it('возвращает фокус к кнопке открытия после отмены проверки', async () => {
@@ -360,8 +396,9 @@ describe('проверка импорта Wowhead', () => {
     mockTooltip({ ...tbcTooltip, tooltip: tbcTooltip.tooltip.replace('(8)', '(0)') })
     const user = userEvent.setup()
     const onImport = vi.fn(useCraftStore.getState().importRecipe)
-    const before = useCraftStore.getState().items
-    const saved = localStorage.getItem('craft-calc-data')
+    const before =
+      useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items
+    const saved = localStorage.getItem('craft-calc-versioned-data')
     render(<ImportHarness catalog={before} onImport={onImport} onClose={vi.fn()} />)
     await user.click(screen.getByRole('button', { name: 'Импорт из Wowhead' }))
     await user.type(screen.getByRole('textbox'), 'https://wowhead.com/tbc/ru/spell=44391')
@@ -369,8 +406,10 @@ describe('проверка импорта Wowhead', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Повреждён состав')
     expect(screen.queryByRole('region')).not.toBeInTheDocument()
     expect(onImport).not.toHaveBeenCalled()
-    expect(useCraftStore.getState().items).toBe(before)
-    expect(localStorage.getItem('craft-calc-data')).toBe(saved)
+    expect(
+      useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items,
+    ).toBe(before)
+    expect(localStorage.getItem('craft-calc-versioned-data')).toBe(saved)
   })
 
   it('показывает ошибку атомарного импорта и оставляет проверку открытой', async () => {
@@ -420,7 +459,9 @@ describe('проверка импорта Wowhead', () => {
       await Promise.resolve()
     })
     expect(onImport).not.toHaveBeenCalled()
-    expect(useCraftStore.getState().items).toEqual({})
+    expect(
+      useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items,
+    ).toEqual({})
   })
 
   it('выбор профессии с клавиатуры, Tab и Escape работают внутри диалога', async () => {

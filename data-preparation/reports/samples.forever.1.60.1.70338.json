@@ -1,0 +1,133 @@
+{
+  "gameVersion": "forever",
+  "build": "1.60.1.70338",
+  "recipes": [
+    {
+      "spellId": 1244431,
+      "source": "https://www.wowhead.com/forever/spell=1244431",
+      "endpoint": "https://nether.wowhead.com/forever/tooltip/spell/1244431",
+      "checkedOn": "2026-10-12",
+      "matches": true,
+      "parsed": {
+        "productItemId": 118,
+        "productNameEn": "Minor Healing Potion",
+        "reagents": [
+          {
+            "itemId": 3371,
+            "quantity": 1
+          },
+          {
+            "itemId": 2678,
+            "quantity": 1
+          },
+          {
+            "itemId": 2447,
+            "quantity": 1
+          }
+        ],
+        "toolReferences": [],
+        "explicitOutputQuantity": 2
+      },
+      "sourceToolReferences": {
+        "itemIds": [],
+        "categoryIds": []
+      },
+      "storedOutputQuantity": null,
+      "note": "Sample confirms product and composition for the same game version. Output remains unknown in the database; current tooltip is not pinned to the historical client build. Tool category mapping is not confirmed by this sample."
+    },
+    {
+      "spellId": 1257390,
+      "source": "https://www.wowhead.com/forever/spell=1257390",
+      "endpoint": "https://nether.wowhead.com/forever/tooltip/spell/1257390",
+      "checkedOn": "2026-10-12",
+      "matches": true,
+      "parsed": {
+        "productItemId": 253929,
+        "productNameEn": "Flame Sash",
+        "reagents": [
+          {
+            "itemId": 4305,
+            "quantity": 8
+          },
+          {
+            "itemId": 2321,
+            "quantity": 4
+          },
+          {
+            "itemId": 249409,
+            "quantity": 3
+          },
+          {
+            "itemId": 6371,
+            "quantity": 3
+          }
+        ],
+        "toolReferences": [],
+        "explicitOutputQuantity": 2
+      },
+      "sourceToolReferences": {
+        "itemIds": [],
+        "categoryIds": []
+      },
+      "storedOutputQuantity": null,
+      "note": "Sample confirms product and composition for the same game version. Output remains unknown in the database; current tooltip is not pinned to the historical client build. Tool category mapping is not confirmed by this sample."
+    },
+    {
+      "spellId": 1257383,
+      "source": "https://www.wowhead.com/forever/spell=1257383",
+      "endpoint": "https://nether.wowhead.com/forever/tooltip/spell/1257383",
+      "checkedOn": "2026-10-12",
+      "matches": true,
+      "parsed": {
+        "productItemId": 253915,
+        "productNameEn": "Silky Gloves",
+        "reagents": [
+          {
+            "itemId": 2997,
+            "quantity": 6
+          },
+          {
+            "itemId": 2321,
+            "quantity": 4
+          },
+          {
+            "itemId": 249409,
+            "quantity": 3
+          },
+          {
+            "itemId": 3182,
+            "quantity": 2
+          }
+        ],
+        "toolReferences": [],
+        "explicitOutputQuantity": 2
+      },
+      "sourceToolReferences": {
+        "itemIds": [],
+        "categoryIds": []
+      },
+      "storedOutputQuantity": null,
+      "note": "Sample confirms product and composition for the same game version. Output remains unknown in the database; current tooltip is not pinned to the historical client build. Tool category mapping is not confirmed by this sample."
+    }
+  ],
+  "iconHttpChecks": [
+    {
+      "itemId": 118,
+      "url": "https://wow.zamimg.com/images/wow/icons/large/inv_potion_49.jpg",
+      "httpStatus": 200,
+      "contentType": "image/jpeg"
+    },
+    {
+      "itemId": 253915,
+      "url": "https://wow.zamimg.com/images/wow/icons/large/inv_gauntlets_17.jpg",
+      "httpStatus": 200,
+      "contentType": "image/jpeg"
+    },
+    {
+      "itemId": 253929,
+      "url": "https://wow.zamimg.com/images/wow/icons/large/inv_belt_43c.jpg",
+      "httpStatus": 200,
+      "contentType": "image/jpeg"
+    }
+  ]
+}

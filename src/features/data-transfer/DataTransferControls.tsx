@@ -28,7 +28,7 @@ export function DataTransferControls({
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `craft-calc-${new Date().toISOString().slice(0, 10)}.json`
+    link.download = `craft-calc-all-versions-${new Date().toISOString().slice(0, 10)}.json`
     link.click()
     URL.revokeObjectURL(url)
     setMessage('Резервная копия сохранена')
@@ -59,8 +59,8 @@ export function DataTransferControls({
     if (
       !window.confirm(
         recoveryRequired
-          ? 'Импорт заменит исходную запись в браузере, текущий каталог и настройки. Продолжить?'
-          : 'Импорт заменит все текущие предметы, рецепты и настройки. Продолжить?',
+          ? 'Импорт заменит исходную запись в браузере, все три каталога и общие настройки. Продолжить?'
+          : 'Импорт заменит все три каталога, их предметы, рецепты и общие настройки. Продолжить?',
       )
     ) {
       return
@@ -93,7 +93,7 @@ export function DataTransferControls({
           onClick={() => {
             if (
               !window.confirm(
-                'Сброс удалит исходную запись в браузере, текущий каталог и настройки. Продолжить?',
+                'Сброс удалит исходную запись в браузере, все три каталога и общие настройки. Продолжить?',
               )
             ) {
               return

@@ -11,13 +11,13 @@ it('преобразует только непосредственный сос�
     name: 'Dream Crown',
     wowheadVersion: 'forever',
     wowheadItemId: 1,
-    defaultPurchasePriceCopper: 20,
+    defaultPurchasePriceCopper: null,
   })
   expect(data.outputQuantity).toBe(7)
   expect(data.reagents).toHaveLength(1)
   expect(data.reagents[0]).toMatchObject({
     wowheadItemId: 2,
-    defaultPurchasePriceCopper: 0,
+    defaultPurchasePriceCopper: null,
     defaultSalePriceCopper: null,
     quantity: 3,
   })

@@ -33,7 +33,7 @@
   padding: 30px;
   border: 1px dashed var(--border-strong);
   border-radius: 16px;
-  background: rgb(21 29 45 / 62%);
+  background: var(--panel-soft);
   text-align: center;
 }
 

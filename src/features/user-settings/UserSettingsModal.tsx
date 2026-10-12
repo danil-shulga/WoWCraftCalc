@@ -1,7 +1,10 @@
 import { Checkbox } from '../../components/ui/Checkbox/Checkbox'
 import { MoneyDisplay } from '../../components/ui/MoneyDisplay/MoneyDisplay'
 import { Modal } from '../../components/ui/Modal/Modal'
-import { PROFESSION_OPTIONS, type Profession } from '../../domain/professions'
+import type { Profession } from '../../domain/professions'
+import { GAME_VERSION_REGISTRY, professionOptionsFor } from '../../domain/game-version'
+import type { GameVersion } from '../../domain/game-version'
+import { GameVersionPicker } from '../../components/ui/GameVersionPicker/GameVersionPicker'
 import type { ItemCatalog, ItemNamesUpdate } from '../../domain/item.types'
 import { ItemNamesLoader } from '../wowhead-import/ItemNamesLoader'
 import type { CurrencyDisplayMode, ItemLanguage } from '../../domain/user-settings'
@@ -9,6 +12,9 @@ import '../../components/ui/Button.css'
 import './UserSettingsModal.css'
 
 interface UserSettingsModalProps {
+  gameVersion?: GameVersion
+  workspaceRevision?: number
+  onGameVersionChange?: (version: GameVersion) => void
   catalog: ItemCatalog
   onItemNamesApply: (updates: readonly ItemNamesUpdate[]) => string | null
   ownedProfessions: readonly Profession[]
@@ -22,6 +28,11 @@ interface UserSettingsModalProps {
 
 export function UserSettingsModal({
   catalog,
+  gameVersion = 'forever',
+  workspaceRevision = 0,
+  onGameVersionChange = () => {
+    /* Standalone settings may omit version switching. */
+  },
   onItemNamesApply,
   ownedProfessions,
   currencyDisplay,
@@ -36,6 +47,15 @@ export function UserSettingsModal({
   return (
     <Modal title="Настройки" onClose={onClose}>
       <div className="user-settings">
+        <fieldset className="user-settings__section">
+          <legend>Версия игры</legend>
+          <GameVersionPicker value={gameVersion} onChange={onGameVersionChange} />
+          <p>
+            {GAME_VERSION_REGISTRY[gameVersion].mode} · сборка{' '}
+            {GAME_VERSION_REGISTRY[gameVersion].build}. Каталог и профессии сохраняются
+            отдельно для каждой версии.
+          </p>
+        </fieldset>
         <fieldset className="user-settings__section">
           <legend>Язык названий предметов</legend>
           <p>Названия предметов и реагентов. Поиск работает на обоих языках.</p>
@@ -60,6 +80,8 @@ export function UserSettingsModal({
           </div>
         </fieldset>
         <ItemNamesLoader
+          key={`${gameVersion}-${String(workspaceRevision)}`}
+          gameVersion={gameVersion}
           catalog={catalog}
           itemLanguage={itemLanguage}
           onApply={onItemNamesApply}
@@ -109,7 +131,7 @@ export function UserSettingsModal({
           <legend>Профессии в наличии</legend>
           <p>Отметьте профессии, которыми владеют ваши персонажи.</p>
           <div className="user-settings__profession-list">
-            {PROFESSION_OPTIONS.map((profession) => (
+            {professionOptionsFor(gameVersion).map((profession) => (
               <Checkbox
                 key={profession.value}
                 label={profession.label}

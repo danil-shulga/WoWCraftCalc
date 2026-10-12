@@ -1,0 +1,180 @@
+{
+  "gameVersion": "classic",
+  "build": "1.14.4.51829",
+  "recipes": [
+    {
+      "spellId": 2330,
+      "source": "https://www.wowhead.com/classic/spell=2330",
+      "endpoint": "https://nether.wowhead.com/classic/tooltip/spell/2330",
+      "checkedOn": "2026-10-12",
+      "matches": true,
+      "parsed": {
+        "productItemId": 118,
+        "productNameEn": "Minor Healing Potion",
+        "reagents": [
+          {
+            "itemId": 2447,
+            "quantity": 1
+          },
+          {
+            "itemId": 765,
+            "quantity": 1
+          },
+          {
+            "itemId": 3371,
+            "quantity": 1
+          }
+        ],
+        "toolReferences": [],
+        "explicitOutputQuantity": null
+      },
+      "sourceToolReferences": {
+        "itemIds": [],
+        "categoryIds": []
+      },
+      "storedOutputQuantity": null,
+      "note": "Sample confirms product and composition for the same game version. Output remains unknown in the database; current tooltip is not pinned to the historical client build. Tool category mapping is not confirmed by this sample."
+    },
+    {
+      "spellId": 2675,
+      "source": "https://www.wowhead.com/classic/spell=2675",
+      "endpoint": "https://nether.wowhead.com/classic/tooltip/spell/2675",
+      "checkedOn": "2026-10-12",
+      "matches": true,
+      "parsed": {
+        "productItemId": 2870,
+        "productNameEn": "Shining Silver Breastplate",
+        "reagents": [
+          {
+            "itemId": 2841,
+            "quantity": 20
+          },
+          {
+            "itemId": 1206,
+            "quantity": 2
+          },
+          {
+            "itemId": 1705,
+            "quantity": 2
+          },
+          {
+            "itemId": 5500,
+            "quantity": 2
+          },
+          {
+            "itemId": 2842,
+            "quantity": 4
+          }
+        ],
+        "toolReferences": [
+          {
+            "href": "/classic/item=5956/blacksmith-hammer",
+            "itemId": 5956
+          }
+        ],
+        "explicitOutputQuantity": null
+      },
+      "sourceToolReferences": {
+        "itemIds": [5956],
+        "categoryIds": []
+      },
+      "storedOutputQuantity": null,
+      "note": "Sample confirms product and composition for the same game version. Output remains unknown in the database; current tooltip is not pinned to the historical client build. Tool category mapping is not confirmed by this sample."
+    },
+    {
+      "spellId": 12092,
+      "source": "https://www.wowhead.com/classic/spell=12092",
+      "endpoint": "https://nether.wowhead.com/classic/tooltip/spell/12092",
+      "checkedOn": "2026-10-12",
+      "matches": true,
+      "parsed": {
+        "productItemId": 10041,
+        "productNameEn": "Dreamweave Circlet",
+        "reagents": [
+          {
+            "itemId": 4339,
+            "quantity": 8
+          },
+          {
+            "itemId": 8153,
+            "quantity": 4
+          },
+          {
+            "itemId": 10286,
+            "quantity": 2
+          },
+          {
+            "itemId": 8343,
+            "quantity": 3
+          },
+          {
+            "itemId": 6037,
+            "quantity": 1
+          },
+          {
+            "itemId": 1529,
+            "quantity": 1
+          }
+        ],
+        "toolReferences": [],
+        "explicitOutputQuantity": null
+      },
+      "sourceToolReferences": {
+        "itemIds": [],
+        "categoryIds": []
+      },
+      "storedOutputQuantity": null,
+      "note": "Sample confirms product and composition for the same game version. Output remains unknown in the database; current tooltip is not pinned to the historical client build. Tool category mapping is not confirmed by this sample."
+    },
+    {
+      "spellId": 25146,
+      "source": "https://www.wowhead.com/classic/spell=25146",
+      "endpoint": "https://nether.wowhead.com/classic/tooltip/spell/25146",
+      "checkedOn": "2026-10-12",
+      "matches": true,
+      "parsed": {
+        "productItemId": 7068,
+        "productNameEn": "Elemental Fire",
+        "reagents": [
+          {
+            "itemId": 7077,
+            "quantity": 1
+          }
+        ],
+        "toolReferences": [
+          {
+            "href": "/classic/item=9149/philosophers-stone",
+            "itemId": 9149
+          }
+        ],
+        "explicitOutputQuantity": 3
+      },
+      "sourceToolReferences": {
+        "itemIds": [9149],
+        "categoryIds": []
+      },
+      "storedOutputQuantity": null,
+      "note": "Sample confirms product and composition for the same game version. Output remains unknown in the database; current tooltip is not pinned to the historical client build. Tool category mapping is not confirmed by this sample."
+    }
+  ],
+  "iconHttpChecks": [
+    {
+      "itemId": 118,
+      "url": "https://wow.zamimg.com/images/wow/icons/large/inv_potion_49.jpg",
+      "httpStatus": 200,
+      "contentType": "image/jpeg"
+    },
+    {
+      "itemId": 2589,
+      "url": "https://wow.zamimg.com/images/wow/icons/large/inv_fabric_linen_01.jpg",
+      "httpStatus": 200,
+      "contentType": "image/jpeg"
+    },
+    {
+      "itemId": 2870,
+      "url": "https://wow.zamimg.com/images/wow/icons/large/inv_chest_plate15.jpg",
+      "httpStatus": 200,
+      "contentType": "image/jpeg"
+    }
+  ]
+}

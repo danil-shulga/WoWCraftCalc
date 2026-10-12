@@ -1,0 +1,30 @@
+{
+  "gameVersion": "forever",
+  "build": "1.60.1.70338",
+  "reuse": "URLs reused only from the same Forever build and item IDs",
+  "items": 2344,
+  "missingIcons": 0,
+  "hyphenIconTooltipChecks": [
+    {
+      "itemId": 277010,
+      "nameEn": "Cloudy Stormsewn Vest",
+      "endpoint": "https://nether.wowhead.com/forever/tooltip/item/277010",
+      "iconUrl": "https://wow.zamimg.com/images/wow/icons/large/inv_chest-_cloth_skybornec60_b_01.jpg",
+      "itemIdEchoed": false,
+      "httpStatus": 200
+    },
+    {
+      "itemId": 277034,
+      "nameEn": "Azure Stormsewn Vest",
+      "endpoint": "https://nether.wowhead.com/forever/tooltip/item/277034",
+      "iconUrl": "https://wow.zamimg.com/images/wow/icons/large/inv_chest-_cloth_skybornec60_b_01.jpg",
+      "itemIdEchoed": false,
+      "httpStatus": 200
+    }
+  ],
+  "hyphenIconHttpCheck": {
+    "url": "https://wow.zamimg.com/images/wow/icons/large/inv_chest-_cloth_skybornec60_b_01.jpg",
+    "httpStatus": 200,
+    "contentType": "image/jpeg"
+  }
+}

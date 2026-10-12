@@ -11,6 +11,7 @@ export const PROFESSION_IDS = [
   'first-aid',
   'cooking',
   'fishing',
+  'jewelcrafting',
 ] as const
 
 export type Profession = (typeof PROFESSION_IDS)[number]
@@ -28,4 +29,5 @@ export const PROFESSION_OPTIONS = [
   { value: 'first-aid', label: 'Первая помощь (First Aid)' },
   { value: 'cooking', label: 'Кулинария (Cooking)' },
   { value: 'fishing', label: 'Рыбная ловля (Fishing)' },
+  { value: 'jewelcrafting', label: 'Ювелирное дело (Jewelcrafting)' },
 ] as const satisfies readonly { value: Profession; label: string }[]

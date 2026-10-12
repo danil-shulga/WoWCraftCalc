@@ -1,8 +1,14 @@
 import './Sidebar.css'
+import { useEffect, useRef, useState } from 'react'
+import { GameVersionPicker } from '../../ui/GameVersionPicker/GameVersionPicker'
+import { GAME_VERSION_REGISTRY } from '../../../domain/game-version'
+import type { GameVersion } from '../../../domain/game-version'
 
 export type AppTab = 'reagents' | 'crafts' | 'profitable' | 'favorites'
 
 interface SidebarProps {
+  gameVersion: GameVersion
+  onGameVersionChange: (version: GameVersion) => void
   activeTab: AppTab
   onChange: (tab: AppTab) => void
 }
@@ -14,16 +20,75 @@ const tabs: readonly { id: AppTab; label: string; available: boolean }[] = [
   { id: 'favorites', label: 'Избранные', available: false },
 ]
 
-export function Sidebar({ activeTab, onChange }: SidebarProps) {
+export function Sidebar({
+  activeTab,
+  onChange,
+  gameVersion,
+  onGameVersionChange,
+}: SidebarProps) {
+  const [open, setOpen] = useState(false)
+  const brandRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!open) return
+    menuRef.current?.querySelector<HTMLButtonElement>('[aria-pressed="true"]')?.focus()
+    const close = () => {
+      setOpen(false)
+      brandRef.current?.focus()
+    }
+    const keydown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        event.stopPropagation()
+        close()
+      }
+    }
+    const outside = (event: PointerEvent) => {
+      if (
+        event.target instanceof Node &&
+        !menuRef.current?.contains(event.target) &&
+        !brandRef.current?.contains(event.target)
+      )
+        close()
+    }
+    document.addEventListener('keydown', keydown)
+    document.addEventListener('pointerdown', outside)
+    return () => {
+      document.removeEventListener('keydown', keydown)
+      document.removeEventListener('pointerdown', outside)
+    }
+  }, [open])
   return (
     <aside className="sidebar">
-      <div className="brand">
+      <button
+        className="brand"
+        type="button"
+        ref={brandRef}
+        aria-label={`Выбрать версию игры: ${GAME_VERSION_REGISTRY[gameVersion].name}`}
+        aria-expanded={open}
+        aria-controls="sidebar-game-version"
+        onClick={() => {
+          setOpen(!open)
+        }}
+      >
         <span className="brand__mark">C</span>
         <div>
           <strong>CraftCalc</strong>
-          <small>WoW Classic</small>
+          <small>{GAME_VERSION_REGISTRY[gameVersion].name}</small>
         </div>
-      </div>
+      </button>
+      {open ? (
+        <div id="sidebar-game-version" className="brand__versions" ref={menuRef}>
+          <GameVersionPicker
+            value={gameVersion}
+            onChange={(version) => {
+              setOpen(false)
+              brandRef.current?.focus()
+              onGameVersionChange(version)
+            }}
+          />
+        </div>
+      ) : null}
       <nav aria-label="Разделы калькулятора">
         {tabs.map((tab) => (
           <button

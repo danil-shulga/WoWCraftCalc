@@ -1,3 +1,5 @@
+import { useDraftGuard } from '../app/draft-guard'
+import { selectActiveItems, selectActiveProfessions } from '../store/craft.selectors'
 import { useCallback, useMemo, useState } from 'react'
 
 import { ItemTree } from '../components/item-tree/ItemTree/ItemTree'
@@ -41,9 +43,14 @@ const pageContent: Record<
 }
 
 export function ItemsPage({ section }: ItemsPageProps) {
-  const items = useCraftStore((state) => state.items)
+  const gameVersion = useCraftStore((state) => state.activeVersion)
+  const [request] = useState(() => ({
+    version: useCraftStore.getState().activeVersion,
+    revision: useCraftStore.getState().workspaceRevision,
+  }))
+  const items = useCraftStore(selectActiveItems)
   const itemLanguage = useCraftStore((state) => state.itemLanguage)
-  const ownedProfessions = useCraftStore((state) => state.ownedProfessions)
+  const ownedProfessions = useCraftStore(selectActiveProfessions)
   const createItem = useCraftStore((state) => state.createItem)
   const updateItem = useCraftStore((state) => state.updateItem)
   const setItemPrices = useCraftStore((state) => state.setItemPrices)
@@ -73,6 +80,12 @@ export function ItemsPage({ section }: ItemsPageProps) {
   const content = pageContent[section]
   const priceField: ItemPriceField =
     section === 'crafts' ? 'salePriceCopper' : 'purchasePriceCopper'
+  useDraftGuard(
+    priceDrafts !== null &&
+      Object.entries(priceDrafts).some(
+        ([id, value]) => value !== items[id]?.[priceField],
+      ),
+  )
   const sectionItems = useMemo(
     () => selectItemsBySection(items, section, itemLanguage),
     [items, section, itemLanguage],
@@ -256,13 +269,14 @@ export function ItemsPage({ section }: ItemsPageProps) {
 
       {isCreating ? (
         <ItemAddModal
+          gameVersion={gameVersion}
           title={content.addLabel}
           defaultSection={section}
           itemLanguage={itemLanguage}
           catalog={items}
           onSave={createItem}
-          onImport={importRecipe}
-          onAddReferenceItem={addReferenceItem}
+          onImport={(data) => importRecipe(data, request)}
+          onAddReferenceItem={(data) => addReferenceItem(data, request)}
           onSuccess={(message) => {
             setNotification((current) => ({ id: (current?.id ?? 0) + 1, message }))
           }}
@@ -311,6 +325,7 @@ export function ItemsPage({ section }: ItemsPageProps) {
           }}
         >
           <RecipeEditor
+            gameVersion={gameVersion}
             item={recipeItem}
             itemLanguage={itemLanguage}
             catalog={items}

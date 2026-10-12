@@ -24,6 +24,7 @@ function ModalHarness() {
       </button>
       {isOpen ? (
         <ItemAddModal
+          gameVersion="tbc"
           title="Добавить крафт"
           defaultSection="crafts"
           catalog={{}}

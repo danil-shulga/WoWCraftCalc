@@ -40,7 +40,7 @@ export default tseslint.config(
   },
   reactRefresh.configs.vite,
   {
-    files: ['*.config.{js,ts}', 'eslint.config.js'],
+    files: ['*.config.{js,ts}', 'eslint.config.js', 'scripts/**/*.mjs'],
     languageOptions: {
       globals: globals.node,
     },

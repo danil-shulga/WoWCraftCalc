@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs'
 import { referenceFixture } from '../test/reference-fixture'
 
 import { parseReferenceDatabase } from './reference-database.schema'
+import { GAME_VERSIONS, GAME_VERSION_REGISTRY } from './game-version'
 
 describe('справочник', () => {
   it('сохраняет неизвестный выход и допускает внешний инструмент', () => {
@@ -44,18 +45,41 @@ describe('справочник', () => {
     expect(() => parseReferenceDatabase(fixture)).toThrow()
   })
   it.each([
-    { schemaVersion: 2 },
+    { schemaVersion: 1 },
     { build: 'other' },
     { iconSource: { provider: 'Wowhead', version: 'classic' } },
   ])('отклоняет неверную версию %j', (change) => {
     expect(() => parseReferenceDatabase({ ...referenceFixture(), ...change })).toThrow()
   })
-  it('проверяет весь подготовленный JSON', () => {
+  it.each(GAME_VERSIONS)('проверяет реальный JSON %s', (version) => {
     const value: unknown = JSON.parse(
-      readFileSync('public/data/craftcalc-db.1.60.1.70338.json', 'utf8'),
+      readFileSync(`public/${GAME_VERSION_REGISTRY[version].databasePath}`, 'utf8'),
     )
-    const db = parseReferenceDatabase(value)
-    expect(Object.keys(db.items)).toHaveLength(2344)
-    expect(Object.keys(db.recipes)).toHaveLength(1984)
+    const db = parseReferenceDatabase(value, version)
+    expect(Object.keys(db.items)).toHaveLength(
+      { forever: 2344, tbc: 2363, classic: 1436 }[version],
+    )
+    expect(
+      Object.values(db.recipes).every((recipe) => recipe.output.quantity === null),
+    ).toBe(true)
+    expect(
+      Object.values(db.professions).some(
+        (profession) => profession.id === 'jewelcrafting',
+      ),
+    ).toBe(version === 'tbc')
+  })
+  it('отклоняет чужую базу, смешанное происхождение и неизвестную профессию', () => {
+    expect(() => parseReferenceDatabase(referenceFixture('tbc'), 'classic')).toThrow()
+    const fixture = referenceFixture()
+    const source = fixture.sources[0]
+    if (!source) throw new Error('Нет источника')
+    source.product = 'wow_anniversary'
+    expect(() => parseReferenceDatabase(fixture)).toThrow()
+    expect(() =>
+      parseReferenceDatabase({
+        ...referenceFixture(),
+        professions: { '197': { id: 'unknown', skillLineId: 197, nameRu: 'Unknown' } },
+      }),
+    ).toThrow()
   })
 })

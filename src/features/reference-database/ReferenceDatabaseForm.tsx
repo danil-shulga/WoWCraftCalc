@@ -1,12 +1,14 @@
+import { useDraftGuard } from '../../app/draft-guard'
 import { useEffect, useId, useMemo, useState } from 'react'
 
 import { ItemIcon } from '../../components/ui/ItemIcon/ItemIcon'
-import { NumberInput } from '../../components/ui/NumberInput/NumberInput'
 import { SearchField } from '../../components/ui/SearchField/SearchField'
 import { SearchableSelect } from '../../components/ui/SearchableSelect/SearchableSelect'
 import { getItemName } from '../../domain/item-names'
 import type { ItemCatalog, ItemSection } from '../../domain/item.types'
-import { PROFESSION_OPTIONS } from '../../domain/professions'
+import { GAME_VERSION_REGISTRY, professionOptionsFor } from '../../domain/game-version'
+import type { GameVersion } from '../../domain/game-version'
+import { MoneyDisplay } from '../../components/ui/MoneyDisplay/MoneyDisplay'
 import {
   referenceItemToImport,
   referenceRecipeToImport,
@@ -33,6 +35,7 @@ import '../EditorForm.css'
 import './ReferenceDatabaseForm.css'
 
 interface ReferenceDatabaseFormProps {
+  gameVersion?: GameVersion
   catalog: ItemCatalog
   section: ItemSection
   itemLanguage: ItemLanguage
@@ -62,16 +65,12 @@ function ReferenceReview({
   onClose,
 }: ReviewProps) {
   const outputId = useId()
-  const imported = referenceItemToImport(item, itemLanguage)
+  const imported = referenceItemToImport(item, index.database.gameVersion, itemLanguage)
   const [savedRecipe] = useState(
     () => findImportedItem(catalog, imported)?.recipe ?? null,
   )
   const [output, setOutput] = useState(
-    () =>
-      savedRecipe?.outputQuantity ??
-      recipe?.output.quantity ??
-      recipe?.output.baseQuantityCandidate ??
-      1,
+    () => savedRecipe?.outputQuantity ?? recipe?.output.quantity ?? 0,
   )
   const [error, setError] = useState<string | null>(null)
   const confirm = () => {
@@ -118,6 +117,13 @@ function ReferenceReview({
           <small>{item.names[itemLanguage === 'ru' ? 'en' : 'ru']}</small>
         </div>
       </div>
+      <p>
+        NPC-цены из таблиц клиента: покупка{' '}
+        <MoneyDisplay value={item.vendor.baseBuyPriceCopper} />, продажа{' '}
+        <MoneyDisplay value={item.vendor.sellPriceCopper} />. Размер пачки:{' '}
+        {item.vendor.stackCount ?? 'неизвестен'}. Доступность продажи не подтверждена.
+        Рыночные цены останутся неизвестными до ручного ввода.
+      </p>
       {recipe === null ? (
         <p>Будет добавлен реагент. Существующий рецепт сохранится.</p>
       ) : (
@@ -142,14 +148,23 @@ function ReferenceReview({
           </ul>
           <div className="reference-db__output">
             <label htmlFor={outputId}>Предметов за один крафт</label>
-            <NumberInput
+            <input
+              type="number"
               id={outputId}
               min={1}
               step={1}
-              value={output}
-              onChange={setOutput}
+              value={output === 0 ? '' : output}
+              onChange={(event) => {
+                setOutput(event.currentTarget.valueAsNumber || 0)
+              }}
             />
           </div>
+          <small>
+            Выход неизвестен. Укажите положительное целое количество.
+            {recipe.output.baseQuantityCandidate !== null
+              ? ` Неподтверждённый кандидат из эффекта: ${String(recipe.output.baseQuantityCandidate)}.`
+              : ''}
+          </small>
           {savedRecipe !== null ? (
             <div className="reference-db__warning">
               <p>Сохранённый активный рецепт будет заменён составом выше.</p>
@@ -166,8 +181,7 @@ function ReferenceReview({
             </div>
           ) : null}
           <small>
-            Цены из базы заполнят только незаданные поля. Цены, вложенные рецепты и ручной
-            выбор получения сохранятся.
+            Пользовательские цены, вложенные рецепты и ручной выбор получения сохранятся.
           </small>
         </>
       )}
@@ -192,16 +206,27 @@ function ReferenceBrowser(
   props: ReferenceDatabaseFormProps & { index: ReferenceDatabaseIndex },
 ) {
   const { index, section, itemLanguage } = props
+  const PROFESSION_OPTIONS = professionOptionsFor(index.database.gameVersion)
   const [query, setQuery] = useState('')
   const [profession, setProfession] = useState('')
   const [page, setPage] = useState(0)
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [recipeId, setRecipeId] = useState('')
+  useDraftGuard(selectedId !== null)
   const selectedProfession =
     PROFESSION_OPTIONS.find((option) => option.value === profession)?.value ?? null
   const results = useMemo(
-    () => searchReferenceItems(index, section, query, selectedProfession, itemLanguage),
-    [index, section, query, selectedProfession, itemLanguage],
+    () =>
+      searchReferenceItems(
+        index,
+        section,
+        query,
+        professionOptionsFor(index.database.gameVersion).find(
+          (option) => option.value === profession,
+        )?.value ?? null,
+        itemLanguage,
+      ),
+    [index, section, query, profession, itemLanguage],
   )
   const selected =
     selectedId === null ? undefined : index.database.items[String(selectedId)]
@@ -211,8 +236,10 @@ function ReferenceBrowser(
   return (
     <div className="editor-form reference-db">
       <p className="reference-db__intro">
-        База Forever · сборка {index.database.build}. Выберите предмет и проверьте данные
-        перед добавлением. Наличие рецепта в базе не гарантирует его доступность в игре.
+        База {GAME_VERSION_REGISTRY[index.database.gameVersion].name} ·{' '}
+        {index.database.mode} · сборка {index.database.build}. Выберите предмет и
+        проверьте данные перед добавлением. Наличие рецепта в базе не гарантирует его
+        доступность в игре.
       </p>
       <SearchField
         value={query}
@@ -342,14 +369,15 @@ function ReferenceBrowser(
   )
 }
 
-export function ReferenceDatabaseForm(props: ReferenceDatabaseFormProps) {
+function ReferenceDatabaseFormForVersion(props: ReferenceDatabaseFormProps) {
+  const gameVersion = props.gameVersion ?? 'forever'
   const [index, setIndex] = useState<ReferenceDatabaseIndex | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [attempt, setAttempt] = useState(0)
   useEffect(() => {
     if (!props.isActive || index !== null) return
     let active = true
-    void loadReferenceDatabase().then(
+    void loadReferenceDatabase(gameVersion).then(
       (loaded) => {
         if (active) setIndex(loaded)
       },
@@ -365,11 +393,11 @@ export function ReferenceDatabaseForm(props: ReferenceDatabaseFormProps) {
     return () => {
       active = false
     }
-  }, [props.isActive, index, attempt])
+  }, [props.isActive, index, attempt, gameVersion])
   if (index !== null) return <ReferenceBrowser {...props} index={index} />
   return (
     <div className="editor-form reference-db">
-      <p>База Forever</p>
+      <p>База {GAME_VERSION_REGISTRY[gameVersion].name}</p>
       {error === null ? (
         <p role="status">Загрузка базы…</p>
       ) : (
@@ -399,5 +427,11 @@ export function ReferenceDatabaseForm(props: ReferenceDatabaseFormProps) {
         </button>
       </div>
     </div>
+  )
+}
+
+export function ReferenceDatabaseForm(props: ReferenceDatabaseFormProps) {
+  return (
+    <ReferenceDatabaseFormForVersion key={props.gameVersion ?? 'forever'} {...props} />
   )
 }

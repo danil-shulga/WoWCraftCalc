@@ -28,7 +28,7 @@
   place-items: center;
   border: 1px solid var(--border-strong);
   border-radius: 5px;
-  background: #101724;
+  background: var(--field);
   transition:
     border-color 120ms ease,
     background-color 120ms ease,

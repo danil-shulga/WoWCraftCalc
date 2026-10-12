@@ -25,7 +25,7 @@ describe('загрузка справочника', () => {
     expect(await load()).toBe(result)
     expect(fetchMock).toHaveBeenCalledTimes(1)
     expect(fetchMock.mock.calls[0]?.[0]).toBe(
-      '/CraftCalc/data/craftcalc-db.1.60.1.70338.json',
+      '/CraftCalc/data/forever/craftcalc-db.1.60.1.70338.json',
     )
     expect(useCraftStore.getState()).toBe(before)
     expect(localStorage.getItem('craft-calc-data')).toBe(saved)
@@ -80,4 +80,40 @@ describe('загрузка справочника', () => {
     expect(searchReferenceItems(index, 'crafts', 'cloth')).toEqual([])
     expect(searchReferenceItems(index, 'reagents', '', 'alchemy')).toEqual([])
   })
+})
+
+it('разделяет запросы, кеши и ошибки трёх версий', async () => {
+  const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation((input) => {
+    const version = (typeof input === 'string'
+      ? input
+      : input instanceof URL
+        ? input.href
+        : input.url
+    ).includes('/tbc/')
+      ? 'tbc'
+      : (typeof input === 'string'
+            ? input
+            : input instanceof URL
+              ? input.href
+              : input.url
+          ).includes('/classic/')
+        ? 'classic'
+        : 'forever'
+    return Promise.resolve(Response.json(referenceFixture(version)))
+  })
+  const load = createReferenceDatabaseLoader('/CraftCalc/')
+  const indexes = await Promise.all([load('forever'), load('tbc'), load('classic')])
+  expect(indexes.map((index) => index.database.gameVersion)).toEqual([
+    'forever',
+    'tbc',
+    'classic',
+  ])
+  expect(await load('tbc')).toBe(indexes[1])
+  expect(fetchMock).toHaveBeenCalledTimes(3)
+  fetchMock.mockResolvedValue(Response.json(referenceFixture('classic')))
+  const bad = createReferenceDatabaseLoader('./')
+  await expect(bad('tbc')).rejects.toThrow('версия')
+  fetchMock.mockResolvedValue(Response.json(referenceFixture('tbc')))
+  await expect(bad('tbc')).resolves.toHaveProperty('database.gameVersion', 'tbc')
+  fetchMock.mockRestore()
 })

@@ -22,7 +22,7 @@
   border: 1px solid var(--border);
   border-radius: 8px;
   color: var(--text);
-  background: #101724;
+  background: var(--field);
 }
 
 .editor-form input:disabled {

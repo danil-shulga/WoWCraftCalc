@@ -38,7 +38,7 @@
   padding: 10px;
   border: 1px solid var(--border);
   border-radius: 9px;
-  background: #111927;
+  background: var(--field);
 }
 
 .recipe-editor__quantity {

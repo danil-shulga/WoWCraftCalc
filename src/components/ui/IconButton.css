@@ -12,7 +12,7 @@
 
 .icon-button:hover {
   border-color: var(--border);
-  background: #26334a;
+  background: var(--hover);
 }
 
 .icon-button--danger {

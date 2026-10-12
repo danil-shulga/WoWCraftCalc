@@ -3,13 +3,18 @@ import {
   type ReferenceDatabaseIndex,
 } from '../../domain/reference-database-index'
 import { parseReferenceDatabase } from '../../domain/reference-database.schema'
-
-export const REFERENCE_DATABASE_FILE = 'data/craftcalc-db.1.60.1.70338.json'
+import { GAME_VERSION_REGISTRY } from '../../domain/game-version'
+import type { GameVersion } from '../../domain/game-version'
 
 export function createReferenceDatabaseLoader(baseUrl: string, timeoutMs = 15000) {
-  let pending: Promise<ReferenceDatabaseIndex> | null = null
-  return function loadReferenceDatabase(): Promise<ReferenceDatabaseIndex> {
-    if (pending !== null) return pending
+  const cache = new Map<string, Promise<ReferenceDatabaseIndex>>()
+  return function loadReferenceDatabase(
+    version: GameVersion = 'forever',
+  ): Promise<ReferenceDatabaseIndex> {
+    const definition = GAME_VERSION_REGISTRY[version]
+    const key = `${version}:${definition.build}`
+    const cached = cache.get(key)
+    if (cached) return cached
     const controller = new AbortController()
     let timer: ReturnType<typeof setTimeout>
     const timeout = new Promise<never>((_resolve, reject) => {
@@ -23,7 +28,7 @@ export function createReferenceDatabaseLoader(baseUrl: string, timeoutMs = 15000
     const request = async () => {
       let response: Response
       try {
-        response = await fetch(`${baseUrl}${REFERENCE_DATABASE_FILE}`, {
+        response = await fetch(`${baseUrl}${definition.databasePath}`, {
           signal: controller.signal,
         })
       } catch {
@@ -40,19 +45,20 @@ export function createReferenceDatabaseLoader(baseUrl: string, timeoutMs = 15000
         throw new Error('Файл базы содержит некорректный JSON.')
       }
       try {
-        return buildReferenceDatabaseIndex(parseReferenceDatabase(value))
+        return buildReferenceDatabaseIndex(parseReferenceDatabase(value, version))
       } catch {
         throw new Error('Формат или связи базы повреждены либо версия не поддерживается.')
       }
     }
-    pending = Promise.race([request(), timeout])
+    const pending = Promise.race([request(), timeout])
       .catch((error: unknown) => {
-        pending = null
+        cache.delete(key)
         throw error
       })
       .finally(() => {
         clearTimeout(timer)
       })
+    cache.set(key, pending)
     return pending
   }
 }

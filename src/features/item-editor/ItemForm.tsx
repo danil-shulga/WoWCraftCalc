@@ -1,3 +1,4 @@
+import { useDraftSnapshot } from '../../app/draft-guard'
 import { useState, type SyntheticEvent } from 'react'
 
 import { Checkbox } from '../../components/ui/Checkbox/Checkbox'
@@ -36,6 +37,14 @@ export function ItemForm({
   const [salePriceCopper, setSalePriceCopper] = useState<number | null>(
     initialItem?.salePriceCopper ?? null,
   )
+  useDraftSnapshot({
+    nameRu,
+    nameEn,
+    iconUrl,
+    sections,
+    purchasePriceCopper,
+    salePriceCopper,
+  })
   const [error, setError] = useState<string | null>(null)
 
   const toggleSection = (section: ItemSection, enabled: boolean) => {
@@ -73,8 +82,8 @@ export function ItemForm({
       names,
       iconUrl: resolvedIconUrl,
       sections,
-      purchasePriceCopper: purchasePriceCopper === 0 ? null : purchasePriceCopper,
-      salePriceCopper: salePriceCopper === 0 ? null : salePriceCopper,
+      purchasePriceCopper,
+      salePriceCopper,
     })
   }
 

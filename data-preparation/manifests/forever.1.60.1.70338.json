@@ -1,0 +1,117 @@
+{
+  "gameVersion": "forever",
+  "mode": "beta",
+  "product": "wow_classic_beta",
+  "build": "1.60.1.70338",
+  "snapshotDate": "2026-10-12",
+  "locales": ["ruRU", "enUS"],
+  "sourceUrl": "https://wago.tools/db2",
+  "buildEvidence": {
+    "product": "wow_classic_beta",
+    "version": "1.60.1.70338",
+    "created_at": "2026-10-10 05:05:05",
+    "build_config": "f6e309c700cea095978aeb5d85210df4",
+    "product_config": "fcfd1bc39031f5921d00aee2d869adb5",
+    "cdn_config": "ad00f88bc136373cdfe57c6bb796516b",
+    "is_bgdl": false
+  },
+  "buildListUrl": "https://wago.tools/api/builds",
+  "sources": [
+    {
+      "table": "Item",
+      "locale": "enUS",
+      "fileName": "Item.enUS.1.60.1.70338.csv",
+      "path": "data-preparation/raw/forever/1.60.1.70338/Item.enUS.1.60.1.70338.csv",
+      "rows": 31847,
+      "sha256": "8af07a6717ff8c4bb5de005cfb40f687c12ca27e5e45cd50b1c8bd71e31d6c2f",
+      "url": "https://wago.tools/db2/Item/csv?build=1.60.1.70338&locale=enUS",
+      "product": "wow_classic_beta",
+      "build": "1.60.1.70338",
+      "originalFileName": "Item.1.60.1.70338.csv"
+    },
+    {
+      "table": "ItemSparse",
+      "locale": "ruRU",
+      "fileName": "ItemSparse.ruRU.1.60.1.70338.csv",
+      "path": "data-preparation/raw/forever/1.60.1.70338/ItemSparse.ruRU.1.60.1.70338.csv",
+      "rows": 19248,
+      "sha256": "4d8aeb53524185f2846c0b9f3f48a1411709aa5a5eabd678a186119622dbe0b5",
+      "url": "https://wago.tools/db2/ItemSparse/csv?build=1.60.1.70338&locale=ruRU",
+      "product": "wow_classic_beta",
+      "build": "1.60.1.70338",
+      "originalFileName": "ItemSparse.1.60.1.70338 (1).csv"
+    },
+    {
+      "table": "ItemSparse",
+      "locale": "enUS",
+      "fileName": "ItemSparse.enUS.1.60.1.70338.csv",
+      "path": "data-preparation/raw/forever/1.60.1.70338/ItemSparse.enUS.1.60.1.70338.csv",
+      "rows": 19248,
+      "sha256": "c4910b0ca68f886b3745be0a54cba4e1400240c618f99af05cd569a4da72c861",
+      "url": "https://wago.tools/db2/ItemSparse/csv?build=1.60.1.70338&locale=enUS",
+      "product": "wow_classic_beta",
+      "build": "1.60.1.70338",
+      "originalFileName": "ItemSparse.1.60.1.70338.csv"
+    },
+    {
+      "table": "SpellReagents",
+      "locale": "enUS",
+      "fileName": "SpellReagents.enUS.1.60.1.70338.csv",
+      "path": "data-preparation/raw/forever/1.60.1.70338/SpellReagents.enUS.1.60.1.70338.csv",
+      "rows": 3300,
+      "sha256": "39701c21d42d7b2c7a9be6d94deef98d859a8e30c7bc8fd6b06b7aa660b84378",
+      "url": "https://wago.tools/db2/SpellReagents/csv?build=1.60.1.70338&locale=enUS",
+      "product": "wow_classic_beta",
+      "build": "1.60.1.70338",
+      "originalFileName": "SpellReagents.1.60.1.70338.csv"
+    },
+    {
+      "table": "SpellEffect",
+      "locale": "enUS",
+      "fileName": "SpellEffect.enUS.1.60.1.70338.csv",
+      "path": "data-preparation/raw/forever/1.60.1.70338/SpellEffect.enUS.1.60.1.70338.csv",
+      "rows": 42569,
+      "sha256": "7d14075e4444dbd364be9943ad9b90872275da2b1c1f63f39b5cf3da9b5e3f80",
+      "url": "https://wago.tools/db2/SpellEffect/csv?build=1.60.1.70338&locale=enUS",
+      "product": "wow_classic_beta",
+      "build": "1.60.1.70338",
+      "originalFileName": "SpellEffect.1.60.1.70338.csv"
+    },
+    {
+      "table": "SkillLineAbility",
+      "locale": "enUS",
+      "fileName": "SkillLineAbility.enUS.1.60.1.70338.csv",
+      "path": "data-preparation/raw/forever/1.60.1.70338/SkillLineAbility.enUS.1.60.1.70338.csv",
+      "rows": 7834,
+      "sha256": "05c88213477aae7b8e3fed9c710d61ead0b6a6011e76499f576acdb2b398fe9b",
+      "url": "https://wago.tools/db2/SkillLineAbility/csv?build=1.60.1.70338&locale=enUS",
+      "product": "wow_classic_beta",
+      "build": "1.60.1.70338",
+      "originalFileName": "SkillLineAbility.1.60.1.70338 (1).csv"
+    },
+    {
+      "table": "SkillLine",
+      "locale": "ruRU",
+      "fileName": "SkillLine.ruRU.1.60.1.70338.csv",
+      "path": "data-preparation/raw/forever/1.60.1.70338/SkillLine.ruRU.1.60.1.70338.csv",
+      "rows": 154,
+      "sha256": "3e323ef4670785f6fad23dbce508f5430b984a9bd995a4c1befdc1a9e9671d11",
+      "url": "https://wago.tools/db2/SkillLine/csv?build=1.60.1.70338&locale=ruRU",
+      "product": "wow_classic_beta",
+      "build": "1.60.1.70338",
+      "originalFileName": "SkillLine.1.60.1.70338.csv"
+    },
+    {
+      "table": "SpellTotems",
+      "locale": "enUS",
+      "fileName": "SpellTotems.enUS.1.60.1.70338.csv",
+      "path": "data-preparation/raw/forever/1.60.1.70338/SpellTotems.enUS.1.60.1.70338.csv",
+      "rows": 1120,
+      "sha256": "2a33bc649501519d7d9e70205bf45bcef1ad44fc1f42a907b28172231d3c5b3b",
+      "url": "https://wago.tools/db2/SpellTotems/csv?build=1.60.1.70338&locale=enUS",
+      "product": "wow_classic_beta",
+      "build": "1.60.1.70338",
+      "originalFileName": "SpellTotems.1.60.1.70338.csv"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "gameVersion": "tbc",
+  "build": "2.5.6.69795",
+  "endpoint": "https://nether.wowhead.com/tbc/tooltip/item/{itemId}",
+  "workers": 2,
+  "pauseSecondsPerWorker": 0.2,
+  "timeoutSeconds": 20,
+  "maximumAttempts": 3,
+  "statistics": {
+    "ok": 2363
+  },
+  "failures": [],
+  "responseIdentityLimitation": "Many tooltip responses do not echo an item ID. Those are checked by unchanged endpoint URL and exact English name, not by an independent echoed ID."
+}

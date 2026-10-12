@@ -7,7 +7,7 @@
   padding: 10px 12px;
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: rgb(21 29 45 / 94%);
+  background: var(--panel-translucent);
   box-shadow: 0 5px 20px rgb(0 0 0 / 12%);
 }
 

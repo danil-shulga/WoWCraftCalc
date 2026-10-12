@@ -8,3 +8,7 @@ coverage/
 !.cursor/rules/*.mdc
 *.local
 *.tsbuildinfo
+data-preparation/raw/
+data-preparation/cache/
+data-preparation/staging/
+**/__pycache__/

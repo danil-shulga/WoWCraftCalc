@@ -2,3 +2,6 @@ dist
 coverage
 node_modules
 package-lock.json
+data-preparation/raw/
+data-preparation/cache/
+data-preparation/staging/
