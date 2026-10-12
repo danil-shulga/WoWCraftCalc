@@ -20,6 +20,7 @@ const focusableSelector = [
 ].join(',')
 const dialogStack: HTMLElement[] = []
 const dialogFocus = new WeakMap<HTMLElement, HTMLElement>()
+let previousBodyOverflow = ''
 
 export function Modal({ title, subtitle, children, onClose }: ModalProps) {
   const titleId = useId()
@@ -49,6 +50,10 @@ export function Modal({ title, subtitle, children, onClose }: ModalProps) {
 
     if (dialog === null) {
       return
+    }
+    if (dialogStack.length === 0) {
+      previousBodyOverflow = document.body.style.overflow
+      document.body.style.overflow = 'hidden'
     }
     dialogStack.push(dialog)
     const rememberFocus = (event: FocusEvent) => {
@@ -100,6 +105,9 @@ export function Modal({ title, subtitle, children, onClose }: ModalProps) {
       dialog.removeEventListener('focusin', rememberFocus)
       const index = dialogStack.indexOf(dialog)
       if (index >= 0) dialogStack.splice(index, 1)
+      if (dialogStack.length === 0) {
+        document.body.style.overflow = previousBodyOverflow
+      }
       const underlying = dialogStack.at(-1)
       const restore =
         underlying && !underlying.contains(previouslyFocused)

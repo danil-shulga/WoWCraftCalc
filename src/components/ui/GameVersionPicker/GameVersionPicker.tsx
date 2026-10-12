@@ -6,11 +6,24 @@ import './GameVersionPicker.css'
 interface GameVersionPickerProps {
   value: GameVersion
   onChange: (version: GameVersion) => void
+  fullWidth?: boolean
 }
 
-export function GameVersionPicker({ value, onChange }: GameVersionPickerProps) {
+export function GameVersionPicker({
+  value,
+  onChange,
+  fullWidth = false,
+}: GameVersionPickerProps) {
   return (
-    <div className="game-version-picker" role="group" aria-label="Версия игры">
+    <div
+      className={
+        fullWidth
+          ? 'game-version-picker game-version-picker--full-width'
+          : 'game-version-picker'
+      }
+      role="group"
+      aria-label="Версия игры"
+    >
       {GAME_VERSIONS.map((version) => (
         <Button
           key={version}

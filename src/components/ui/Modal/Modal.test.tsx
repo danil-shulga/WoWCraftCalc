@@ -1,6 +1,6 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { useState } from 'react'
+import { StrictMode, useState } from 'react'
 
 import { Modal } from './Modal'
 
@@ -33,6 +33,51 @@ function ModalHarness() {
 }
 
 describe('Modal', () => {
+  it('блокирует прокрутку страницы до закрытия диалога', async () => {
+    const user = userEvent.setup()
+    const previousOverflow = document.body.style.overflow
+    render(<ModalHarness />)
+    await user.click(screen.getByRole('button', { name: 'Открыть' }))
+    expect(document.body.style.overflow).toBe('hidden')
+    await user.keyboard('{Escape}')
+    expect(document.body.style.overflow).toBe(previousOverflow)
+  })
+
+  it.each(['first', 'second'] as const)(
+    'сохраняет блокировку при закрытии %s диалога и восстанавливает исходный стиль после последнего',
+    (firstClosed) => {
+      const previousOverflow = document.body.style.overflow
+      document.body.style.overflow = 'scroll'
+      const first = render(
+        <StrictMode>
+          <Modal title="Первый" onClose={vi.fn()}>
+            Первый диалог
+          </Modal>
+        </StrictMode>,
+      )
+      const second = render(
+        <StrictMode>
+          <Modal title="Второй" onClose={vi.fn()}>
+            Второй диалог
+          </Modal>
+        </StrictMode>,
+      )
+      try {
+        expect(document.body.style.overflow).toBe('hidden')
+        const [earlier, later] =
+          firstClosed === 'first' ? [first, second] : [second, first]
+        earlier.unmount()
+        expect(document.body.style.overflow).toBe('hidden')
+        later.unmount()
+        expect(document.body.style.overflow).toBe('scroll')
+      } finally {
+        first.unmount()
+        second.unmount()
+        document.body.style.overflow = previousOverflow
+      }
+    },
+  )
+
   it('удерживает клавиатурный фокус внутри диалога', async () => {
     const user = userEvent.setup()
 

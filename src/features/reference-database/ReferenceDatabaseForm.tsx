@@ -2,9 +2,10 @@ import { ItemQuantityList } from '../../components/ui/ItemQuantityList/ItemQuant
 import { FormError } from '../../components/ui/FormError/FormError'
 import { Button } from '../../components/ui/Button/Button'
 import { useDraftGuard } from '../../app/draft-guard'
-import { useEffect, useId, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 
 import { ItemIdentity } from '../../components/ui/ItemIdentity/ItemIdentity'
+import { NumberInput } from '../../components/ui/NumberInput/NumberInput'
 import { SearchField } from '../../components/ui/SearchField/SearchField'
 import { SearchableSelect } from '../../components/ui/SearchableSelect/SearchableSelect'
 import {
@@ -15,7 +16,6 @@ import {
 import type { Item, ItemCatalog, ItemSection } from '../../domain/item.types'
 import { GAME_VERSION_REGISTRY, professionOptionsFor } from '../../domain/game-version'
 import type { GameVersion } from '../../domain/game-version'
-import { MoneyDisplay } from '../../components/ui/MoneyDisplay/MoneyDisplay'
 import {
   referenceItemToImport,
   referenceRecipeToImport,
@@ -72,8 +72,29 @@ function ReferenceReview({
   onSuccess,
   onClose,
   targetItem,
+  isActive,
 }: ReviewProps) {
   const outputId = useId()
+  const actionsRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const dialog = actionsRef.current?.closest<HTMLElement>('[role="dialog"]')
+    if (!isActive || targetItem !== undefined || !dialog) return
+
+    const startTop = dialog.scrollTop
+    const startTime = performance.now()
+    let frameId: number
+    const animate = (time: number) => {
+      const progress = Math.min(1, Math.max(0, (time - startTime) / 150))
+      const bottom = Math.max(0, dialog.scrollHeight - dialog.clientHeight)
+      const eased = 1 - (1 - progress) ** 3
+      dialog.scrollTop = startTop + (bottom - startTop) * eased
+      if (progress < 1) frameId = requestAnimationFrame(animate)
+    }
+    frameId = requestAnimationFrame(animate)
+    return () => {
+      cancelAnimationFrame(frameId)
+    }
+  }, [isActive, targetItem])
   const imported = referenceItemToImport(item, index.database.gameVersion, itemLanguage)
   const [savedRecipe] = useState(() =>
     targetItem === undefined
@@ -81,7 +102,7 @@ function ReferenceReview({
       : targetItem.recipe,
   )
   const [output, setOutput] = useState(
-    () => savedRecipe?.outputQuantity ?? recipe?.output.quantity ?? 0,
+    () => savedRecipe?.outputQuantity ?? recipe?.output.quantity ?? 1,
   )
   const [error, setError] = useState<string | null>(null)
   const confirm = () => {
@@ -125,13 +146,6 @@ function ReferenceReview({
         nameAs="h3"
         className="reference-db__product"
       />
-      <p>
-        NPC-цены из таблиц клиента: покупка{' '}
-        <MoneyDisplay value={item.vendor.baseBuyPriceCopper} />, продажа{' '}
-        <MoneyDisplay value={item.vendor.sellPriceCopper} />. Размер пачки:{' '}
-        {item.vendor.stackCount ?? 'неизвестен'}. Доступность продажи не подтверждена.
-        Рыночные цены останутся неизвестными до ручного ввода.
-      </p>
       {recipe === null ? (
         <p>Будет добавлен реагент. Существующий рецепт сохранится.</p>
       ) : (
@@ -158,23 +172,14 @@ function ReferenceReview({
           />
           <div className="reference-db__output">
             <label htmlFor={outputId}>Предметов за один крафт</label>
-            <input
-              type="number"
+            <NumberInput
               id={outputId}
               min={1}
               step={1}
-              value={output === 0 ? '' : output}
-              onChange={(event) => {
-                setOutput(event.currentTarget.valueAsNumber || 0)
-              }}
+              value={output}
+              onChange={setOutput}
             />
           </div>
-          <small>
-            Выход неизвестен. Укажите положительное целое количество.
-            {recipe.output.baseQuantityCandidate !== null
-              ? ` Неподтверждённый кандидат из эффекта: ${String(recipe.output.baseQuantityCandidate)}.`
-              : ''}
-          </small>
           {savedRecipe !== null ? (
             <div className="reference-db__warning">
               <p>Сохранённый активный рецепт будет заменён составом выше.</p>
@@ -196,7 +201,7 @@ function ReferenceReview({
         </>
       )}
       <FormError message={error} />
-      <div className="editor-form__actions">
+      <div ref={actionsRef} className="editor-form__actions">
         <Button variant="secondary" type="button" onClick={onClose}>
           Отмена
         </Button>
@@ -261,11 +266,11 @@ function ReferenceBrowser(
     <div className="editor-form reference-db">
       <p className="reference-db__intro">
         База {GAME_VERSION_REGISTRY[index.database.gameVersion].name} ·{' '}
-        {index.database.mode} · сборка {index.database.build}.{' '}
+        {index.database.mode} · сборка {index.database.build}
+        <br/>
         {initialItem === undefined
-          ? 'Выберите предмет и проверьте данные перед добавлением.'
-          : 'Проверьте рецепт перед сохранением.'}{' '}
-        Наличие рецепта в базе не гарантирует его доступность в игре.
+          ? ' Выберите предмет и проверьте данные перед добавлением'
+          : null}
       </p>
       {initialItem === undefined ? (
         <>
@@ -358,6 +363,7 @@ function ReferenceBrowser(
           {recipes.length > 0 ? (
             <SearchableSelect
               label="Рецепт"
+              disabled={section !== 'reagents' && recipes.length === 1}
               value={recipeId}
               placeholder="Выберите рецепт…"
               options={[

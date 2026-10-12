@@ -2,3 +2,9 @@
   display: flex;
   gap: 8px;
 }
+
+.game-version-picker--full-width {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+}

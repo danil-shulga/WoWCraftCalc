@@ -36,6 +36,39 @@ function renderForm(props: Partial<ComponentProps<typeof ReferenceDatabaseForm>>
 }
 
 describe('вкладка базы', () => {
+  it('прокручивает окно до нижней границы за 150 мс без повторения при изменении выхода', async () => {
+    const frames: FrameRequestCallback[] = []
+    const requestFrame = vi
+      .spyOn(window, 'requestAnimationFrame')
+      .mockImplementation((callback) => {
+        frames.push(callback)
+        return frames.length
+      })
+    vi.spyOn(performance, 'now').mockReturnValue(1000)
+    const user = userEvent.setup()
+    const { container, unmount } = renderForm()
+    container.setAttribute('role', 'dialog')
+    Object.defineProperties(container, {
+      scrollHeight: { configurable: true, value: 1200 },
+      clientHeight: { configurable: true, value: 500 },
+    })
+    container.scrollTop = 100
+    await screen.findByRole('searchbox')
+    expect(requestFrame).not.toHaveBeenCalled()
+    await user.click(screen.getByRole('button', { name: /Венец Грёз/ }))
+    expect(container.scrollTop).toBe(100)
+    frames.shift()?.(1075)
+    expect(container.scrollTop).toBeGreaterThan(100)
+    expect(container.scrollTop).toBeLessThan(700)
+    frames.shift()?.(1150)
+    expect(container.scrollTop).toBe(700)
+    expect(frames).toHaveLength(0)
+    requestFrame.mockClear()
+    await user.click(screen.getByRole('button', { name: 'Увеличить значение' }))
+    expect(requestFrame).not.toHaveBeenCalled()
+    unmount()
+  })
+
   beforeEach(() => {
     useCraftStore
       .getState()
@@ -76,10 +109,15 @@ describe('вкладка базы', () => {
       expect(screen.queryByRole('button', { name: 'Назад' })).not.toBeInTheDocument()
       expect(screen.queryByRole('button', { name: 'Далее' })).not.toBeInTheDocument()
       expect(screen.queryByText(/Найдено:/)).not.toBeInTheDocument()
-      expect(screen.getByText(/Проверьте рецепт перед сохранением/)).toBeVisible()
+      expect(
+        screen.queryByText(/Проверьте рецепт перед сохранением/),
+      ).not.toBeInTheDocument()
       expect(screen.getByRole('combobox', { name: 'Рецепт' })).toHaveValue(
         'Портняжное дело (Tailoring)',
       )
+      expect(screen.getByRole('combobox', { name: 'Рецепт' })).toBeDisabled()
+      await user.click(screen.getByRole('combobox', { name: 'Рецепт' }))
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
       expect(
         within(preview).getByRole('list', { name: 'Состав рецепта' }),
       ).toHaveTextContent('Ткань')
@@ -89,6 +127,44 @@ describe('вкладка базы', () => {
       await user.click(screen.getByRole('button', { name: 'Подтвердить импорт' }))
       expect(onImport).toHaveBeenCalledWith(
         expect.objectContaining({ outputQuantity: 3, profession: 'tailoring' }),
+      )
+    },
+  )
+
+  it.each([null, 5])(
+    'импортирует выход %s из рецепта с запасным значением 1',
+    async (quantity) => {
+      const fixture = referenceFixture()
+      const database = parseReferenceDatabase({
+        ...fixture,
+        recipes: {
+          '10': {
+            ...fixture.recipes['10'],
+            output: { ...fixture.recipes['10'].output, quantity },
+          },
+        },
+      })
+      vi.mocked(loader.loadReferenceDatabase).mockResolvedValue(
+        buildReferenceDatabaseIndex(database),
+      )
+      const user = userEvent.setup()
+      const { onImport } = renderForm()
+      await user.click(await screen.findByRole('button', { name: /Венец Грёз/ }))
+      const expectedOutput = quantity ?? 1
+      const input = screen.getByLabelText('Предметов за один крафт')
+      expect(input).toHaveValue(expectedOutput)
+      expect(
+        screen.queryByText(
+          /NPC-цены|Выход неизвестен|Неподтверждённый кандидат|Наличие рецепта в базе/,
+        ),
+      ).not.toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: 'Увеличить значение' }))
+      expect(input).toHaveValue(expectedOutput + 1)
+      await user.click(screen.getByRole('button', { name: 'Уменьшить значение' }))
+      expect(input).toHaveValue(expectedOutput)
+      await user.click(screen.getByRole('button', { name: 'Подтвердить импорт' }))
+      expect(onImport).toHaveBeenCalledWith(
+        expect.objectContaining({ outputQuantity: expectedOutput }),
       )
     },
   )
@@ -118,14 +194,11 @@ describe('вкладка базы', () => {
     const search = await screen.findByRole('searchbox')
     await user.type(search, 'DREAM')
     await user.click(screen.getByRole('button', { name: /Венец Грёз/ }))
-    expect(screen.getByLabelText('Предметов за один крафт')).toHaveValue(null)
+    expect(screen.getByLabelText('Предметов за один крафт')).toHaveValue(1)
     expect(screen.getByRole('combobox', { name: 'Рецепт' })).toHaveValue(
       'Портняжное дело (Tailoring)',
     )
     expect(screen.queryByText(/Качество:|Привязка:|Рецепт #/)).not.toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: 'Подтвердить импорт' }))
-    expect(onImport).not.toHaveBeenCalled()
-    expect(screen.getByRole('alert')).toHaveTextContent('положительное целое')
     expect(
       screen.queryByText(/Предположение из базы|Подтвердите фиксированное|Кандидат/),
     ).not.toBeInTheDocument()
@@ -185,14 +258,15 @@ describe('вкладка базы', () => {
     renderForm()
     await user.click(await screen.findByRole('button', { name: /Венец Грёз/ }))
     expect(screen.getByRole('button', { name: 'Подтвердить импорт' })).toBeVisible()
-    expect(screen.getByLabelText('Предметов за один крафт')).toHaveValue(null)
+    expect(screen.getByLabelText('Предметов за один крафт')).toHaveValue(1)
+    expect(screen.getByRole('combobox', { name: 'Рецепт' })).toBeEnabled()
     await user.click(screen.getByRole('combobox', { name: 'Рецепт' }))
     const options = screen.getAllByRole('option', { name: 'Портняжное дело (Tailoring)' })
     expect(options).toHaveLength(2)
     const alternative = options[1]
     if (!alternative) throw new Error('Нет альтернативного рецепта')
     await user.click(alternative)
-    expect(screen.getByLabelText('Предметов за один крафт')).toHaveValue(null)
+    expect(screen.getByLabelText('Предметов за один крафт')).toHaveValue(1)
     expect(screen.queryByText(/По умолчанию|Переменный выход/)).not.toBeInTheDocument()
   })
 
@@ -282,6 +356,7 @@ describe('вкладка базы', () => {
     const user = userEvent.setup()
     const { onAddItem } = renderForm({ section: 'reagents' })
     await user.click(await screen.findByRole('button', { name: /Венец Грёз/ }))
+    expect(screen.getByRole('combobox', { name: 'Рецепт' })).toBeEnabled()
     expect(screen.getByRole('button', { name: 'Подтвердить импорт' })).toBeVisible()
     expect(screen.getByRole('combobox', { name: 'Рецепт' })).toHaveValue(
       'Портняжное дело (Tailoring)',

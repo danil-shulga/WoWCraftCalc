@@ -49,12 +49,16 @@ export function UserSettingsModal({
       <div className="user-settings">
         <fieldset className="user-settings__section">
           <legend>Версия игры</legend>
-          <GameVersionPicker value={gameVersion} onChange={onGameVersionChange} />
           <p>
             {GAME_VERSION_REGISTRY[gameVersion].mode} · сборка{' '}
-            {GAME_VERSION_REGISTRY[gameVersion].build}. Каталог и профессии сохраняются
+            {GAME_VERSION_REGISTRY[gameVersion].build}<br/> Каталог и профессии сохраняются
             отдельно для каждой версии.
           </p>
+          <GameVersionPicker
+            value={gameVersion}
+            onChange={onGameVersionChange}
+            fullWidth
+          />
         </fieldset>
         <fieldset className="user-settings__section">
           <legend>Язык названий предметов</legend>

@@ -26,6 +26,7 @@ interface SearchableSelectProps {
   placeholder?: string
   emptyMessage?: string
   hideLabel?: boolean
+  disabled?: boolean
   onChange: (value: string) => void
 }
 
@@ -42,6 +43,7 @@ export function SearchableSelect({
   placeholder = 'Начните вводить название…',
   emptyMessage = 'Ничего не найдено',
   hideLabel = false,
+  disabled = false,
   onChange,
 }: SearchableSelectProps) {
   const listboxId = useId()
@@ -171,9 +173,10 @@ export function SearchableSelect({
           autoComplete="off"
           aria-autocomplete="list"
           aria-controls={listboxId}
-          aria-expanded={isOpen}
+          disabled={disabled}
+          aria-expanded={isOpen && !disabled}
           aria-activedescendant={
-            isOpen && filteredOptions[highlightedIndex] !== undefined
+            isOpen && !disabled && filteredOptions[highlightedIndex] !== undefined
               ? `${listboxId}-option-${String(highlightedIndex)}`
               : undefined
           }
@@ -230,7 +233,7 @@ export function SearchableSelect({
         </small>
       ) : null}
 
-      {isOpen && listPosition !== null
+      {isOpen && !disabled && listPosition !== null
         ? createPortal(
             <ul
               id={listboxId}

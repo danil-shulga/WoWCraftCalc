@@ -17,6 +17,8 @@
 
 .reagent-item-row__quantity {
   flex: 0 0 auto;
+  align-self: center;
+  margin-left: 4px;
   color: var(--accent-strong);
   font-weight: 700;
   white-space: nowrap;
