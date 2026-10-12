@@ -267,7 +267,7 @@ function ReferenceBrowser(
       <p className="reference-db__intro">
         База {GAME_VERSION_REGISTRY[index.database.gameVersion].name} ·{' '}
         {index.database.mode} · сборка {index.database.build}
-        <br/>
+        <br />
         {initialItem === undefined
           ? ' Выберите предмет и проверьте данные перед добавлением'
           : null}
@@ -276,7 +276,7 @@ function ReferenceBrowser(
         <>
           <SearchField
             value={query}
-            placeholder="Название RU или EN…"
+            placeholder="Название RU или EN"
             onChange={(value) => {
               setQuery(value)
               setPage(0)

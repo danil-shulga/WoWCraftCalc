@@ -51,8 +51,8 @@ export function UserSettingsModal({
           <legend>Версия игры</legend>
           <p>
             {GAME_VERSION_REGISTRY[gameVersion].mode} · сборка{' '}
-            {GAME_VERSION_REGISTRY[gameVersion].build}<br/> Каталог и профессии сохраняются
-            отдельно для каждой версии.
+            {GAME_VERSION_REGISTRY[gameVersion].build}
+            <br /> Каталог и профессии сохраняются отдельно для каждой версии.
           </p>
           <GameVersionPicker
             value={gameVersion}
