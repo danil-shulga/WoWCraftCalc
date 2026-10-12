@@ -48,13 +48,3 @@
   font-size: 0.8rem;
   line-height: 1.5;
 }
-
-@media (max-width: 720px) {
-  .modal-backdrop {
-    padding: 10px;
-  }
-
-  .modal {
-    max-height: calc(100vh - 20px);
-  }
-}

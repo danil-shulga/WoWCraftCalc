@@ -82,39 +82,3 @@
   font-size: 0.78rem;
   line-height: 1.5;
 }
-
-@media (max-width: 720px) {
-  .sidebar {
-    position: static;
-    display: block;
-    width: 100%;
-    height: auto;
-    padding: 12px;
-    border-right: 0;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .brand {
-    margin: 0 4px 12px;
-  }
-
-  .brand__mark {
-    width: 36px;
-    height: 36px;
-  }
-
-  .sidebar nav {
-    display: flex;
-    overflow-x: auto;
-  }
-
-  .nav-button {
-    width: auto;
-    flex: 0 0 auto;
-    gap: 8px;
-  }
-
-  .sidebar__note {
-    display: none;
-  }
-}

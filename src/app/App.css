@@ -1,5 +1,5 @@
 .app-shell {
-  --content-padding: clamp(16px, 3vw, 44px);
+  --content-padding: 44px;
   --sidebar-width: 230px;
 
   display: grid;
@@ -89,22 +89,4 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-}
-
-@media (max-width: 720px) {
-  .app-shell {
-    --content-padding: 12px;
-    --sidebar-width: 0px;
-
-    display: block;
-  }
-
-  .main-content {
-    padding: 14px 12px 36px;
-  }
-
-  .utility-bar {
-    flex-wrap: wrap;
-    margin-bottom: 20px;
-  }
 }

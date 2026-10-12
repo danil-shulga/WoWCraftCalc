@@ -100,7 +100,7 @@
   left: 0;
   display: none;
   width: max-content;
-  max-width: min(300px, 75vw);
+  max-width: 300px;
   padding: 10px 12px;
   border: 1px solid var(--border-strong);
   border-radius: 8px;
@@ -125,23 +125,4 @@
 
 .item-row__actions {
   display: flex;
-}
-
-@media (max-width: 1050px) {
-  .item-icon {
-    width: 44px;
-    height: 44px;
-  }
-}
-
-@media (max-width: 720px) {
-  .item-tree--nested {
-    margin-left: 12px;
-    padding-left: 8px;
-  }
-
-  .item-icon {
-    width: 40px;
-    height: 40px;
-  }
 }

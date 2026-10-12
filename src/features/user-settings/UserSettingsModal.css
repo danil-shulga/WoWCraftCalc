@@ -70,10 +70,3 @@
   padding-top: 16px;
   border-top: 1px solid var(--border);
 }
-
-@media (max-width: 560px) {
-  .user-settings__currency-options,
-  .user-settings__profession-list {
-    grid-template-columns: 1fr;
-  }
-}

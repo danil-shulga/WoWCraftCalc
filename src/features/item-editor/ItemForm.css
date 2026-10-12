@@ -24,9 +24,3 @@
   grid-template-columns: 1fr 1fr;
   gap: 14px;
 }
-
-@media (max-width: 720px) {
-  .price-grid {
-    grid-template-columns: 1fr;
-  }
-}
