@@ -4,16 +4,14 @@ import { useCallback, useMemo, useState } from 'react'
 
 import { ItemTree } from '../components/item-tree/ItemTree/ItemTree'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog/ConfirmDialog'
-import { Modal } from '../components/ui/Modal/Modal'
 import { ItemName } from '../components/ui/ItemName/ItemName'
 import { SearchField } from '../components/ui/SearchField/SearchField'
 import { Toast } from '../components/ui/Toast/Toast'
 import { createCatalogCalculationSnapshot } from '../domain/calculations'
-import { getItemName, getSecondaryItemName, matchesItemName } from '../domain/item-names'
-import type { ItemId, ItemPriceField, ItemSection, Recipe } from '../domain/item.types'
+import { matchesItemName } from '../domain/item-names'
+import type { ItemId, ItemPriceField, ItemSection } from '../domain/item.types'
 import { ItemAddModal } from '../features/item-editor/ItemAddModal'
-import { ItemForm } from '../features/item-editor/ItemForm'
-import { RecipeEditor } from '../features/recipe-editor/RecipeEditor'
+import { ItemEditModal } from '../features/item-editor/ItemEditModal'
 import { selectItemsBySection } from '../store/craft.selectors'
 import { useCraftStore } from '../store/useCraftStore'
 import '../components/ui/Button.css'
@@ -52,10 +50,9 @@ export function ItemsPage({ section }: ItemsPageProps) {
   const itemLanguage = useCraftStore((state) => state.itemLanguage)
   const ownedProfessions = useCraftStore(selectActiveProfessions)
   const createItem = useCraftStore((state) => state.createItem)
-  const updateItem = useCraftStore((state) => state.updateItem)
+  const saveItemEdit = useCraftStore((state) => state.saveItemEdit)
   const setItemPrices = useCraftStore((state) => state.setItemPrices)
   const removeItem = useCraftStore((state) => state.removeItem)
-  const setRecipe = useCraftStore((state) => state.setRecipe)
   const setAcquisition = useCraftStore((state) => state.setAcquisition)
   const importRecipe = useCraftStore((state) => state.importRecipe)
   const addReferenceItem = useCraftStore((state) => state.addReferenceItem)
@@ -69,7 +66,6 @@ export function ItemsPage({ section }: ItemsPageProps) {
     setNotification(null)
   }, [])
   const [editingItemId, setEditingItemId] = useState<ItemId | null>(null)
-  const [editingRecipeId, setEditingRecipeId] = useState<ItemId | null>(null)
   const [deletingItemId, setDeletingItemId] = useState<ItemId | null>(null)
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set())
   const [searchQuery, setSearchQuery] = useState('')
@@ -110,7 +106,6 @@ export function ItemsPage({ section }: ItemsPageProps) {
     [items, ownedProfessionSet, visibleItems],
   )
   const editingItem = editingItemId === null ? undefined : items[editingItemId]
-  const recipeItem = editingRecipeId === null ? undefined : items[editingRecipeId]
   const deletingItem = deletingItemId === null ? undefined : items[deletingItemId]
 
   const toggleExpanded = (path: string) => {
@@ -125,16 +120,6 @@ export function ItemsPage({ section }: ItemsPageProps) {
 
       return next
     })
-  }
-
-  const saveRecipe = (itemId: ItemId, recipe: Recipe): string | null => {
-    const error = setRecipe(itemId, recipe)
-
-    if (error === null) {
-      setEditingRecipeId(null)
-    }
-
-    return error
   }
 
   const startPriceEditing = () => {
@@ -257,7 +242,6 @@ export function ItemsPage({ section }: ItemsPageProps) {
                   expandedPaths={expandedPaths}
                   onToggleExpanded={toggleExpanded}
                   onEditItem={setEditingItemId}
-                  onEditRecipe={setEditingRecipeId}
                   onDeleteItem={setDeletingItemId}
                   onSetAcquisition={setAcquisition}
                 />
@@ -295,51 +279,25 @@ export function ItemsPage({ section }: ItemsPageProps) {
       )}
 
       {editingItem === undefined ? null : (
-        <Modal
-          title={`Редактировать: ${getItemName(editingItem, itemLanguage)}`}
-          subtitle={getSecondaryItemName(editingItem, itemLanguage)}
+        <ItemEditModal
+          key={editingItem.id}
+          item={editingItem}
+          catalog={items}
+          gameVersion={gameVersion}
+          itemLanguage={itemLanguage}
+          defaultSection={section}
+          ownedProfessions={ownedProfessions}
+          onSave={(input, recipe) => saveItemEdit(editingItem.id, input, recipe, request)}
+          onImport={(data, input) =>
+            importRecipe(data, request, { itemId: editingItem.id, input })
+          }
+          onSuccess={(message) => {
+            setNotification((current) => ({ id: (current?.id ?? 0) + 1, message }))
+          }}
           onClose={() => {
             setEditingItemId(null)
           }}
-        >
-          <ItemForm
-            initialItem={editingItem}
-            defaultSection={section}
-            onCancel={() => {
-              setEditingItemId(null)
-            }}
-            onSave={(input) => {
-              updateItem(editingItem.id, input)
-              setEditingItemId(null)
-            }}
-          />
-        </Modal>
-      )}
-
-      {recipeItem === undefined ? null : (
-        <Modal
-          title={`Рецепт: ${getItemName(recipeItem, itemLanguage)}`}
-          subtitle={getSecondaryItemName(recipeItem, itemLanguage)}
-          onClose={() => {
-            setEditingRecipeId(null)
-          }}
-        >
-          <RecipeEditor
-            gameVersion={gameVersion}
-            item={recipeItem}
-            itemLanguage={itemLanguage}
-            catalog={items}
-            ownedProfessions={ownedProfessions}
-            onCancel={() => {
-              setEditingRecipeId(null)
-            }}
-            onRemove={() => {
-              setRecipe(recipeItem.id, null)
-              setEditingRecipeId(null)
-            }}
-            onSave={(recipe) => saveRecipe(recipeItem.id, recipe)}
-          />
-        </Modal>
+        />
       )}
 
       {deletingItem === undefined ? null : (

@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs'
 import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { ComponentProps } from 'react'
+import type { Item } from '../../domain/item.types'
 
 import { buildReferenceDatabaseIndex } from '../../domain/reference-database-index'
 import { parseReferenceDatabase } from '../../domain/reference-database.schema'
@@ -47,6 +48,68 @@ describe('вкладка базы', () => {
   })
   afterEach(() => {
     vi.restoreAllMocks()
+  })
+
+  it.each(['source', 'name'] as const)(
+    'открывает рецепт известного предмета по %s без поиска, фильтра и пагинации',
+    async (match) => {
+      const user = userEvent.setup()
+      const targetItem: Item = {
+        id: 'existing',
+        name: match === 'source' ? 'Мой венец' : 'Dream Crown',
+        iconUrl: '',
+        sections: ['crafts'],
+        purchasePriceCopper: null,
+        salePriceCopper: null,
+        recipe: null,
+        ...(match === 'source' ? { source: { wowheadItemId: 1 } } : {}),
+      }
+      const { onImport } = renderForm({ targetItem })
+      const preview = await screen.findByRole('region', { name: 'Предпросмотр из базы' })
+      expect(screen.queryByRole('searchbox')).not.toBeInTheDocument()
+      expect(
+        screen.queryByRole('combobox', { name: 'Профессия' }),
+      ).not.toBeInTheDocument()
+      expect(
+        screen.queryByRole('group', { name: 'Результаты поиска в базе' }),
+      ).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Назад' })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: 'Далее' })).not.toBeInTheDocument()
+      expect(screen.queryByText(/Найдено:/)).not.toBeInTheDocument()
+      expect(screen.getByText(/Проверьте рецепт перед сохранением/)).toBeVisible()
+      expect(screen.getByRole('combobox', { name: 'Рецепт' })).toHaveValue(
+        'Портняжное дело (Tailoring)',
+      )
+      expect(
+        within(preview).getByRole('list', { name: 'Состав рецепта' }),
+      ).toHaveTextContent('Ткань')
+      fireEvent.change(within(preview).getByLabelText('Предметов за один крафт'), {
+        target: { value: '3' },
+      })
+      await user.click(screen.getByRole('button', { name: 'Подтвердить импорт' }))
+      expect(onImport).toHaveBeenCalledWith(
+        expect.objectContaining({ outputQuantity: 3, profession: 'tailoring' }),
+      )
+    },
+  )
+
+  it('сохраняет поиск и выбор предмета, если редактируемый предмет не найден в базе', async () => {
+    renderForm({
+      targetItem: {
+        id: 'unknown',
+        name: 'Неизвестный предмет',
+        iconUrl: '',
+        sections: ['crafts'],
+        purchasePriceCopper: null,
+        salePriceCopper: null,
+        recipe: null,
+      },
+    })
+    expect(await screen.findByRole('searchbox')).toBeVisible()
+    expect(screen.getByRole('combobox', { name: 'Профессия' })).toBeVisible()
+    expect(screen.getByRole('group', { name: 'Результаты поиска в базе' })).toBeVisible()
+    expect(screen.getByRole('button', { name: /Венец Грёз/ })).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Далее' })).toBeVisible()
   })
 
   it('ищет RU/EN, фильтрует профессию и подтверждает отредактированный выход без лишних подписей', async () => {

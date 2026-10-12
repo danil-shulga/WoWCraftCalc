@@ -26,7 +26,6 @@ interface ReagentItemRowProps {
   automaticMethod: Exclude<AcquisitionMethod, 'auto'>
   onToggleExpanded: () => void
   onEditItem: (itemId: ItemId) => void
-  onEditRecipe: (itemId: ItemId) => void
   onSetAcquisition: (
     ownerItemId: ItemId,
     reagentItemId: ItemId,
@@ -46,7 +45,6 @@ export function ReagentItemRow({
   automaticMethod,
   onToggleExpanded,
   onEditItem,
-  onEditRecipe,
   onSetAcquisition,
 }: ReagentItemRowProps) {
   const hasRecipe = item.recipe !== null
@@ -140,17 +138,6 @@ export function ReagentItemRow({
           }}
         >
           ✎
-        </button>
-        <button
-          className="icon-button"
-          type="button"
-          title="Редактировать рецепт"
-          aria-label={`Редактировать рецепт ${itemName}`}
-          onClick={() => {
-            onEditRecipe(item.id)
-          }}
-        >
-          ⚒
         </button>
       </div>
     </article>

@@ -4,8 +4,12 @@ import { useEffect, useId, useMemo, useState } from 'react'
 import { ItemIcon } from '../../components/ui/ItemIcon/ItemIcon'
 import { SearchField } from '../../components/ui/SearchField/SearchField'
 import { SearchableSelect } from '../../components/ui/SearchableSelect/SearchableSelect'
-import { getItemName } from '../../domain/item-names'
-import type { ItemCatalog, ItemSection } from '../../domain/item.types'
+import {
+  getItemName,
+  getItemSearchNames,
+  normalizeItemName,
+} from '../../domain/item-names'
+import type { Item, ItemCatalog, ItemSection } from '../../domain/item.types'
 import { GAME_VERSION_REGISTRY, professionOptionsFor } from '../../domain/game-version'
 import type { GameVersion } from '../../domain/game-version'
 import { MoneyDisplay } from '../../components/ui/MoneyDisplay/MoneyDisplay'
@@ -40,6 +44,7 @@ interface ReferenceDatabaseFormProps {
   section: ItemSection
   itemLanguage: ItemLanguage
   isActive: boolean
+  targetItem?: Item
   onImport: (data: RecipeImportData) => RecipeImportResult
   onAddItem: (data: RecipeImportItem) => ReferenceItemAddResult
   onSuccess: (message: string) => void
@@ -63,11 +68,14 @@ function ReferenceReview({
   onAddItem,
   onSuccess,
   onClose,
+  targetItem,
 }: ReviewProps) {
   const outputId = useId()
   const imported = referenceItemToImport(item, index.database.gameVersion, itemLanguage)
-  const [savedRecipe] = useState(
-    () => findImportedItem(catalog, imported)?.recipe ?? null,
+  const [savedRecipe] = useState(() =>
+    targetItem === undefined
+      ? (findImportedItem(catalog, imported)?.recipe ?? null)
+      : targetItem.recipe,
   )
   const [output, setOutput] = useState(
     () => savedRecipe?.outputQuantity ?? recipe?.output.quantity ?? 0,
@@ -205,13 +213,31 @@ function ReferenceReview({
 function ReferenceBrowser(
   props: ReferenceDatabaseFormProps & { index: ReferenceDatabaseIndex },
 ) {
-  const { index, section, itemLanguage } = props
+  const { index, section, itemLanguage, targetItem } = props
   const PROFESSION_OPTIONS = professionOptionsFor(index.database.gameVersion)
-  const [query, setQuery] = useState('')
+  const [initialItem] = useState(() => {
+    if (targetItem === undefined) return undefined
+    if (targetItem.source !== undefined)
+      return index.database.items[String(targetItem.source.wowheadItemId)]
+    const names = new Set(getItemSearchNames(targetItem).map(normalizeItemName))
+    const matches = searchReferenceItems(index, 'crafts', '').filter((item) =>
+      index.searchNames.get(item.itemId)?.some((name) => names.has(name)),
+    )
+    return matches.length === 1 ? matches[0] : undefined
+  })
+  const [query, setQuery] = useState(() =>
+    initialItem === undefined ? '' : referenceItemName(initialItem, itemLanguage),
+  )
   const [profession, setProfession] = useState('')
   const [page, setPage] = useState(0)
-  const [selectedId, setSelectedId] = useState<number | null>(null)
-  const [recipeId, setRecipeId] = useState('')
+  const [selectedId, setSelectedId] = useState<number | null>(initialItem?.itemId ?? null)
+  const [recipeId, setRecipeId] = useState(() => {
+    const recipe =
+      initialItem === undefined
+        ? undefined
+        : index.recipesByProduct.get(initialItem.itemId)?.[0]
+    return recipe === undefined ? '' : String(recipe.spellId)
+  })
   useDraftGuard(selectedId !== null)
   const selectedProfession =
     PROFESSION_OPTIONS.find((option) => option.value === profession)?.value ?? null
@@ -237,90 +263,97 @@ function ReferenceBrowser(
     <div className="editor-form reference-db">
       <p className="reference-db__intro">
         База {GAME_VERSION_REGISTRY[index.database.gameVersion].name} ·{' '}
-        {index.database.mode} · сборка {index.database.build}. Выберите предмет и
-        проверьте данные перед добавлением. Наличие рецепта в базе не гарантирует его
-        доступность в игре.
+        {index.database.mode} · сборка {index.database.build}.{' '}
+        {initialItem === undefined
+          ? 'Выберите предмет и проверьте данные перед добавлением.'
+          : 'Проверьте рецепт перед сохранением.'}{' '}
+        Наличие рецепта в базе не гарантирует его доступность в игре.
       </p>
-      <SearchField
-        value={query}
-        placeholder="Название RU или EN…"
-        onChange={(value) => {
-          setQuery(value)
-          setPage(0)
-        }}
-      />
-      <SearchableSelect
-        label={section === 'crafts' ? 'Профессия' : 'Используется в профессии'}
-        value={profession}
-        options={[{ value: '', label: 'Все профессии' }, ...PROFESSION_OPTIONS]}
-        onChange={(value) => {
-          setProfession(value)
-          setPage(0)
-        }}
-      />
-      <div
-        className="reference-db__results"
-        role="group"
-        aria-label="Результаты поиска в базе"
-      >
-        {results.length === 0 ? (
-          <p>Ничего не найдено</p>
-        ) : (
-          results.slice(page * 50, (page + 1) * 50).map((item) => (
+      {initialItem === undefined ? (
+        <>
+          <SearchField
+            value={query}
+            placeholder="Название RU или EN…"
+            onChange={(value) => {
+              setQuery(value)
+              setPage(0)
+            }}
+          />
+          <SearchableSelect
+            label={section === 'crafts' ? 'Профессия' : 'Используется в профессии'}
+            value={profession}
+            options={[{ value: '', label: 'Все профессии' }, ...PROFESSION_OPTIONS]}
+            onChange={(value) => {
+              setProfession(value)
+              setPage(0)
+            }}
+          />
+          <div
+            className="reference-db__results"
+            role="group"
+            aria-label="Результаты поиска в базе"
+          >
+            {results.length === 0 ? (
+              <p>Ничего не найдено</p>
+            ) : (
+              results.slice(page * 50, (page + 1) * 50).map((item) => (
+                <button
+                  className="reference-db__result"
+                  type="button"
+                  key={item.itemId}
+                  aria-pressed={selectedId === item.itemId}
+                  onClick={() => {
+                    setSelectedId(item.itemId)
+                    const options = index.recipesByProduct.get(item.itemId) ?? []
+                    const defaultRecipe =
+                      options.find(
+                        (option) => option.profession === selectedProfession,
+                      ) ?? options[0]
+                    setRecipeId(
+                      defaultRecipe === undefined ? '' : String(defaultRecipe.spellId),
+                    )
+                  }}
+                >
+                  <ItemIcon
+                    iconUrl={item.iconUrl}
+                    itemName={referenceItemName(item, itemLanguage)}
+                  />
+                  <span>
+                    {referenceItemName(item, itemLanguage)}
+                    <small>{item.names[itemLanguage === 'ru' ? 'en' : 'ru']}</small>
+                  </span>
+                </button>
+              ))
+            )}
+          </div>
+          <div className="reference-db__pages">
             <button
-              className="reference-db__result"
+              className="button button--secondary"
               type="button"
-              key={item.itemId}
-              aria-pressed={selectedId === item.itemId}
+              disabled={page === 0}
               onClick={() => {
-                setSelectedId(item.itemId)
-                const options = index.recipesByProduct.get(item.itemId) ?? []
-                const defaultRecipe =
-                  options.find((option) => option.profession === selectedProfession) ??
-                  options[0]
-                setRecipeId(
-                  defaultRecipe === undefined ? '' : String(defaultRecipe.spellId),
-                )
+                setPage(page - 1)
               }}
             >
-              <ItemIcon
-                iconUrl={item.iconUrl}
-                itemName={referenceItemName(item, itemLanguage)}
-              />
-              <span>
-                {referenceItemName(item, itemLanguage)}
-                <small>{item.names[itemLanguage === 'ru' ? 'en' : 'ru']}</small>
-              </span>
+              Назад
             </button>
-          ))
-        )}
-      </div>
-      <div className="reference-db__pages">
-        <button
-          className="button button--secondary"
-          type="button"
-          disabled={page === 0}
-          onClick={() => {
-            setPage(page - 1)
-          }}
-        >
-          Назад
-        </button>
-        <span role="status">
-          Найдено: {results.length} · Страница {page + 1} из{' '}
-          {Math.max(1, Math.ceil(results.length / 50))}
-        </span>
-        <button
-          className="button button--secondary"
-          type="button"
-          disabled={(page + 1) * 50 >= results.length}
-          onClick={() => {
-            setPage(page + 1)
-          }}
-        >
-          Далее
-        </button>
-      </div>
+            <span role="status">
+              Найдено: {results.length} · Страница {page + 1} из{' '}
+              {Math.max(1, Math.ceil(results.length / 50))}
+            </span>
+            <button
+              className="button button--secondary"
+              type="button"
+              disabled={(page + 1) * 50 >= results.length}
+              onClick={() => {
+                setPage(page + 1)
+              }}
+            >
+              Далее
+            </button>
+          </div>
+        </>
+      ) : null}
       {selected ? (
         <>
           {recipes.length > 0 ? (
@@ -344,7 +377,11 @@ function ReferenceBrowser(
             />
           ) : null}
           {section === 'crafts' && recipe === null ? (
-            <p>У предмета несколько рецептов. Выберите один для предпросмотра.</p>
+            <p>
+              {recipes.length === 0
+                ? 'В базе нет рецепта для этого предмета. Используйте ссылку Wowhead или ручной ввод.'
+                : 'Выберите рецепт для предпросмотра.'}
+            </p>
           ) : (
             <ReferenceReview
               key={`${String(selected.itemId)}-${recipeId}`}

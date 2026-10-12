@@ -30,6 +30,7 @@ interface RecipeEditorProps {
   itemLanguage?: ItemLanguage
   catalog: ItemCatalog
   ownedProfessions: readonly Profession[]
+  onDraftChange?: (recipe: Recipe) => void
   onSave: (recipe: Recipe) => string | null
   onRemove: () => void
   onCancel: () => void
@@ -41,6 +42,7 @@ export function RecipeEditor({
   itemLanguage = 'ru',
   catalog,
   ownedProfessions,
+  onDraftChange,
   onSave,
   onRemove,
   onCancel,
@@ -77,6 +79,19 @@ export function RecipeEditor({
     [availableItems, itemLanguage],
   )
 
+  const changeDraft = (updates: Partial<Recipe>) => {
+    const next = {
+      outputQuantity,
+      profession: profession === '' ? null : profession,
+      reagents,
+      ...updates,
+    }
+    setOutputQuantity(next.outputQuantity)
+    setProfession(next.profession ?? '')
+    setReagents(next.reagents)
+    onDraftChange?.(next)
+  }
+
   const addReagent = () => {
     const selectedItem = catalog[selectedItemId]
 
@@ -84,14 +99,16 @@ export function RecipeEditor({
       return
     }
 
-    setReagents((current) => [
-      ...current,
-      {
-        itemId: selectedItem.id,
-        quantity: 1,
-        acquisition: 'auto',
-      },
-    ])
+    changeDraft({
+      reagents: [
+        ...reagents,
+        {
+          itemId: selectedItem.id,
+          quantity: 1,
+          acquisition: 'auto',
+        },
+      ],
+    })
     setSelectedItemId('')
   }
 
@@ -99,11 +116,11 @@ export function RecipeEditor({
     reagentItemId: string,
     updates: Partial<Pick<RecipeLine, 'quantity' | 'acquisition'>>,
   ) => {
-    setReagents((current) =>
-      current.map((line) =>
+    changeDraft({
+      reagents: reagents.map((line) =>
         line.itemId === reagentItemId ? { ...line, ...updates } : line,
       ),
-    )
+    })
   }
 
   const handleSubmit = (event: SyntheticEvent<HTMLFormElement, SubmitEvent>) => {
@@ -141,7 +158,7 @@ export function RecipeEditor({
             step={1}
             value={outputQuantity}
             onChange={(nextValue) => {
-              setOutputQuantity(nextValue)
+              changeDraft({ outputQuantity: nextValue })
             }}
           />
         </div>
@@ -155,7 +172,7 @@ export function RecipeEditor({
               (option) => option.value === nextProfession,
             )
 
-            setProfession(selectedProfession?.value ?? '')
+            changeDraft({ profession: selectedProfession?.value ?? null })
           }}
         />
       </div>
@@ -220,11 +237,11 @@ export function RecipeEditor({
                     className="button button--danger-text"
                     type="button"
                     onClick={() => {
-                      setReagents((current) =>
-                        current.filter(
+                      changeDraft({
+                        reagents: reagents.filter(
                           (currentLine) => currentLine.itemId !== line.itemId,
                         ),
-                      )
+                      })
                     }}
                   >
                     Удалить

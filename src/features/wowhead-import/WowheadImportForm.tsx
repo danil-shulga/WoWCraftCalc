@@ -4,7 +4,7 @@ import { useEffect, useId, useRef, useState, type SyntheticEvent } from 'react'
 import { NumberInput } from '../../components/ui/NumberInput/NumberInput'
 import { ItemIcon } from '../../components/ui/ItemIcon/ItemIcon'
 import { SearchableSelect } from '../../components/ui/SearchableSelect/SearchableSelect'
-import type { ItemCatalog } from '../../domain/item.types'
+import type { Item, ItemCatalog } from '../../domain/item.types'
 import { getItemName } from '../../domain/item-names'
 import type { ItemLanguage } from '../../domain/user-settings'
 import { GAME_VERSION_REGISTRY, professionOptionsFor } from '../../domain/game-version'
@@ -27,6 +27,7 @@ interface WowheadImportFormProps {
   onSuccess: (message: string) => void
   onClose: () => void
   isActive?: boolean
+  targetItem?: Item
 }
 
 function getSuccessMessage(
@@ -53,12 +54,15 @@ function RecipeReview({
   onClose,
   onSuccess,
   isActive = true,
+  targetItem,
 }: RecipeReviewProps) {
   const PROFESSION_OPTIONS = professionOptionsFor(gameVersion)
   const otherLanguage = itemLanguage === 'ru' ? 'en' : 'ru'
   const outputId = useId()
-  const [savedRecipe] = useState(
-    () => findImportedItem(catalog, recipe.product)?.recipe ?? null,
+  const [savedRecipe] = useState(() =>
+    targetItem === undefined
+      ? (findImportedItem(catalog, recipe.product)?.recipe ?? null)
+      : targetItem.recipe,
   )
   const [outputQuantity, setOutputQuantity] = useState(
     () => savedRecipe?.outputQuantity ?? recipe.outputQuantity ?? 1,
@@ -192,6 +196,7 @@ function WowheadImportFormForVersion({
   onSuccess,
   onClose,
   isActive = true,
+  targetItem,
 }: WowheadImportFormProps) {
   const [url, setUrl] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -249,6 +254,7 @@ function WowheadImportFormForVersion({
             close()
           }}
           isActive={isActive}
+          {...(targetItem === undefined ? {} : { targetItem })}
         />
       ) : (
         <form

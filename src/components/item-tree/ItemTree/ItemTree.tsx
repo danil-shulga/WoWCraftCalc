@@ -26,7 +26,6 @@ interface ItemTreeProps {
   expandedPaths: ReadonlySet<string>
   onToggleExpanded: (path: string) => void
   onEditItem: (itemId: ItemId) => void
-  onEditRecipe: (itemId: ItemId) => void
   onDeleteItem: (itemId: ItemId) => void
   onSetAcquisition: (
     ownerItemId: ItemId,
@@ -55,7 +54,6 @@ function ItemTreeNode({
   expandedPaths,
   onToggleExpanded,
   onEditItem,
-  onEditRecipe,
   onDeleteItem,
   onSetAcquisition,
   visited,
@@ -95,7 +93,6 @@ function ItemTreeNode({
             onToggleExpanded(path)
           }}
           onEditItem={onEditItem}
-          onEditRecipe={onEditRecipe}
           onDeleteItem={onDeleteItem}
         />
       ) : parentItemId === null ? null : (
@@ -113,7 +110,6 @@ function ItemTreeNode({
             onToggleExpanded(path)
           }}
           onEditItem={onEditItem}
-          onEditRecipe={onEditRecipe}
           onSetAcquisition={onSetAcquisition}
         />
       )}
@@ -134,7 +130,6 @@ function ItemTreeNode({
               expandedPaths={expandedPaths}
               onToggleExpanded={onToggleExpanded}
               onEditItem={onEditItem}
-              onEditRecipe={onEditRecipe}
               onDeleteItem={onDeleteItem}
               onSetAcquisition={onSetAcquisition}
               visited={nextVisited}

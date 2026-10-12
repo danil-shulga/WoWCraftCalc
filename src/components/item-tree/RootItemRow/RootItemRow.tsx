@@ -24,7 +24,6 @@ interface RootItemRowProps {
   }
   onToggleExpanded: () => void
   onEditItem: (itemId: ItemId) => void
-  onEditRecipe: (itemId: ItemId) => void
   onDeleteItem: (itemId: ItemId) => void
 }
 
@@ -40,7 +39,6 @@ export function RootItemRow({
   quickPriceEdit,
   onToggleExpanded,
   onEditItem,
-  onEditRecipe,
   onDeleteItem,
 }: RootItemRowProps) {
   const hasRecipe = item.recipe !== null
@@ -143,17 +141,6 @@ export function RootItemRow({
           }}
         >
           ✎
-        </button>
-        <button
-          className="icon-button"
-          type="button"
-          title="Редактировать рецепт"
-          aria-label={`Редактировать рецепт ${itemName}`}
-          onClick={() => {
-            onEditRecipe(item.id)
-          }}
-        >
-          ⚒
         </button>
         <button
           className="icon-button icon-button--danger"

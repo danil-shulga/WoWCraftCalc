@@ -160,7 +160,8 @@ it('защищает ручную форму и возвращает фокус 
 it('защищает изменённый рецепт и выбранный предпросмотр базы', async () => {
   const user = userEvent.setup()
   render(<App />)
-  await user.click(screen.getByRole('button', { name: /Редактировать рецепт/ }))
+  await user.click(screen.getByRole('button', { name: /Редактировать Рулон/ }))
+  await user.click(screen.getByRole('button', { name: 'Рецепт' }))
   fireEvent.change(screen.getByLabelText('Предметов за один крафт'), {
     target: { value: '2' },
   })

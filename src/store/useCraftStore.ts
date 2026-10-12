@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware'
 import { z } from 'zod'
 
 import { getItemSearchNames, normalizeItemName } from '../domain/item-names'
-import { itemNamesSchema, recipeSchema } from '../domain/item.schema'
+import { itemNamesSchema, itemSchema, recipeSchema } from '../domain/item.schema'
 import { GAME_VERSION_REGISTRY } from '../domain/game-version'
 import type { GameVersion } from '../domain/game-version'
 import { selectActiveWorkspace } from './craft.selectors'
@@ -38,6 +38,11 @@ import {
 } from './persistence'
 
 export type ItemInput = Omit<Item, 'id' | 'recipe'>
+
+export interface RecipeImportTarget {
+  itemId: ItemId
+  input: ItemInput
+}
 
 export interface RecipeImportItem {
   wowheadItemId: number
@@ -99,6 +104,12 @@ interface CraftStore extends PersistedCraftData {
   setActiveVersion: (version: GameVersion) => void
   createItem: (input: ItemInput) => ItemId
   updateItem: (itemId: ItemId, input: ItemInput) => void
+  saveItemEdit: (
+    itemId: ItemId,
+    input: ItemInput,
+    recipe: Recipe | null,
+    expected?: WorkspaceRequest,
+  ) => string | null
   setItemPrice: (itemId: ItemId, field: ItemPriceField, value: number | null) => void
   setItemPrices: (
     field: ItemPriceField,
@@ -114,6 +125,7 @@ interface CraftStore extends PersistedCraftData {
   importRecipe: (
     data: RecipeImportData,
     expected?: WorkspaceRequest,
+    target?: RecipeImportTarget,
   ) => RecipeImportResult
   addReferenceItem: (
     data: RecipeImportItem,
@@ -310,6 +322,34 @@ export const useCraftStore = create<CraftStore>()(
           })
         },
 
+        saveItemEdit: (itemId, input, recipe, expected) => {
+          if (!requestIsCurrent(expected))
+            return 'Версия игры изменилась. Откройте редактор заново'
+          const { items } = get()
+          const current = items[itemId]
+          if (current === undefined) return 'Предмет не найден'
+          const parsed = itemSchema.safeParse({
+            ...current,
+            ...input,
+            id: itemId,
+            recipe,
+          })
+          if (!parsed.success) return 'Проверьте описание, количества и состав рецепта'
+          if (recipe !== null) {
+            if (
+              recipe.profession &&
+              !GAME_VERSION_REGISTRY[getState().activeVersion].professions.includes(
+                recipe.profession,
+              )
+            )
+              return 'Профессия недоступна в этой версии игры'
+            const error = getRecipeValidationError(items, itemId, recipe.reagents)
+            if (error !== null) return error
+          }
+          set({ items: { ...items, [itemId]: parsed.data } })
+          return null
+        },
+
         setItemPrice: (itemId, field, value) => {
           set((state) => {
             const item = state.items[itemId]
@@ -451,7 +491,7 @@ export const useCraftStore = create<CraftStore>()(
           })
         },
 
-        importRecipe: (data, expected) => {
+        importRecipe: (data, expected, target) => {
           if (!requestIsCurrent(expected))
             return { success: false, error: 'Версия игры изменилась. Повторите импорт' }
           if (!importIsCompatible([data.product, ...data.reagents]))
@@ -475,6 +515,34 @@ export const useCraftStore = create<CraftStore>()(
           }
           data = parsed.data
           const currentItems = get().items
+          const targetItem =
+            target === undefined ? undefined : currentItems[target.itemId]
+          if (target !== undefined) {
+            if (targetItem === undefined)
+              return { success: false, error: 'Предмет не найден' }
+            if (
+              targetItem.source !== undefined &&
+              (targetItem.source.wowheadItemId !== data.product.wowheadItemId ||
+                (targetItem.source.wowheadVersion !== undefined &&
+                  targetItem.source.wowheadVersion !==
+                    GAME_VERSION_REGISTRY[getState().activeVersion].wowheadVersion))
+            )
+              return {
+                success: false,
+                error:
+                  'Этот рецепт создаёт другой предмет. Выберите рецепт редактируемого предмета',
+              }
+            const matched = findImportedItem(currentItems, data.product)
+            if (matched !== undefined && matched.id !== target.itemId)
+              return {
+                success: false,
+                error: 'Результат этого рецепта уже связан с другим предметом в каталоге',
+              }
+            if (
+              !itemSchema.omit({ id: true, recipe: true }).safeParse(target.input).success
+            )
+              return { success: false, error: 'Проверьте описание предмета' }
+          }
           const reagentSourceIds = new Set<number>()
           for (const imported of [data.product, ...data.reagents]) {
             const ambiguity = getImportAmbiguityError(currentItems, imported)
@@ -493,7 +561,8 @@ export const useCraftStore = create<CraftStore>()(
             }
             reagentSourceIds.add(reagent.wowheadItemId)
           }
-          const currentProduct = findImportedItem(currentItems, data.product)
+          const currentProduct =
+            targetItem ?? findImportedItem(currentItems, data.product)
           const productItemId = currentProduct?.id ?? crypto.randomUUID()
           const productCreated = currentProduct === undefined
           const nextItems: ItemCatalog = { ...currentItems }
@@ -526,6 +595,17 @@ export const useCraftStore = create<CraftStore>()(
               ? currentProduct.salePriceCopper
               : (data.product.defaultSalePriceCopper ?? null),
             recipe: currentProduct?.recipe ?? null,
+            ...(target === undefined
+              ? {}
+              : {
+                  name: target.input.name,
+                  names: target.input.names ??
+                    currentProduct?.names ?? { ru: null, en: null },
+                  iconUrl: target.input.iconUrl,
+                  sections: target.input.sections,
+                  purchasePriceCopper: target.input.purchasePriceCopper,
+                  salePriceCopper: target.input.salePriceCopper,
+                }),
           }
           nextItems[productItemId] = importedProduct
 
