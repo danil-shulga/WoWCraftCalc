@@ -1,6 +1,5 @@
 import { combineMoney, splitCopper } from '../../../domain/money'
 import type { MoneyParts } from '../../../domain/money'
-import { Checkbox } from '../Checkbox/Checkbox'
 import { CurrencyIcon } from '../CurrencyIcon/CurrencyIcon'
 import { NumberInput } from '../NumberInput/NumberInput'
 import './InlineMoneyInput.css'
@@ -25,23 +24,11 @@ export function InlineMoneyInput({ label, value, onChange }: InlineMoneyInputPro
 
   return (
     <fieldset className="inline-money-input" aria-label={label}>
-      <Checkbox
-        compact
-        hideLabel
-        className="inline-money-input__enabled"
-        label="Указать цену"
-        title={value === null ? 'Цена не указана' : 'Цена указана'}
-        checked={value !== null}
-        onChange={(checked) => {
-          onChange(checked ? 0 : null)
-        }}
-      />
       <div className="inline-money-input__part">
         <NumberInput
           ariaLabel={`${label}, золото`}
           min={0}
           step={1}
-          disabled={value === null}
           value={parts.gold}
           onChange={(partValue) => {
             updatePart('gold', partValue)
@@ -55,7 +42,6 @@ export function InlineMoneyInput({ label, value, onChange }: InlineMoneyInputPro
           min={0}
           max={99}
           step={1}
-          disabled={value === null}
           value={parts.silver}
           onChange={(partValue) => {
             updatePart('silver', partValue)
@@ -69,7 +55,6 @@ export function InlineMoneyInput({ label, value, onChange }: InlineMoneyInputPro
           min={0}
           max={99}
           step={1}
-          disabled={value === null}
           value={parts.copper}
           onChange={(partValue) => {
             updatePart('copper', partValue)

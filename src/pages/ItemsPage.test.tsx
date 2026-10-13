@@ -187,7 +187,9 @@ describe('ItemsPage', () => {
 
     await user.click(screen.getByRole('button', { name: 'Редактировать цены' }))
     const group = screen.getByRole('group', { name: 'Цена продажи: Лечебное зелье' })
-    await user.click(within(group).getByRole('checkbox', { name: 'Указать цену' }))
+    const copper = within(group).getByRole('spinbutton', { name: /медь$/ })
+    await user.clear(copper)
+    await user.type(copper, '50')
     await user.click(screen.getByRole('button', { name: 'Отмена' }))
     expect(useCraftStore.getState()).toBe(before)
 
@@ -195,8 +197,8 @@ describe('ItemsPage', () => {
     expect(
       within(
         screen.getByRole('group', { name: 'Цена продажи: Лечебное зелье' }),
-      ).getByRole('checkbox', { name: 'Указать цену' }),
-    ).toBeChecked()
+      ).getByRole('spinbutton', { name: /серебро$/ }),
+    ).toHaveValue(1)
     await user.click(screen.getByRole('button', { name: 'Сохранить все' }))
     expect(useCraftStore.getState()).toBe(before)
     expect(setItem).not.toHaveBeenCalled()
@@ -210,7 +212,12 @@ describe('ItemsPage', () => {
       const catalog = Object.fromEntries(
         Object.entries(items).map(([id, item]) => [
           id,
-          { ...item, sections: [section], purchasePriceCopper: 300 },
+          {
+            ...item,
+            sections: [section],
+            purchasePriceCopper: 300,
+            ...(id === 'potion' ? { [field]: null } : {}),
+          },
         ]),
       )
       setTestCraftState({ items: catalog })
@@ -226,9 +233,16 @@ describe('ItemsPage', () => {
       if (first === undefined || second === undefined) {
         throw new Error('Не найдены поля двух цен')
       }
-      await user.click(within(first).getByRole('checkbox', { name: 'Указать цену' }))
-      await user.click(within(second).getByRole('checkbox', { name: 'Указать цену' }))
-      await user.click(within(second).getByRole('checkbox', { name: 'Указать цену' }))
+      expect(
+        screen.queryByRole('checkbox', { name: 'Указать цену' }),
+      ).not.toBeInTheDocument()
+      for (const input of within(first).getAllByRole('spinbutton')) {
+        expect(input).toBeEnabled()
+      }
+      for (const input of within(second).getAllByRole('spinbutton')) {
+        await user.clear(input)
+        await user.type(input, '0')
+      }
       expect(
         useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items,
       ).toBe(before)
@@ -254,6 +268,31 @@ describe('ItemsPage', () => {
         setItem.mock.calls.filter(([key]) => key === 'craft-calc-versioned-data'),
       ).toHaveLength(1)
       expect(screen.getByRole('button', { name: 'Редактировать цены' })).toBeVisible()
+    },
+  )
+
+  it.each(['crafts', 'reagents'] as const)(
+    'вводит ранее неизвестную цену без разблокировки в разделе %s',
+    async (section) => {
+      const user = userEvent.setup()
+      const field = section === 'crafts' ? 'salePriceCopper' : 'purchasePriceCopper'
+      const potion = items.potion
+      if (potion === undefined) throw new Error('Нет тестового предмета')
+      setTestCraftState({
+        items: { potion: { ...potion, sections: [section], [field]: null } },
+      })
+      render(<ItemsPage section={section} />)
+      await user.click(screen.getByRole('button', { name: 'Редактировать цены' }))
+      const group = screen.getByRole('group', { name: /^Цена / })
+      expect(within(group).queryByRole('checkbox')).not.toBeInTheDocument()
+      const gold = within(group).getByRole('spinbutton', { name: /золото$/ })
+      expect(gold).toBeEnabled()
+      await user.type(gold, '2')
+      expect(useCraftStore.getState().workspaces.forever.items.potion?.[field]).toBeNull()
+      await user.click(screen.getByRole('button', { name: 'Сохранить все' }))
+      expect(useCraftStore.getState().workspaces.forever.items.potion?.[field]).toBe(
+        20000,
+      )
     },
   )
 

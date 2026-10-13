@@ -65,7 +65,7 @@ export function RootItemRow({
         item={item}
         language={itemLanguage}
         nameAs="strong"
-        truncate
+        truncate={quickPriceEdit === undefined}
         className="item-row__identity"
       />
 

@@ -24,6 +24,21 @@
   grid-template-columns: repeat(4, minmax(max-content, 1fr));
 }
 
-.root-item-row__prices > div:has(.item-row__price-editor) {
-  grid-column: span 2;
+.root-item-row:has(.item-row__price-editor) {
+  grid-template-columns: 28px minmax(0, 1fr) auto auto;
+}
+
+.root-item-row:has(.item-row__price-editor) > .item-row__identity {
+  grid-column: 2;
+}
+
+.root-item-row__prices:has(.item-row__price-editor) {
+  grid-column: 3;
+  grid-template-columns: 120px 280px 128px;
+  gap: 16px;
+  align-items: center;
+}
+
+.root-item-row__prices--with-purchase:has(.item-row__price-editor) {
+  grid-template-columns: 280px 120px 120px 128px;
 }
