@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { CatalogCalculationSnapshot } from '../../../domain/calculations'
 import type { ItemLanguage } from '../../../domain/user-settings'
 import type {
@@ -61,6 +62,13 @@ function ItemTreeNode({
   visited,
   rootItemId,
 }: ItemTreeNodeProps) {
+  const isExpanded = expandedPaths.has(path)
+  const [isBranchMounted, setIsBranchMounted] = useState(isExpanded)
+
+  if (isExpanded && !isBranchMounted) {
+    setIsBranchMounted(true)
+  }
+
   const item = catalog[itemId]
   const calculation = calculationSnapshot[itemId]
 
@@ -69,7 +77,6 @@ function ItemTreeNode({
   }
 
   const hasRecipe = item.recipe !== null
-  const isExpanded = expandedPaths.has(path)
   const hasCycle = visited.has(itemId)
   const exactSelectedProfit =
     recipeLine === null
@@ -122,28 +129,39 @@ function ItemTreeNode({
         />
       )}
 
-      {isExpanded && hasRecipe && !hasCycle ? (
-        <ul className="item-tree item-tree--nested">
-          {item.recipe?.reagents.map((line) => (
-            <ItemTreeNode
-              key={line.itemId}
-              rootItemId={rootItemId}
-              itemLanguage={itemLanguage}
-              itemId={line.itemId}
-              path={`${path}/${line.itemId}`}
-              parentItemId={itemId}
-              recipeLine={line}
-              catalog={catalog}
-              calculationSnapshot={calculationSnapshot}
-              expandedPaths={expandedPaths}
-              onToggleExpanded={onToggleExpanded}
-              onEditItem={onEditItem}
-              onDeleteItem={onDeleteItem}
-              onSetAcquisition={onSetAcquisition}
-              visited={nextVisited}
-            />
-          ))}
-        </ul>
+      {isBranchMounted && hasRecipe && !hasCycle ? (
+        <div
+          className={`item-tree__expansion${isExpanded ? '' : ' item-tree__expansion--closing'}`}
+          aria-hidden={!isExpanded}
+          inert={!isExpanded}
+          onAnimationEnd={(event) => {
+            if (event.target === event.currentTarget && !isExpanded) {
+              setIsBranchMounted(false)
+            }
+          }}
+        >
+          <ul className="item-tree item-tree--nested">
+            {item.recipe?.reagents.map((line) => (
+              <ItemTreeNode
+                key={line.itemId}
+                rootItemId={rootItemId}
+                itemLanguage={itemLanguage}
+                itemId={line.itemId}
+                path={`${path}/${line.itemId}`}
+                parentItemId={itemId}
+                recipeLine={line}
+                catalog={catalog}
+                calculationSnapshot={calculationSnapshot}
+                expandedPaths={expandedPaths}
+                onToggleExpanded={onToggleExpanded}
+                onEditItem={onEditItem}
+                onDeleteItem={onDeleteItem}
+                onSetAcquisition={onSetAcquisition}
+                visited={nextVisited}
+              />
+            ))}
+          </ul>
+        </div>
       ) : null}
     </li>
   )

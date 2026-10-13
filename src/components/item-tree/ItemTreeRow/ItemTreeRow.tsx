@@ -52,7 +52,7 @@ export function ItemTreeRow({
       }}
     >
       <span className="item-tree-row__indicator" aria-hidden="true">
-        {hasRecipe ? (isExpanded ? '▾' : '▸') : '·'}
+        {hasRecipe ? '▸' : '·'}
       </span>
       {children}
     </article>

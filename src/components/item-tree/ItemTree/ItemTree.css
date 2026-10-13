@@ -4,7 +4,53 @@
   list-style: none;
 }
 
+.item-tree__expansion {
+  display: grid;
+  grid-template-rows: 1fr;
+  animation: item-tree-expand 150ms ease-out;
+}
+
+.item-tree__expansion--closing {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  overflow: hidden;
+  animation-name: item-tree-collapse;
+}
+
+@keyframes item-tree-collapse {
+  from {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+
+  to {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+}
+
+@keyframes item-tree-expand {
+  from {
+    grid-template-rows: 0fr;
+    opacity: 0;
+    overflow: hidden;
+  }
+
+  to {
+    grid-template-rows: 1fr;
+    opacity: 1;
+    overflow: hidden;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .item-tree__expansion {
+    animation-duration: 1ms;
+  }
+}
+
 .item-tree--nested {
+  min-height: 0;
   margin: 6px 0 0 14px;
   padding-left: 9px;
   border-left: 1px solid var(--border);
