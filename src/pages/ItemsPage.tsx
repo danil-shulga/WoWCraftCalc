@@ -254,8 +254,8 @@ export function ItemsPage({ section }: ItemsPageProps) {
           <legend>Цены для расчётов</legend>
           {(
             [
-              { value: 'individual', label: 'Основные цены' },
-              { value: 'tsm', label: 'Все по TSM' },
+              { value: 'individual', label: 'Выбранные' },
+              { value: 'tsm', label: 'По TSM' },
             ] as const
           ).map((mode) => (
             <Checkbox
