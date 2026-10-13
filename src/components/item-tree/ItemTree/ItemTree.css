@@ -5,13 +5,13 @@
 }
 
 .item-tree--nested {
-  margin: 7px 0 0 14px;
+  margin: 6px 0 0 14px;
   padding-left: 9px;
   border-left: 1px solid var(--border);
 }
 
 .item-tree__node + .item-tree__node {
-  margin-top: 7px;
+  margin-top: 6px;
 }
 
 .item-row__identity {

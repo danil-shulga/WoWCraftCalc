@@ -121,8 +121,9 @@ alwaysApply: false
 
 - `src/components/item-tree/ItemTree/ItemTree.tsx` — рекурсивное дерево рецепта,
   раскрытие по полному пути и защита от циклов.
-- `src/components/item-tree/ItemExpandButton/ItemExpandButton.tsx` — общая кнопка
-  раскрытия рецепта для корня и вложенного реагента с защитой от циклов и отсутствия рецепта.
+- `src/components/item-tree/ItemTreeRow/ItemTreeRow.tsx` — общая оболочка корневой
+  и вложенной строки: раскрытие кликом, Enter или пробелом, индикатор состояния,
+  защита от циклов и отсутствия рецепта; вложенные контролы выполняют свои действия.
 - `src/components/item-tree/RootItemRow/RootItemRow.tsx` — корневая строка предмета:
   цены, прибыль, быстрое редактирование цены и действия.
 - `src/components/item-tree/RootItemRow/ItemPriceCell.tsx` — общая ячейка покупки

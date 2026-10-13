@@ -1,4 +1,4 @@
-import { ItemExpandButton } from '../ItemExpandButton/ItemExpandButton'
+import { ItemTreeRow } from '../ItemTreeRow/ItemTreeRow'
 import { IconButton } from '../../ui/IconButton/IconButton'
 import type {
   AcquisitionMethod,
@@ -61,14 +61,13 @@ export function ReagentItemRow({
         : 'money-negative'
 
   return (
-    <article className="reagent-item-row">
-      <ItemExpandButton
-        hasRecipe={hasRecipe}
-        hasCycle={hasCycle}
-        isExpanded={isExpanded}
-        onToggle={onToggleExpanded}
-      />
-
+    <ItemTreeRow
+      className="reagent-item-row"
+      hasRecipe={hasRecipe}
+      hasCycle={hasCycle}
+      isExpanded={isExpanded}
+      onToggle={onToggleExpanded}
+    >
       <ItemIdentity
         item={item}
         language={itemLanguage}
@@ -140,6 +139,6 @@ export function ReagentItemRow({
           ✎
         </IconButton>
       </div>
-    </article>
+    </ItemTreeRow>
   )
 }

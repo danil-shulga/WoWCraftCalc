@@ -1,4 +1,4 @@
-import { ItemExpandButton } from '../ItemExpandButton/ItemExpandButton'
+import { ItemTreeRow } from '../ItemTreeRow/ItemTreeRow'
 import { IconButton } from '../../ui/IconButton/IconButton'
 import type { Item, ItemId, ItemPriceField } from '../../../domain/item.types'
 import { getItemName } from '../../../domain/item-names'
@@ -54,14 +54,13 @@ export function RootItemRow({
   const itemName = getItemName(item, itemLanguage)
 
   return (
-    <article className="root-item-row">
-      <ItemExpandButton
-        hasRecipe={item.recipe !== null}
-        hasCycle={hasCycle}
-        isExpanded={isExpanded}
-        onToggle={onToggleExpanded}
-      />
-
+    <ItemTreeRow
+      className="root-item-row"
+      hasRecipe={item.recipe !== null}
+      hasCycle={hasCycle}
+      isExpanded={isExpanded}
+      onToggle={onToggleExpanded}
+    >
       <ItemIdentity
         item={item}
         language={itemLanguage}
@@ -149,6 +148,6 @@ export function RootItemRow({
           ×
         </IconButton>
       </div>
-    </article>
+    </ItemTreeRow>
   )
 }

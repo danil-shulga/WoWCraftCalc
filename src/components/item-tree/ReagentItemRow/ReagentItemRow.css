@@ -3,8 +3,8 @@
   grid-template-columns: 28px 48px minmax(160px, 1fr) minmax(360px, max-content) auto auto;
   align-items: center;
   gap: 10px;
-  min-height: 70px;
-  padding: 10px 12px;
+  min-height: 63px;
+  padding: 6.3px 12px;
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--panel-translucent);

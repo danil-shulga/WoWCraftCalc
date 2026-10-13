@@ -14,7 +14,7 @@
 
 .item-list {
   display: grid;
-  gap: 12px;
+  gap: 10px;
 }
 
 .search-empty-state {
