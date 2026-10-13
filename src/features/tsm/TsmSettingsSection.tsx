@@ -48,21 +48,20 @@ export function TsmSettingsSection({
         продажи.
       </p>
       <div className="tsm-settings__market editor-fields">
-        <label>
-          <span>Регион</span>
-          <select
-            aria-label="Регион TSM"
-            value={selectedRegion}
-            onChange={(event) => {
-              const next = event.target.value === 'us' ? 'us' : 'eu'
-              setRegion(next)
-              onChange({ ...settings, market: null })
-            }}
-          >
-            <option value="eu">Европа</option>
-            <option value="us">Северная Америка</option>
-          </select>
-        </label>
+        <SearchableSelect
+          label="Регион TSM"
+          searchable={false}
+          options={[
+            { value: 'eu', label: 'Европа' },
+            { value: 'us', label: 'Северная Америка' },
+          ]}
+          value={selectedRegion}
+          onChange={(value) => {
+            const next = value === 'us' ? 'us' : 'eu'
+            setRegion(next)
+            onChange({ ...settings, market: null })
+          }}
+        />
         <SearchableSelect
           key={selectedRegion}
           label="Игровой мир TSM"
@@ -83,24 +82,23 @@ export function TsmSettingsSection({
             })
           }}
         />
-        <label>
-          <span>Фракция</span>
-          <select
-            aria-label="Фракция TSM"
-            value={selectedFaction}
-            onChange={(event) => {
-              const next = event.target.value === 'horde' ? 'horde' : 'alliance'
-              setFaction(next)
-              onChange({
-                ...settings,
-                market: settings.market ? { ...settings.market, faction: next } : null,
-              })
-            }}
-          >
-            <option value="alliance">Альянс</option>
-            <option value="horde">Орда</option>
-          </select>
-        </label>
+        <SearchableSelect
+          label="Фракция TSM"
+          searchable={false}
+          options={[
+            { value: 'alliance', label: 'Альянс' },
+            { value: 'horde', label: 'Орда' },
+          ]}
+          value={selectedFaction}
+          onChange={(value) => {
+            const next = value === 'horde' ? 'horde' : 'alliance'
+            setFaction(next)
+            onChange({
+              ...settings,
+              market: settings.market ? { ...settings.market, faction: next } : null,
+            })
+          }}
+        />
       </div>
       <fieldset className="tsm-settings__metric">
         <legend>Цена TSM для расчётов</legend>

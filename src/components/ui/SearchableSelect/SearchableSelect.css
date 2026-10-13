@@ -47,6 +47,8 @@
 }
 
 .searchable-select__list {
+  --scrollbar-inset: 8px;
+
   position: fixed;
   z-index: 20;
   margin: 0;

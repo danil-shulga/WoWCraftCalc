@@ -11,6 +11,8 @@
 }
 
 .modal {
+  --scrollbar-inset: 16px;
+
   width: min(760px, 100%);
   max-height: calc(100vh - 48px);
   overflow-y: auto;

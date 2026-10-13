@@ -25,6 +25,7 @@ interface SearchableSelectProps {
   value: string
   placeholder?: string
   emptyMessage?: string
+  searchable?: boolean
   hideLabel?: boolean
   disabled?: boolean
   onChange: (value: string) => void
@@ -42,6 +43,7 @@ export function SearchableSelect({
   value,
   placeholder = 'Начните вводить название…',
   emptyMessage = 'Ничего не найдено',
+  searchable = true,
   hideLabel = false,
   disabled = false,
   onChange,
@@ -171,7 +173,8 @@ export function SearchableSelect({
           role="combobox"
           type="text"
           autoComplete="off"
-          aria-autocomplete="list"
+          readOnly={!searchable}
+          aria-autocomplete={searchable ? 'list' : 'none'}
           aria-controls={listboxId}
           disabled={disabled}
           aria-expanded={isOpen && !disabled}
@@ -182,6 +185,9 @@ export function SearchableSelect({
           }
           placeholder={placeholder}
           value={inputValue}
+          onClick={() => {
+            setIsOpen(true)
+          }}
           onFocus={(event) => {
             event.currentTarget.select()
             setHighlightedIndex(0)
