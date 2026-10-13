@@ -13,6 +13,7 @@ import { UserSettingsModal } from '../features/user-settings/UserSettingsModal'
 import { ItemsPage } from '../pages/ItemsPage'
 import { PlaceholderPage } from '../pages/PlaceholderPage'
 import { useCraftStore, usePersistenceStatusStore } from '../store/useCraftStore'
+import { useLocalStorageUsage } from './useLocalStorageUsage'
 import './App.css'
 
 function CurrentPage({ activeTab }: { activeTab: AppTab }) {
@@ -29,6 +30,7 @@ function CurrentPage({ activeTab }: { activeTab: AppTab }) {
 }
 
 export function App() {
+  const storageBytes = useLocalStorageUsage()
   useEffect(startTsmClient, [])
   const [activeTab, setActiveTab] = useState<AppTab>('crafts')
   const [areSettingsOpen, setAreSettingsOpen] = useState(false)
@@ -66,6 +68,7 @@ export function App() {
     <DraftContext.Provider value={drafts}>
       <div className="app-shell" data-currency-display={currencyDisplay}>
         <Sidebar
+          storageBytes={storageBytes}
           activeTab={activeTab}
           onChange={setActiveTab}
           gameVersion={activeVersion}

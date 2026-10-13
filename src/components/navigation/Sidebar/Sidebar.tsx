@@ -4,10 +4,12 @@ import { useEffect, useRef, useState } from 'react'
 import { GameVersionPicker } from '../../ui/GameVersionPicker/GameVersionPicker'
 import { GAME_VERSION_REGISTRY } from '../../../domain/game-version'
 import type { GameVersion } from '../../../domain/game-version'
+import { formatStorageUsage } from '../../../domain/storage-usage'
 
 export type AppTab = 'reagents' | 'crafts' | 'profitable' | 'favorites'
 
 interface SidebarProps {
+  storageBytes: number | null
   gameVersion: GameVersion
   onGameVersionChange: (version: GameVersion) => void
   activeTab: AppTab
@@ -22,6 +24,7 @@ const tabs: readonly { id: AppTab; label: string; available: boolean }[] = [
 ]
 
 export function Sidebar({
+  storageBytes,
   activeTab,
   onChange,
   gameVersion,
@@ -110,7 +113,15 @@ export function Sidebar({
           </Button>
         ))}
       </nav>
-      <p className="sidebar__note">Данные хранятся только в этом браузере.</p>
+      <p className="sidebar__note">
+        Данные хранятся только в этом браузере.
+        <span
+          className="sidebar__storage"
+          title="Оценка всех записей localStorage этого сайта по размеру строк UTF-16. Остаток рассчитан от типичного лимита 5 МиБ; фактическая квота зависит от браузера."
+        >
+          {formatStorageUsage(storageBytes)}
+        </span>
+      </p>
     </aside>
   )
 }
