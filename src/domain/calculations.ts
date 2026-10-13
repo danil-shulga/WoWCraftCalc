@@ -1,7 +1,13 @@
 import type { AcquisitionMethod, ItemCatalog, ItemId } from './item.types'
 import type { Profession } from './professions'
+import { resolveItemPrice, usesTsmPrice } from './tsm'
+import type { PriceContext } from './tsm'
 
 export interface ItemCalculationSnapshot {
+  purchasePrice: number | null
+  salePrice: number | null
+  purchaseIsTsm: boolean
+  saleIsTsm: boolean
   craftUnitCost: number | null
   exactSelectedUnitProfits: Record<AcquisitionMethod, number | null>
   automaticMethod: Exclude<AcquisitionMethod, 'auto'>
@@ -15,6 +21,7 @@ export type CatalogCalculationSnapshot = Record<ItemId, ItemCalculationSnapshot>
 export type CalculationScenario = 'configured' | 'all-professions' | 'buy-reagents'
 
 export interface CalculationOptions {
+  prices?: PriceContext | undefined
   ownedProfessions?: ReadonlySet<Profession>
   scenario?: CalculationScenario
 }
@@ -54,9 +61,11 @@ function resolveAcquisitionMethod(
     return 'buy'
   }
 
-  const purchasePrice = item?.purchasePriceCopper
+  const purchasePrice = item
+    ? resolveItemPrice(item, 'purchasePriceCopper', options.prices)
+    : null
 
-  if (purchasePrice === null || purchasePrice === undefined) {
+  if (purchasePrice === null) {
     return 'craft'
   }
 
@@ -69,8 +78,10 @@ export function getAutomaticAcquisitionMethod(
   catalog: ItemCatalog,
   itemId: ItemId,
   ownedProfessions: ReadonlySet<Profession>,
+  prices?: PriceContext,
 ): Exclude<AcquisitionMethod, 'auto'> {
   const options = {
+    prices,
     ownedProfessions,
     scenario: 'configured',
   } as const
@@ -109,11 +120,13 @@ function getExactUnitCost(
       craftUnitCost,
     )
 
-    return automaticMethod === 'buy' ? item.purchasePriceCopper : craftUnitCost
+    return automaticMethod === 'buy'
+      ? resolveItemPrice(item, 'purchasePriceCopper', options.prices)
+      : craftUnitCost
   }
 
   return resolveAcquisitionMethod(catalog, itemId, acquisition, options) === 'buy'
-    ? item.purchasePriceCopper
+    ? resolveItemPrice(item, 'purchasePriceCopper', options.prices)
     : getExactCraftUnitCost(catalog, itemId, options, path, craftCostCache)
 }
 
@@ -185,6 +198,9 @@ function getProfitWithCache(
   craftCostCache: Map<ItemId, number | null>,
 ): number | null {
   const item = catalog[itemId]
+  const salePrice = item
+    ? resolveItemPrice(item, 'salePriceCopper', options.prices)
+    : null
   const unitCost = getExactCraftUnitCost(
     catalog,
     itemId,
@@ -193,20 +209,14 @@ function getProfitWithCache(
     craftCostCache,
   )
 
-  if (
-    item?.recipe === undefined ||
-    item.recipe === null ||
-    item.salePriceCopper === null
-  ) {
+  if (item?.recipe === undefined || item.recipe === null || salePrice === null) {
     return null
   }
 
   const batchCost =
     unitCost === null ? null : Math.round(unitCost * item.recipe.outputQuantity)
 
-  return batchCost === null
-    ? null
-    : item.salePriceCopper * item.recipe.outputQuantity - batchCost
+  return batchCost === null ? null : salePrice * item.recipe.outputQuantity - batchCost
 }
 
 export function getRecipeBatchCost(
@@ -231,17 +241,20 @@ export function getProfitPerCraft(
 ): number | null {
   const item = catalog[itemId]
   const batchCost = getRecipeBatchCost(catalog, itemId, options)
+  const salePrice = item
+    ? resolveItemPrice(item, 'salePriceCopper', options.prices)
+    : null
 
   if (
     item?.recipe === undefined ||
     item.recipe === null ||
-    item.salePriceCopper === null ||
+    salePrice === null ||
     batchCost === null
   ) {
     return null
   }
 
-  return item.salePriceCopper * item.recipe.outputQuantity - batchCost
+  return salePrice * item.recipe.outputQuantity - batchCost
 }
 
 function getExactUnitAcquisitionProfit(
@@ -269,10 +282,11 @@ export function createCatalogCalculationSnapshot(
   catalog: ItemCatalog,
   ownedProfessions: ReadonlySet<Profession>,
   profitItemIds: ReadonlySet<ItemId>,
+  prices?: PriceContext,
 ): CatalogCalculationSnapshot {
-  const configuredOptions = { ownedProfessions }
-  const allProfessionsOptions = { scenario: 'all-professions' as const }
-  const buyReagentsOptions = { scenario: 'buy-reagents' as const }
+  const configuredOptions = { ownedProfessions, prices }
+  const allProfessionsOptions = { scenario: 'all-professions' as const, prices }
+  const buyReagentsOptions = { scenario: 'buy-reagents' as const, prices }
   const configuredCache = new Map<ItemId, number | null>()
   const allProfessionsCache = new Map<ItemId, number | null>()
   const buyReagentsCache = new Map<ItemId, number | null>()
@@ -283,6 +297,7 @@ export function createCatalogCalculationSnapshot(
         catalog,
         itemId,
         ownedProfessions,
+        prices,
       )
       const exactCraftCost = getExactCraftUnitCost(
         catalog,
@@ -292,11 +307,19 @@ export function createCatalogCalculationSnapshot(
         configuredCache,
       )
       const craftUnitCost = exactCraftCost === null ? null : Math.round(exactCraftCost)
-      const purchasePrice = catalog[itemId]?.purchasePriceCopper ?? null
+      const item = catalog[itemId]
+      const purchasePrice = item
+        ? resolveItemPrice(item, 'purchasePriceCopper', prices)
+        : null
+      const salePrice = item ? resolveItemPrice(item, 'salePriceCopper', prices) : null
 
       return [
         itemId,
         {
+          purchasePrice,
+          salePrice,
+          purchaseIsTsm: item ? usesTsmPrice(item, 'purchasePriceCopper', prices) : false,
+          saleIsTsm: item ? usesTsmPrice(item, 'salePriceCopper', prices) : false,
           craftUnitCost,
           exactSelectedUnitProfits: {
             auto: getExactUnitAcquisitionProfit(

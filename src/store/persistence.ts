@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { DEFAULT_TSM_SETTINGS } from '../domain/tsm'
 import { createJSONStorage } from 'zustand/middleware'
 
 import { persistedCraftDataSchema } from '../domain/item.schema'
@@ -13,6 +14,7 @@ export const EXPORT_VERSION = 1
 
 export function createEmptyCraftData(): PersistedCraftData {
   return {
+    tbcPricing: { ...DEFAULT_TSM_SETTINGS },
     activeVersion: 'forever',
     workspaces: {
       forever: { items: {}, ownedProfessions: [] },

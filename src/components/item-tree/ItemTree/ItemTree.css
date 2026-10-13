@@ -5,8 +5,8 @@
 }
 
 .item-tree--nested {
-  margin: 7px 0 0 28px;
-  padding-left: 18px;
+  margin: 7px 0 0 14px;
+  padding-left: 9px;
   border-left: 1px solid var(--border);
 }
 

@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  schedule:
+    - cron: '17 * * * *'
 
 permissions:
   contents: read
@@ -12,7 +14,7 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   deploy:
@@ -23,6 +25,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: main
 
       - name: Set up Node
         uses: actions/setup-node@v4
@@ -33,6 +37,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Check TSM processor
+        run: python -m unittest discover -s scripts/tsm -p 'test_*.py'
+
       - name: Check project
         run: npm run check
 
@@ -40,15 +52,33 @@ jobs:
         run: npm run build
 
       - name: Configure Pages
+        id: pages
         uses: actions/configure-pages@v5
         with:
           enablement: true
 
+      - name: Restore and update TSM snapshots
+        id: tsm
+        env:
+          PREVIOUS_URL: ${{ steps.pages.outputs.base_url }}
+        run: python scripts/tsm/update.py --output dist/data/tsm --previous-url "$PREVIOUS_URL"
+
+      # All Pages publications share this workflow-level lock. Each queued run
+      # checks out current main and restores the most recently published prices.
+      - name: Check current main
+        id: head
+        run: |
+          current=$(git rev-parse HEAD)
+          latest=$(git ls-remote origin refs/heads/main | cut -f1)
+          echo "current=$([ "$current" = "$latest" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
       - name: Upload artifact
+        if: steps.head.outputs.current == 'true' && (github.event_name != 'schedule' || steps.tsm.outputs.changed == 'true')
         uses: actions/upload-pages-artifact@v4
         with:
           path: dist
 
       - name: Deploy
+        if: steps.head.outputs.current == 'true' && (github.event_name != 'schedule' || steps.tsm.outputs.changed == 'true')
         id: deployment
         uses: actions/deploy-pages@v4

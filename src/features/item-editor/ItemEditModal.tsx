@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Modal } from '../../components/ui/Modal/Modal'
 import { Tabs } from '../../components/ui/Tabs/Tabs'
 import type { GameVersion } from '../../domain/game-version'
+import type { PriceContext } from '../../domain/tsm'
 import { getItemName, getSecondaryItemName } from '../../domain/item-names'
 import type { Item, ItemCatalog, ItemSection, Recipe } from '../../domain/item.types'
 import type { Profession } from '../../domain/professions'
@@ -30,6 +31,7 @@ const editTabs: readonly { value: EditTab; label: string }[] = [
 ]
 
 interface ItemEditModalProps {
+  prices?: PriceContext
   item: Item
   catalog: ItemCatalog
   gameVersion: GameVersion
@@ -43,6 +45,7 @@ interface ItemEditModalProps {
 }
 
 export function ItemEditModal({
+  prices,
   item,
   catalog,
   gameVersion,
@@ -103,6 +106,8 @@ export function ItemEditModal({
           }}
         >
           <ItemDescriptionFields
+            item={item}
+            prices={prices}
             draft={draft}
             onChange={setDraft}
             nameInputRef={nameInputRef}
@@ -140,6 +145,7 @@ export function ItemEditModal({
           onClose={close}
           renderManual={() => (
             <RecipeEditor
+              prices={prices}
               gameVersion={gameVersion}
               item={item}
               catalog={catalog}

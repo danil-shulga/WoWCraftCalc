@@ -9,6 +9,7 @@ interface ItemIdentityProps {
   language: ComponentProps<typeof ItemName>['language']
   iconSize?: ComponentProps<typeof ItemIcon>['size']
   nameAs?: ComponentProps<typeof ItemName>['primaryAs']
+  fitWrappedName?: boolean
   showIcon?: boolean
   showSecondaryName?: boolean
   truncate?: boolean
@@ -21,6 +22,7 @@ export function ItemIdentity({
   language,
   iconSize = 'large',
   nameAs = 'span',
+  fitWrappedName = false,
   showIcon = true,
   showSecondaryName = true,
   truncate = false,
@@ -51,6 +53,7 @@ export function ItemIdentity({
           item={item}
           language={language}
           primaryAs={nameAs}
+          fitWrappedText={fitWrappedName}
           showSecondaryName={showSecondaryName}
         />
         {children}

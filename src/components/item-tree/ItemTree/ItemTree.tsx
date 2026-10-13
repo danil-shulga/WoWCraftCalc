@@ -18,6 +18,7 @@ interface QuickPriceEdit {
 }
 
 interface ItemTreeProps {
+  showPurchasePrice?: boolean
   rootItemId: ItemId
   itemLanguage: ItemLanguage
   catalog: ItemCatalog
@@ -43,6 +44,7 @@ interface ItemTreeNodeProps extends ItemTreeProps {
 }
 
 function ItemTreeNode({
+  showPurchasePrice = true,
   itemId,
   itemLanguage,
   path,
@@ -80,6 +82,11 @@ function ItemTreeNode({
     <li className="item-tree__node">
       {recipeLine === null ? (
         <RootItemRow
+          showPurchasePrice={showPurchasePrice}
+          purchasePrice={calculation.purchasePrice}
+          salePrice={calculation.salePrice}
+          purchaseIsTsm={calculation.purchaseIsTsm}
+          saleIsTsm={calculation.saleIsTsm}
           item={item}
           itemLanguage={itemLanguage}
           isExpanded={isExpanded}
@@ -97,6 +104,7 @@ function ItemTreeNode({
         />
       ) : parentItemId === null ? null : (
         <ReagentItemRow
+          purchasePrice={calculation.purchasePrice}
           item={item}
           itemLanguage={itemLanguage}
           parentItemId={parentItemId}

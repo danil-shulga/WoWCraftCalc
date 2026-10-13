@@ -6,12 +6,18 @@ import { NumberInput } from '../NumberInput/NumberInput'
 import './MoneyInput.css'
 
 interface MoneyInputProps {
+  disabled?: boolean
   label: string
   value: number | null
   onChange: (value: number | null) => void
 }
 
-export function MoneyInput({ label, value, onChange }: MoneyInputProps) {
+export function MoneyInput({
+  label,
+  value,
+  onChange,
+  disabled = false,
+}: MoneyInputProps) {
   const id = useId()
   const parts = splitCopper(value)
 
@@ -24,13 +30,14 @@ export function MoneyInput({ label, value, onChange }: MoneyInputProps) {
   }
 
   return (
-    <fieldset className="money-input">
+    <fieldset className="money-input" disabled={disabled}>
       <legend>{label}</legend>
       <div className="money-input__fields">
         <div className="money-input__field">
           <label htmlFor={`${id}-gold`}>золото</label>
           <NumberInput
             id={`${id}-gold`}
+            disabled={disabled}
             min={0}
             step={1}
             value={parts.gold}
@@ -43,6 +50,7 @@ export function MoneyInput({ label, value, onChange }: MoneyInputProps) {
           <label htmlFor={`${id}-silver`}>серебро</label>
           <NumberInput
             id={`${id}-silver`}
+            disabled={disabled}
             min={0}
             max={99}
             step={1}
@@ -56,6 +64,7 @@ export function MoneyInput({ label, value, onChange }: MoneyInputProps) {
           <label htmlFor={`${id}-copper`}>медь</label>
           <NumberInput
             id={`${id}-copper`}
+            disabled={disabled}
             min={0}
             max={99}
             step={1}

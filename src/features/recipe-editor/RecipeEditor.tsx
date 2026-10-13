@@ -15,6 +15,8 @@ import type { Item, ItemCatalog, Recipe, RecipeLine } from '../../domain/item.ty
 import type { Profession } from '../../domain/professions'
 import { professionOptionsFor } from '../../domain/game-version'
 import type { GameVersion } from '../../domain/game-version'
+import { resolveItemPrice } from '../../domain/tsm'
+import type { PriceContext } from '../../domain/tsm'
 import { selectAvailableReagents } from '../../store/craft.selectors'
 import {
   getItemName,
@@ -26,6 +28,7 @@ import '../EditorForm.css'
 import './RecipeEditor.css'
 
 interface RecipeEditorProps {
+  prices?: PriceContext | undefined
   gameVersion?: GameVersion
   item: Item
   itemLanguage?: ItemLanguage
@@ -38,6 +41,7 @@ interface RecipeEditorProps {
 }
 
 export function RecipeEditor({
+  prices,
   item,
   gameVersion = 'forever',
   itemLanguage = 'ru',
@@ -191,7 +195,12 @@ export function RecipeEditor({
                 return null
               }
 
-              const calculationOptions = { ownedProfessions: ownedProfessionSet }
+              const calculationOptions = { ownedProfessions: ownedProfessionSet, prices }
+              const purchasePrice = resolveItemPrice(
+                reagent,
+                'purchasePriceCopper',
+                prices,
+              )
               const craftUnitCost = getCraftUnitCost(
                 catalog,
                 reagent.id,
@@ -201,6 +210,7 @@ export function RecipeEditor({
                 catalog,
                 reagent.id,
                 ownedProfessionSet,
+                prices,
               )
 
               return (
@@ -224,10 +234,10 @@ export function RecipeEditor({
                   </div>
                   <AcquisitionMethodPicker
                     value={line.acquisition}
-                    purchasePrice={reagent.purchasePriceCopper}
+                    purchasePrice={purchasePrice}
                     craftPrice={craftUnitCost}
                     automaticMethod={automaticMethod}
-                    canBuy={reagent.purchasePriceCopper !== null}
+                    canBuy={purchasePrice !== null}
                     canCraft={reagent.recipe !== null}
                     showLegend
                     onChange={(acquisition) => {

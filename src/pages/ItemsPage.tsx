@@ -1,4 +1,6 @@
 import { Button } from '../components/ui/Button/Button'
+import { usePriceContext } from '../features/tsm/tsm-client'
+import { Checkbox } from '../components/ui/Checkbox/Checkbox'
 import { useDraftGuard } from '../app/draft-guard'
 import { selectActiveItems, selectActiveProfessions } from '../store/craft.selectors'
 import { useCallback, useMemo, useState } from 'react'
@@ -41,6 +43,8 @@ const pageContent: Record<
 }
 
 export function ItemsPage({ section }: ItemsPageProps) {
+  const prices = usePriceContext()
+  const setTbcPricing = useCraftStore((state) => state.setTbcPricing)
   const gameVersion = useCraftStore((state) => state.activeVersion)
   const [request] = useState(() => ({
     version: useCraftStore.getState().activeVersion,
@@ -102,8 +106,9 @@ export function ItemsPage({ section }: ItemsPageProps) {
         items,
         ownedProfessionSet,
         new Set(visibleItems.map((item) => item.id)),
+        prices,
       ),
-    [items, ownedProfessionSet, visibleItems],
+    [items, ownedProfessionSet, visibleItems, prices],
   )
   const editingItem = editingItemId === null ? undefined : items[editingItemId]
   const deletingItem = deletingItemId === null ? undefined : items[deletingItemId]
@@ -214,6 +219,7 @@ export function ItemsPage({ section }: ItemsPageProps) {
               {visibleItems.map((item) => (
                 <ItemTree
                   key={item.id}
+                  showPurchasePrice={section === 'reagents'}
                   rootItemId={item.id}
                   itemLanguage={itemLanguage}
                   catalog={items}
@@ -243,8 +249,31 @@ export function ItemsPage({ section }: ItemsPageProps) {
         </div>
       )}
 
+      {gameVersion === 'tbc' ? (
+        <fieldset className="items-price-mode">
+          <legend>Цены для расчётов</legend>
+          {(
+            [
+              { value: 'individual', label: 'Основные цены' },
+              { value: 'tsm', label: 'Все по TSM' },
+            ] as const
+          ).map((mode) => (
+            <Checkbox
+              key={mode.value}
+              controlType="radio"
+              name="tsm-price-mode"
+              label={mode.label}
+              checked={prices.settings.priceMode === mode.value}
+              onChange={(checked) => {
+                if (checked) setTbcPricing({ ...prices.settings, priceMode: mode.value })
+              }}
+            />
+          ))}
+        </fieldset>
+      ) : null}
       {isCreating ? (
         <ItemAddModal
+          prices={prices}
           gameVersion={gameVersion}
           title={content.addLabel}
           defaultSection={section}
@@ -272,6 +301,7 @@ export function ItemsPage({ section }: ItemsPageProps) {
 
       {editingItem === undefined ? null : (
         <ItemEditModal
+          prices={prices}
           key={editingItem.id}
           item={editingItem}
           catalog={items}

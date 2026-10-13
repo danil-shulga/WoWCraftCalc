@@ -109,7 +109,8 @@ alwaysApply: false
 - `ItemName` — название на выбранном языке и второе доступное название;
   `showSecondaryName` управляет переводом, `primaryAs` — семантикой основного названия.
 - `ItemIdentity` — общий блок `ItemIcon` + `ItemName`: язык, размер иконки,
-  `showIcon`, `showSecondaryName`, `nameAs` и `truncate`; `children` — место для
+  `showIcon`, `showSecondaryName`, `nameAs` и `truncate`; `fitWrappedName` сжимает
+  блок названия до ширины видимых строк после переноса; `children` — место для
   дополнительных данных рядом с названием, например количества в дереве.
 - `ItemQuantityList` — список предметов с иконками, названиями и количеством;
   используется в предпросмотрах базы и Wowhead, получает готовые данные через props.
@@ -124,6 +125,8 @@ alwaysApply: false
   раскрытия рецепта для корня и вложенного реагента с защитой от циклов и отсутствия рецепта.
 - `src/components/item-tree/RootItemRow/RootItemRow.tsx` — корневая строка предмета:
   цены, прибыль, быстрое редактирование цены и действия.
+- `src/components/item-tree/RootItemRow/ItemPriceCell.tsx` — общая ячейка покупки
+  и продажи: используемая цена и ввод ручной суммы, включая режим TSM.
 - `src/components/item-tree/ReagentItemRow/ReagentItemRow.tsx` — вложенная строка
   реагента: количество, цены, выгода и способ получения.
 - `src/components/navigation/Sidebar/Sidebar.tsx` — разделы приложения и выбор
@@ -133,6 +136,8 @@ alwaysApply: false
 
 - `src/features/item-editor/ItemDescriptionFields.tsx` — общие поля названий,
   иконки, разделов и цен; используются при добавлении и редактировании предмета.
+- `src/features/item-editor/ItemPriceField.tsx` — общее поле ручной цены с
+  флажком источника TSM и его суммой; покупка и продажа задаются props.
 - `src/features/item-editor/ItemForm.tsx` — ручная форма описания предмета с
   проверкой и сохранением; черновик и его проверка — в `useItemDescriptionDraft.ts` рядом.
 - `src/features/item-editor/ItemSourceForm.tsx` — общий выбор источника: база,
@@ -151,6 +156,8 @@ alwaysApply: false
   проверка результата и применение из настроек.
 - `src/features/user-settings/UserSettingsModal.tsx` — диалог версии игры,
   языка предметов, вида валют и профессий.
+- `src/features/tsm/TsmSettingsSection.tsx` — блок TBC-настроек рынка, единого
+  показателя TSM, фактической даты снимка и проверки обновлений.
 - `src/features/data-transfer/DataTransferControls.tsx` — экспорт, импорт JSON
   и сброс данных с подтверждением.
 
@@ -174,6 +181,8 @@ alwaysApply: false
 - Разрабатывай интерфейс только для десктопа; не добавляй адаптивные стили,
   мобильные раскладки и переключение интерфейса по ширине экрана.
 - `ItemsPage` обслуживает оба раздела; не дублируй страницу для крафтов и реагентов.
+- В TBC нижний выбор «Основные цены / Все по TSM» меняет используемые цены обоих
+  направлений; массовый ввод редактирует ручные суммы, сохраняя источники.
 - Страницы связывают store с UI; компоненты получают данные и обработчики через props.
   Формулы стоимости и выбора получения вызывай из `domain`, не копируй в JSX.
 - Черновики формы/цен локальны; отмена не меняет каталог, сохранение вызывает store.

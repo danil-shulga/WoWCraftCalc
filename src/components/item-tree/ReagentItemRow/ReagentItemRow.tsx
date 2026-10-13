@@ -15,6 +15,7 @@ import { MoneyDisplay } from '../../ui/MoneyDisplay/MoneyDisplay'
 import './ReagentItemRow.css'
 
 interface ReagentItemRowProps {
+  purchasePrice: number | null
   item: Item
   itemLanguage: ItemLanguage
   parentItemId: ItemId
@@ -34,6 +35,7 @@ interface ReagentItemRowProps {
 }
 
 export function ReagentItemRow({
+  purchasePrice,
   item,
   itemLanguage,
   parentItemId,
@@ -73,6 +75,7 @@ export function ReagentItemRow({
         nameAs="strong"
         truncate
         className="item-row__identity"
+        fitWrappedName
       >
         <span className="reagent-item-row__quantity">× {recipeLine.quantity}</span>
       </ItemIdentity>
@@ -81,7 +84,7 @@ export function ReagentItemRow({
         <div>
           <dt>Покупка</dt>
           <dd>
-            <MoneyDisplay value={item.purchasePriceCopper} />
+            <MoneyDisplay value={purchasePrice} />
           </dd>
         </div>
         <div>
@@ -115,10 +118,10 @@ export function ReagentItemRow({
 
       <AcquisitionMethodPicker
         value={recipeLine.acquisition}
-        purchasePrice={item.purchasePriceCopper}
+        purchasePrice={purchasePrice}
         craftPrice={craftUnitCost}
         automaticMethod={automaticMethod}
-        canBuy={item.purchasePriceCopper !== null}
+        canBuy={purchasePrice !== null}
         canCraft={hasRecipe}
         onChange={(acquisition) => {
           onSetAcquisition(parentItemId, item.id, acquisition)

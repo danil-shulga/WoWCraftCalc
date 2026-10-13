@@ -4,6 +4,7 @@ import { Modal } from '../../components/ui/Modal/Modal'
 import type { ItemCatalog, ItemSection } from '../../domain/item.types'
 import type { ItemLanguage } from '../../domain/user-settings'
 import type { GameVersion } from '../../domain/game-version'
+import type { PriceContext } from '../../domain/tsm'
 import type {
   ItemInput,
   RecipeImportData,
@@ -15,6 +16,7 @@ import { ItemForm } from './ItemForm'
 import { ItemSourceForm } from './ItemSourceForm'
 
 interface ItemAddModalProps {
+  prices?: PriceContext
   gameVersion?: GameVersion
   title: string
   itemLanguage?: ItemLanguage
@@ -28,6 +30,7 @@ interface ItemAddModalProps {
 }
 
 export function ItemAddModal({
+  prices,
   title,
   gameVersion = 'forever',
   itemLanguage = 'ru',
@@ -61,6 +64,7 @@ export function ItemAddModal({
         onClose={close}
         renderManual={() => (
           <ItemForm
+            prices={prices}
             defaultSection={defaultSection}
             onCancel={close}
             onSave={(input) => {

@@ -1,6 +1,7 @@
 import { Button } from '../components/ui/Button/Button'
 import { selectActiveItems, selectActiveProfessions } from '../store/craft.selectors'
-import { useLayoutEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useState } from 'react'
+import { checkTsmUpdate, startTsmClient, useTsmStore } from '../features/tsm/tsm-client'
 import { DraftContext } from './draft-guard'
 import type { GameVersion } from '../domain/game-version'
 import { GAME_VERSION_REGISTRY } from '../domain/game-version'
@@ -28,6 +29,7 @@ function CurrentPage({ activeTab }: { activeTab: AppTab }) {
 }
 
 export function App() {
+  useEffect(startTsmClient, [])
   const [activeTab, setActiveTab] = useState<AppTab>('crafts')
   const [areSettingsOpen, setAreSettingsOpen] = useState(false)
   const [drafts] = useState(() => new Set<string>())
@@ -39,6 +41,9 @@ export function App() {
   const setItemLanguage = useCraftStore((state) => state.setItemLanguage)
   const fillItemNames = useCraftStore((state) => state.fillItemNames)
   const workspaces = useCraftStore((state) => state.workspaces)
+  const tbcPricing = useCraftStore((state) => state.tbcPricing)
+  const setTbcPricing = useCraftStore((state) => state.setTbcPricing)
+  const tsmState = useTsmStore()
   const activeVersion = useCraftStore((state) => state.activeVersion)
   const workspaceRevision = useCraftStore((state) => state.workspaceRevision)
   const setActiveVersion = useCraftStore((state) => state.setActiveVersion)
@@ -102,7 +107,13 @@ export function App() {
               Настройки
             </Button>
             <DataTransferControls
-              data={{ activeVersion, workspaces, currencyDisplay, itemLanguage }}
+              data={{
+                activeVersion,
+                workspaces,
+                currencyDisplay,
+                itemLanguage,
+                tbcPricing,
+              }}
               onImport={replaceData}
               recoveryRequired={recoveryRequired}
               onReset={resetData}
@@ -132,6 +143,14 @@ export function App() {
         </Button>
         {areSettingsOpen ? (
           <UserSettingsModal
+            tsm={{
+              settings: tbcPricing,
+              state: tsmState,
+              onChange: setTbcPricing,
+              onCheck: () => {
+                void checkTsmUpdate()
+              },
+            }}
             gameVersion={activeVersion}
             workspaceRevision={workspaceRevision}
             onGameVersionChange={switchVersion}

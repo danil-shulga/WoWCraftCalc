@@ -11,6 +11,9 @@ alwaysApply: false
 - В persistence/экспорт входят `activeVersion`, три `workspaces` (`items`,
   `ownedProfessions`) и общие `currencyDisplay`, `itemLanguage`.
   Вкладки, раскрытые пути дерева, модальные окна и черновики остаются в React.
+- `tbcPricing` хранит рынок, единый показатель и режим цен TBC. Индивидуальные
+  источники покупки/продажи сохраняются с предметами; отсутствие поля означает
+  ручной источник. Кэш снимков TSM отделён от persistence и резервных копий.
 - Ключ хранилища — `craft-calc-versioned-data`, persistence v1. Полный экспорт —
   `craftcalc-versioned-backup` v1. Schema 2 справочников независима от этих версий.
 - Старый ключ `craft-calc-data` удаляется при чтении. Миграций и поддержки старых

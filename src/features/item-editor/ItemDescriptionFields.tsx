@@ -1,12 +1,15 @@
 import type { Ref } from 'react'
 
 import { Checkbox } from '../../components/ui/Checkbox/Checkbox'
-import { MoneyInput } from '../../components/ui/MoneyInput/MoneyInput'
-import type { ItemSection } from '../../domain/item.types'
+import { ItemPriceField } from './ItemPriceField'
+import type { Item, ItemSection } from '../../domain/item.types'
+import type { PriceContext } from '../../domain/tsm'
 import type { ItemDescriptionDraft } from './useItemDescriptionDraft'
 import './ItemForm.css'
 
 interface ItemDescriptionFieldsProps {
+  item?: Pick<Item, 'source'> | undefined
+  prices?: PriceContext | undefined
   draft: ItemDescriptionDraft
   onChange: (draft: ItemDescriptionDraft) => void
   nameInputRef?: Ref<HTMLInputElement>
@@ -16,6 +19,8 @@ export function ItemDescriptionFields({
   draft,
   onChange,
   nameInputRef,
+  item = {},
+  prices,
 }: ItemDescriptionFieldsProps) {
   const toggleSection = (section: ItemSection, enabled: boolean) => {
     onChange({
@@ -90,14 +95,26 @@ export function ItemDescriptionFields({
       </fieldset>
 
       <div className="price-grid">
-        <MoneyInput
+        <ItemPriceField
+          item={item}
+          prices={prices}
+          source={draft.purchasePriceSource ?? 'manual'}
+          onSourceChange={(source) => {
+            onChange({ ...draft, purchasePriceSource: source })
+          }}
           label="Цена покупки за единицу"
           value={draft.purchasePriceCopper}
           onChange={(value) => {
             onChange({ ...draft, purchasePriceCopper: value })
           }}
         />
-        <MoneyInput
+        <ItemPriceField
+          item={item}
+          prices={prices}
+          source={draft.salePriceSource ?? 'manual'}
+          onSourceChange={(source) => {
+            onChange({ ...draft, salePriceSource: source })
+          }}
           label="Цена продажи за единицу"
           value={draft.salePriceCopper}
           onChange={(value) => {

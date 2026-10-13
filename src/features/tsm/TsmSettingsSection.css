@@ -1,0 +1,27 @@
+.tsm-settings__market {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr 1fr;
+  align-items: start;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.tsm-settings__market select {
+  width: 100%;
+  min-height: 40px;
+}
+.tsm-settings__metric {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.tsm-settings__status {
+  display: grid;
+  gap: 6px;
+  margin: 16px 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}

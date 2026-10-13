@@ -1,6 +1,6 @@
 .reagent-item-row {
   display: grid;
-  grid-template-columns: 28px 48px minmax(160px, 1fr) 300px auto auto;
+  grid-template-columns: 28px 48px minmax(160px, 1fr) minmax(360px, max-content) auto auto;
   align-items: center;
   gap: 10px;
   min-height: 70px;
@@ -24,6 +24,7 @@
   white-space: nowrap;
 }
 
-.reagent-item-row__prices {
-  grid-template-columns: repeat(3, minmax(75px, 1fr));
+.reagent-item-row__prices.item-row__prices {
+  grid-template-columns: repeat(3, minmax(max-content, 1fr));
+  gap: 24px;
 }

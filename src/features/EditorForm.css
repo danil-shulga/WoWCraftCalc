@@ -4,18 +4,22 @@
   padding: 22px;
 }
 
-.editor-form > label {
+.editor-form > label,
+.editor-fields > label {
   display: grid;
   gap: 7px;
 }
 
-.editor-form label > span {
+.editor-form label > span,
+.editor-fields label > span {
   color: var(--muted);
   font-size: 0.8rem;
 }
 
 .editor-form input,
-.editor-form select {
+.editor-form select,
+.editor-fields input,
+.editor-fields select {
   min-width: 0;
   min-height: 40px;
   padding: 8px 10px;
@@ -25,7 +29,8 @@
   background: var(--field);
 }
 
-.editor-form input:disabled {
+.editor-form input:disabled,
+.editor-fields input:disabled {
   opacity: 0.45;
 }
 

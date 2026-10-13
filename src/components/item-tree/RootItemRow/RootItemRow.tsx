@@ -3,12 +3,17 @@ import { IconButton } from '../../ui/IconButton/IconButton'
 import type { Item, ItemId, ItemPriceField } from '../../../domain/item.types'
 import { getItemName } from '../../../domain/item-names'
 import type { ItemLanguage } from '../../../domain/user-settings'
-import { InlineMoneyInput } from '../../ui/InlineMoneyInput/InlineMoneyInput'
+import { ItemPriceCell } from './ItemPriceCell'
 import { ItemIdentity } from '../../ui/ItemIdentity/ItemIdentity'
 import { MoneyDisplay } from '../../ui/MoneyDisplay/MoneyDisplay'
 import './RootItemRow.css'
 
 interface RootItemRowProps {
+  showPurchasePrice?: boolean
+  purchasePrice: number | null
+  salePrice: number | null
+  purchaseIsTsm: boolean
+  saleIsTsm: boolean
   item: Item
   itemLanguage: ItemLanguage
   isExpanded: boolean
@@ -28,6 +33,11 @@ interface RootItemRowProps {
 }
 
 export function RootItemRow({
+  showPurchasePrice = true,
+  purchasePrice,
+  salePrice,
+  purchaseIsTsm,
+  saleIsTsm,
   item,
   itemLanguage,
   isExpanded,
@@ -60,45 +70,35 @@ export function RootItemRow({
         className="item-row__identity"
       />
 
-      <dl className="root-item-row__prices item-row__prices">
-        <div>
-          <dt>Покупка</dt>
-          {quickPriceEdit?.field === 'purchasePriceCopper' ? (
-            <dd className="item-row__price-editor">
-              <InlineMoneyInput
-                label={`Цена покупки: ${itemName}`}
-                value={quickPriceEdit.value}
-                onChange={quickPriceEdit.onChange}
-              />
-            </dd>
-          ) : (
-            <dd>
-              <MoneyDisplay value={item.purchasePriceCopper} />
-            </dd>
-          )}
-        </div>
+      <dl
+        className={`root-item-row__prices item-row__prices${showPurchasePrice ? ' root-item-row__prices--with-purchase' : ''}`}
+      >
+        {showPurchasePrice ? (
+          <ItemPriceCell
+            title="Покупка"
+            editLabel="Цена покупки"
+            itemName={itemName}
+            value={purchasePrice}
+            isTsm={purchaseIsTsm}
+            field="purchasePriceCopper"
+            quickPriceEdit={quickPriceEdit}
+          />
+        ) : null}
         <div>
           <dt>Крафт</dt>
           <dd>
             <MoneyDisplay value={craftUnitCost} />
           </dd>
         </div>
-        <div>
-          <dt>Продажа</dt>
-          {quickPriceEdit?.field === 'salePriceCopper' ? (
-            <dd className="item-row__price-editor">
-              <InlineMoneyInput
-                label={`Цена продажи: ${itemName}`}
-                value={quickPriceEdit.value}
-                onChange={quickPriceEdit.onChange}
-              />
-            </dd>
-          ) : (
-            <dd>
-              <MoneyDisplay value={item.salePriceCopper} />
-            </dd>
-          )}
-        </div>
+        <ItemPriceCell
+          title="Продажа"
+          editLabel="Цена продажи"
+          itemName={itemName}
+          value={salePrice}
+          isTsm={saleIsTsm}
+          field="salePriceCopper"
+          quickPriceEdit={quickPriceEdit}
+        />
         <div>
           <dt>Прибыль за крафт</dt>
           <dd

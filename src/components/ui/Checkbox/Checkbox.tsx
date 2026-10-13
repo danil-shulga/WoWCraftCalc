@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import './Checkbox.css'
 
 interface CheckboxProps {
+  'aria-label'?: string
   label: ReactNode
   checked: boolean
   controlType?: 'checkbox' | 'radio'
@@ -16,6 +17,7 @@ interface CheckboxProps {
 }
 
 export function Checkbox({
+  'aria-label': ariaLabel,
   label,
   checked,
   controlType = 'checkbox',
@@ -34,6 +36,7 @@ export function Checkbox({
   return (
     <label className={classes} title={title}>
       <input
+        aria-label={ariaLabel}
         className="checkbox__input"
         type={controlType}
         name={name}

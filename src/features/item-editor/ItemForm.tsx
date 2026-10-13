@@ -3,6 +3,7 @@ import { Button } from '../../components/ui/Button/Button'
 import { useState, type SyntheticEvent } from 'react'
 
 import type { Item, ItemSection } from '../../domain/item.types'
+import type { PriceContext } from '../../domain/tsm'
 import type { ItemInput } from '../../store/useCraftStore'
 import '../EditorForm.css'
 import { ItemDescriptionFields } from './ItemDescriptionFields'
@@ -13,6 +14,7 @@ import {
 import './ItemForm.css'
 
 interface ItemFormProps {
+  prices?: PriceContext | undefined
   initialItem?: Item
   defaultSection: ItemSection
   onSave: (input: ItemInput) => void
@@ -20,6 +22,7 @@ interface ItemFormProps {
 }
 
 export function ItemForm({
+  prices,
   initialItem,
   defaultSection,
   onSave,
@@ -40,7 +43,12 @@ export function ItemForm({
 
   return (
     <form className="editor-form" onSubmit={handleSubmit}>
-      <ItemDescriptionFields draft={draft} onChange={setDraft} />
+      <ItemDescriptionFields
+        draft={draft}
+        onChange={setDraft}
+        item={initialItem}
+        prices={prices}
+      />
 
       <FormError message={error} announce={false} />
 

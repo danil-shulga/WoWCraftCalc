@@ -31,6 +31,26 @@ const items: ItemCatalog = {
 
 describe('ItemsPage', () => {
   it.each(['crafts', 'reagents'] as const)(
+    'показывает покупку в корневой строке только для раздела реагентов: %s',
+    (section) => {
+      setTestCraftState({
+        items: Object.fromEntries(
+          Object.entries(items).map(([id, item]) => [
+            id,
+            { ...item, sections: [section] },
+          ]),
+        ),
+      })
+      render(<ItemsPage section={section} />)
+      const row = screen.getByText('Лечебное зелье').closest('article')
+      if (!row) throw new Error('Нет корневой строки')
+      expect(within(row).queryByText('Покупка') !== null).toBe(section === 'reagents')
+      expect(within(row).getByText('Крафт')).toBeVisible()
+      expect(within(row).getByText('Продажа')).toBeVisible()
+    },
+  )
+
+  it.each(['crafts', 'reagents'] as const)(
     'ищет оба названия в разделе %s при любом языке отображения',
     async (section) => {
       const user = userEvent.setup()

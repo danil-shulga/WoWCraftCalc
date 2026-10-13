@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 import { PROFESSION_IDS } from './professions'
 import { GAME_VERSIONS } from './game-version'
+import { DEFAULT_TSM_SETTINGS, tsmSettingsSchema } from './tsm'
 import { CURRENCY_DISPLAY_MODES, ITEM_LANGUAGES, WOWHEAD_VERSIONS } from './user-settings'
 
 export const itemNamesSchema = z.object({
@@ -41,6 +42,8 @@ export const itemSchema = z.object({
   sections: z.array(z.enum(['crafts', 'reagents'])).min(1),
   purchasePriceCopper: nullableCopperSchema,
   salePriceCopper: nullableCopperSchema,
+  purchasePriceSource: z.enum(['manual', 'tsm']).optional(),
+  salePriceSource: z.enum(['manual', 'tsm']).optional(),
   recipe: recipeSchema.nullable(),
 })
 
@@ -50,6 +53,7 @@ export const versionWorkspaceSchema = z.object({
 })
 
 export const persistedCraftDataSchema = z.object({
+  tbcPricing: tsmSettingsSchema.default(DEFAULT_TSM_SETTINGS),
   activeVersion: z.enum(GAME_VERSIONS),
   workspaces: z.object({
     forever: versionWorkspaceSchema,

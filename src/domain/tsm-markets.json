@@ -1,0 +1,7 @@
+[
+  { "region": "eu", "realm": "thunderstrike", "name": "Thunderstrike" },
+  { "region": "eu", "realm": "spineshatter", "name": "Spineshatter" },
+  { "region": "us", "realm": "dreamscythe", "name": "Dreamscythe" },
+  { "region": "us", "realm": "nightslayer", "name": "Nightslayer" },
+  { "region": "us", "realm": "maladath-au", "name": "Maladath (AU)" }
+]

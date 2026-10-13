@@ -10,8 +10,11 @@ import type { ItemCatalog, ItemNamesUpdate } from '../../domain/item.types'
 import { ItemNamesLoader } from '../wowhead-import/ItemNamesLoader'
 import type { CurrencyDisplayMode, ItemLanguage } from '../../domain/user-settings'
 import './UserSettingsModal.css'
+import { TsmSettingsSection } from '../tsm/TsmSettingsSection'
+import type { TsmSettingsSectionProps } from '../tsm/TsmSettingsSection'
 
 interface UserSettingsModalProps {
+  tsm?: TsmSettingsSectionProps
   gameVersion?: GameVersion
   workspaceRevision?: number
   onGameVersionChange?: (version: GameVersion) => void
@@ -27,6 +30,7 @@ interface UserSettingsModalProps {
 }
 
 export function UserSettingsModal({
+  tsm,
   catalog,
   gameVersion = 'forever',
   workspaceRevision = 0,
@@ -131,6 +135,7 @@ export function UserSettingsModal({
           </div>
         </fieldset>
 
+        {gameVersion === 'tbc' && tsm ? <TsmSettingsSection {...tsm} /> : null}
         <fieldset className="user-settings__professions">
           <legend>Профессии в наличии</legend>
           <p>Отметьте профессии, которыми владеют ваши персонажи.</p>
