@@ -1,6 +1,6 @@
 ---
 description: Проверки, конфигурация инструментов и подготовка результата
-globs: package.json,tsconfig*.json,*config.*,src/**/*.test.*,src/test/**,.github/workflows/**
+globs: package.json,tsconfig*.json,*config.*,src/**/*.test.*,src/test/**,scripts/**,.github/workflows/**
 alwaysApply: false
 ---
 
@@ -22,7 +22,14 @@ alwaysApply: false
 - Документы/правила: Prettier для изменённых файлов, ссылки, frontmatter и `git diff --check`.
   Для `.mdc` укажи Prettier `--parser markdown` явно.
 - Код: сначала профильные тесты, затем `npm run check` и `npm run build`.
+- `npm run check` проверяет TS, ESLint, Prettier и Vitest; Python-проверки в него
+  не входят. Для `scripts/versioned_databases` запускай `npm run data:test`
+  (Python + Node.js), для `scripts/tsm` — `npm run tsm:test` (Python 3.12+).
+  Сверяй контракт подготовки с соответствующей схемой в `src/domain`.
 - Интерфейс проверяй только на десктопе; проверки на разных размерах экрана не нужны.
+- `npm run dev` вызывает `predev` с сетевой подготовкой TSM. Для UI-проверки
+  с уже имеющимися снимками запускай `node node_modules/vite/bin/vite.js`.
+  Сборку со свежими ценами готовь в порядке `build` → `tsm:refresh` → `preview`.
 - Конфигурация/зависимости: дополнительно проверь оба TS-проекта и затронутую сборку.
 - `npm run typecheck` проверяет приложение и конфигурацию инструментов по обоим
   дочерним TS-проектам. Для отдельной диагностики выполняй:
