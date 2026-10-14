@@ -77,9 +77,10 @@ describe('восстановление сохранения в App', () => {
     localStorage.clear()
   })
 
-  function setup() {
+  async function setup() {
     const user = userEvent.setup()
     const { container } = render(<App />)
+    await user.click(screen.getByRole('button', { name: 'Настройки' }))
     const input = container.querySelector('input[type="file"]')
     if (!(input instanceof HTMLInputElement)) {
       throw new Error('Поле импорта не найдено')
@@ -93,11 +94,10 @@ describe('восстановление сохранения в App', () => {
   }
 
   it('показывает приостановку сохранения после изменения настроек', async () => {
-    const { user } = setup()
+    const { user } = await setup()
     expect(screen.getByRole('alert')).toHaveTextContent(
       'Автоматическое сохранение приостановлено',
     )
-    await user.click(screen.getByRole('button', { name: 'Настройки' }))
     await user.click(screen.getByRole('radio', { name: /^Буквы/ }))
     expect(useCraftStore.getState().currencyDisplay).toBe('text')
     expect(localStorage.getItem(storageKey)).toBe(originalRecord)
@@ -108,7 +108,7 @@ describe('восстановление сохранения в App', () => {
 
   it('сохраняет оригинал при неверном импорте и разрешает повторную попытку', async () => {
     const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true)
-    const { user, upload } = setup()
+    const { user, upload } = await setup()
     await upload('{invalid')
     expect(screen.getByRole('status')).toHaveTextContent(
       'Файл не является корректным JSON',
@@ -128,12 +128,16 @@ describe('восстановление сохранения в App', () => {
 
   it.each(['импорт', 'сброс'])('сохраняет оригинал при отмене: %s', async (action) => {
     const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false)
-    const { user, upload } = setup()
+    const { user, upload } = await setup()
     if (action === 'импорт') {
       await upload(createExportJson(backupData))
-      expect(screen.getByRole('dialog')).toHaveTextContent('исходную запись')
+      expect(screen.getByRole('dialog', { name: 'Импорт JSON' })).toHaveTextContent(
+        'исходную запись',
+      )
       await user.click(screen.getByRole('button', { name: 'Отмена' }))
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+      expect(
+        screen.queryByRole('dialog', { name: 'Импорт JSON' }),
+      ).not.toBeInTheDocument()
       expect(confirm).not.toHaveBeenCalled()
     } else {
       await user.click(screen.getByRole('button', { name: 'Сбросить данные' }))
@@ -148,11 +152,12 @@ describe('восстановление сохранения в App', () => {
   })
 
   it('восстанавливает каталог и настройки и убирает предупреждение', async () => {
-    const { user, upload } = setup()
+    const { user, upload } = await setup()
     await upload(createExportJson(backupData))
     await user.click(screen.getByRole('button', { name: 'Импортировать' }))
 
     expect(useCraftStore.getState()).toMatchObject(backupData)
+    await user.click(screen.getByRole('button', { name: 'Закрыть' }))
     expect(screen.getByText('Восстановленная ткань')).toBeVisible()
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
     expect(
@@ -171,7 +176,7 @@ describe('восстановление сохранения в App', () => {
       vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
         throw new Error('Хранилище переполнено')
       })
-      const { user, upload } = setup()
+      const { user, upload } = await setup()
       if (action === 'импорт') {
         await upload(createExportJson(backupData))
         await user.click(screen.getByRole('button', { name: 'Импортировать' }))
@@ -191,7 +196,7 @@ describe('восстановление сохранения в App', () => {
 
   it('сбрасывает данные только после подтверждения и убирает предупреждение', async () => {
     vi.spyOn(window, 'confirm').mockReturnValue(true)
-    const { user } = setup()
+    const { user } = await setup()
     await user.click(screen.getByRole('button', { name: 'Сбросить данные' }))
     expect(screen.getByRole('status')).toHaveTextContent('Данные сброшены')
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
@@ -203,7 +208,7 @@ describe('восстановление сохранения в App', () => {
   })
 
   it('сохраняет исходную запись при ошибке чтения файла', async () => {
-    const { user, input } = setup()
+    const { user, input } = await setup()
     const file = new File([], 'backup.json', { type: 'application/json' })
     Object.defineProperty(file, 'text', {
       value: () => Promise.reject(new Error('Файл недоступен')),
@@ -214,10 +219,10 @@ describe('восстановление сохранения в App', () => {
     expect(screen.getByRole('alert')).toBeVisible()
   })
 
-  it('не показывает восстановление при нормальном первом запуске', () => {
+  it('не показывает восстановление при нормальном первом запуске', async () => {
     useCraftStore.getState().resetData()
     localStorage.clear()
-    setup()
+    await setup()
     act(() => {
       useCraftStore.getState().setCurrencyDisplay('text')
     })

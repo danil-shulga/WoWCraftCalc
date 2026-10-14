@@ -82,7 +82,7 @@
 }
 
 .sidebar__note {
-  margin: auto 8px 0;
+  margin: 16px 8px 0;
   color: var(--muted);
   font-size: 0.78rem;
   line-height: 1.5;
@@ -109,4 +109,11 @@
 .brand__versions .game-version-picker {
   flex-direction: column;
   min-width: 150px;
+}
+
+.sidebar__settings {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: auto;
 }

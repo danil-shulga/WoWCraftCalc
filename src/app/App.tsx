@@ -68,6 +68,9 @@ export function App() {
     <DraftContext.Provider value={drafts}>
       <div className="app-shell" data-currency-display={currencyDisplay}>
         <Sidebar
+          onOpenSettings={() => {
+            setAreSettingsOpen(true)
+          }}
           storageBytes={storageBytes}
           activeTab={activeTab}
           onChange={setActiveTab}
@@ -97,31 +100,6 @@ export function App() {
               </span>
             </div>
           ) : null}
-          <div className="utility-bar">
-            <Button
-              variant="secondary"
-              className="settings-button"
-              type="button"
-              onClick={() => {
-                setAreSettingsOpen(true)
-              }}
-            >
-              <span aria-hidden="true">⚙</span>
-              Настройки
-            </Button>
-            <DataTransferControls
-              data={{
-                activeVersion,
-                workspaces,
-                currencyDisplay,
-                itemLanguage,
-                tbcPricing,
-              }}
-              onImport={replaceData}
-              recoveryRequired={recoveryRequired}
-              onReset={resetData}
-            />
-          </div>
           <CurrentPage
             key={`${activeVersion}-${String(workspaceRevision)}`}
             activeTab={activeTab}
@@ -146,6 +124,20 @@ export function App() {
         </Button>
         {areSettingsOpen ? (
           <UserSettingsModal
+            dataTransfer={
+              <DataTransferControls
+                data={{
+                  activeVersion,
+                  workspaces,
+                  currencyDisplay,
+                  itemLanguage,
+                  tbcPricing,
+                }}
+                onImport={replaceData}
+                recoveryRequired={recoveryRequired}
+                onReset={resetData}
+              />
+            }
             tsm={{
               settings: tbcPricing,
               state: tsmState,

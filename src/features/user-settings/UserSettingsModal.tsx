@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { Button } from '../../components/ui/Button/Button'
 import { Checkbox } from '../../components/ui/Checkbox/Checkbox'
 import { MoneyDisplay } from '../../components/ui/MoneyDisplay/MoneyDisplay'
@@ -14,6 +15,7 @@ import { TsmSettingsSection } from '../tsm/TsmSettingsSection'
 import type { TsmSettingsSectionProps } from '../tsm/TsmSettingsSection'
 
 interface UserSettingsModalProps {
+  dataTransfer?: ReactNode
   tsm?: TsmSettingsSectionProps
   gameVersion?: GameVersion
   workspaceRevision?: number
@@ -30,6 +32,7 @@ interface UserSettingsModalProps {
 }
 
 export function UserSettingsModal({
+  dataTransfer,
   tsm,
   catalog,
   gameVersion = 'forever',
@@ -152,11 +155,13 @@ export function UserSettingsModal({
             ))}
           </div>
         </fieldset>
-        <footer className="user-settings__actions">
-          <Button variant="primary" type="button" onClick={onClose}>
-            Готово
-          </Button>
-        </footer>
+        {dataTransfer ? (
+          <fieldset className="user-settings__section user-settings__backup">
+            <legend>Резервная копия</legend>
+            <p>Сохранение и восстановление всех каталогов и настроек в JSON.</p>
+            {dataTransfer}
+          </fieldset>
+        ) : null}
       </div>
     </Modal>
   )

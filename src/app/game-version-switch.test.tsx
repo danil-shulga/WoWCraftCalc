@@ -95,7 +95,7 @@ it('синхронизирует настройки и логотип, сохр�
     screen.getByRole('button', { name: 'Выбрать версию игры: Classic' }),
   ).toBeVisible()
   await user.click(settings.getByRole('button', { name: 'Forever' }))
-  await user.click(settings.getByRole('button', { name: 'Готово' }))
+  await user.click(settings.getByRole('button', { name: 'Закрыть' }))
   expect(screen.getByText('Ткань Forever')).toBeVisible()
 })
 

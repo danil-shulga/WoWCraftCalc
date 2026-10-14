@@ -9,6 +9,7 @@ import { formatStorageUsage } from '../../../domain/storage-usage'
 export type AppTab = 'reagents' | 'crafts' | 'profitable' | 'favorites'
 
 interface SidebarProps {
+  onOpenSettings: () => void
   storageBytes: number | null
   gameVersion: GameVersion
   onGameVersionChange: (version: GameVersion) => void
@@ -24,6 +25,7 @@ const tabs: readonly { id: AppTab; label: string; available: boolean }[] = [
 ]
 
 export function Sidebar({
+  onOpenSettings,
   storageBytes,
   activeTab,
   onChange,
@@ -113,6 +115,10 @@ export function Sidebar({
           </Button>
         ))}
       </nav>
+      <Button variant="secondary" className="sidebar__settings" onClick={onOpenSettings}>
+        <span aria-hidden="true">⚙</span>
+        Настройки
+      </Button>
       <p className="sidebar__note">
         Данные хранятся только в этом браузере.
         <span

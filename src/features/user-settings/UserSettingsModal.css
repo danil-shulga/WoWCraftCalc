@@ -63,10 +63,9 @@
   gap: 12px 24px;
 }
 
-.user-settings__actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 24px;
-  padding-top: 16px;
+.user-settings__backup {
+  margin: 24px 0 0;
+  padding: 24px 0 0;
   border-top: 1px solid var(--border);
+  border-bottom: 0;
 }
