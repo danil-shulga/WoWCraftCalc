@@ -27,7 +27,7 @@ export function AcquisitionMethodPicker({
   return (
     <fieldset className="acquisition-method-picker">
       <legend className={showLegend ? undefined : 'visually-hidden'}>Получать</legend>
-      <div className="acquisition-method-picker__options">
+      <div className="acquisition-method-picker__options" data-value={value}>
         <Button
           variant="plain"
           type="button"

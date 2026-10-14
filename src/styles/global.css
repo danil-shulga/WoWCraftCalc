@@ -80,8 +80,16 @@
   --scrollbar-inset: 0px;
 
   box-sizing: border-box;
+  user-select: none;
   scrollbar-width: thin;
   scrollbar-color: var(--border-strong) transparent;
+}
+
+input,
+textarea,
+[contenteditable='true'],
+[contenteditable='true'] * {
+  user-select: text;
 }
 
 @supports selector(::-webkit-scrollbar) {

@@ -13,13 +13,44 @@
 }
 
 .acquisition-method-picker__options {
+  --auto-width: 72px;
+  --manual-width: calc((100% - var(--auto-width) - 4px) / 2);
+
+  position: relative;
+  isolation: isolate;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: var(--auto-width) repeat(2, minmax(0, 1fr));
   min-width: 270px;
   padding: 2px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--field);
+}
+
+.acquisition-method-picker__options::before {
+  position: absolute;
+  z-index: -1;
+  top: 2px;
+  bottom: 2px;
+  left: 2px;
+  width: var(--auto-width);
+  border-radius: 6px;
+  background: var(--accent);
+  content: '';
+  pointer-events: none;
+  transition:
+    left 0.15s ease,
+    width 0.15s ease;
+}
+
+.acquisition-method-picker__options[data-value='buy']::before {
+  left: calc(2px + var(--auto-width));
+  width: var(--manual-width);
+}
+
+.acquisition-method-picker__options[data-value='craft']::before {
+  left: calc(2px + var(--auto-width) + var(--manual-width));
+  width: var(--manual-width);
 }
 
 .acquisition-method-picker__options button {
@@ -33,11 +64,11 @@
   color: var(--muted);
   background: transparent;
   cursor: pointer;
+  transition: color 0.15s ease;
 }
 
 .acquisition-method-picker__options button[aria-pressed='true'] {
   color: var(--accent-ink);
-  background: var(--accent);
 }
 
 .acquisition-method-picker__options button[aria-pressed='true'] .currency-mark__text {
@@ -59,4 +90,11 @@
   font-size: 0.7rem;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .acquisition-method-picker__options::before,
+  .acquisition-method-picker__options button {
+    transition: none;
+  }
 }
