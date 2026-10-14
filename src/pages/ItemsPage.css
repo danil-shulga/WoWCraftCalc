@@ -13,8 +13,48 @@
 }
 
 .item-list {
+  position: relative;
   display: grid;
   gap: 10px;
+  padding-block: 10px;
+}
+
+.item-list__drop-gap {
+  position: absolute;
+  right: 0;
+  left: 0;
+  z-index: 1;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+  pointer-events: none;
+}
+
+.item-list--dragging > .item-tree {
+  transition: transform 180ms ease;
+  will-change: transform;
+}
+
+.item-list--dragging,
+.item-list--dragging * {
+  cursor: grabbing;
+}
+
+.item-list--dragging > .item-tree--moving,
+.item-list--dragging > .item-tree--settling {
+  position: relative;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.item-list--dragging > .item-tree--moving {
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .item-list--dragging > .item-tree {
+    transition: none;
+  }
 }
 
 .search-empty-state {

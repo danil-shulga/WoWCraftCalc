@@ -31,12 +31,18 @@ export function selectItemsBySection(
   catalog: ItemCatalog,
   section: ItemSection | 'favorites',
   language: ItemLanguage = 'ru',
+  order: readonly ItemId[] = [],
 ): Item[] {
-  return sortByName(
+  const sorted = sortByName(
     Object.values(catalog).filter((item) =>
       section === 'favorites' ? item.isFavorite : item.sections.includes(section),
     ),
     language,
+  )
+  const ranks = new Map(order.map((id, index) => [id, index]))
+  return sorted.sort(
+    (left, right) =>
+      (ranks.get(left.id) ?? order.length) - (ranks.get(right.id) ?? order.length),
   )
 }
 

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { HTMLAttributes } from 'react'
 import type { CatalogCalculationSnapshot } from '../../../domain/calculations'
 import type { ItemLanguage } from '../../../domain/user-settings'
 import type {
@@ -19,6 +20,7 @@ interface QuickPriceEdit {
 }
 
 interface ItemTreeProps {
+  rootDragAndDrop?: HTMLAttributes<HTMLElement> | undefined
   showPurchasePrice?: boolean
   rootItemId: ItemId
   itemLanguage: ItemLanguage
@@ -46,6 +48,7 @@ interface ItemTreeNodeProps extends ItemTreeProps {
 }
 
 function ItemTreeNode({
+  rootDragAndDrop,
   showPurchasePrice = true,
   itemId,
   itemLanguage,
@@ -91,6 +94,7 @@ function ItemTreeNode({
     <li className="item-tree__node">
       {recipeLine === null ? (
         <RootItemRow
+          dragAndDrop={rootDragAndDrop}
           showPurchasePrice={showPurchasePrice}
           purchasePrice={calculation.purchasePrice}
           salePrice={calculation.salePrice}

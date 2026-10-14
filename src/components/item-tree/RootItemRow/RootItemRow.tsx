@@ -1,4 +1,5 @@
 import { ItemTreeRow } from '../ItemTreeRow/ItemTreeRow'
+import type { HTMLAttributes } from 'react'
 import { IconButton } from '../../ui/IconButton/IconButton'
 import type { Item, ItemId, ItemPriceField } from '../../../domain/item.types'
 import { getItemName } from '../../../domain/item-names'
@@ -9,6 +10,7 @@ import { MoneyDisplay } from '../../ui/MoneyDisplay/MoneyDisplay'
 import './RootItemRow.css'
 
 interface RootItemRowProps {
+  dragAndDrop?: HTMLAttributes<HTMLElement> | undefined
   showPurchasePrice?: boolean
   purchasePrice: number | null
   salePrice: number | null
@@ -34,6 +36,7 @@ interface RootItemRowProps {
 }
 
 export function RootItemRow({
+  dragAndDrop,
   showPurchasePrice = true,
   purchasePrice,
   salePrice,
@@ -57,6 +60,7 @@ export function RootItemRow({
 
   return (
     <ItemTreeRow
+      dragAndDrop={dragAndDrop}
       className="root-item-row"
       hasRecipe={item.recipe !== null}
       hasCycle={hasCycle}

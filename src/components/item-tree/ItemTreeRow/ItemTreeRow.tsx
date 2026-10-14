@@ -1,7 +1,8 @@
-import type { ReactNode } from 'react'
+import type { HTMLAttributes, ReactNode } from 'react'
 import './ItemTreeRow.css'
 
 interface ItemTreeRowProps {
+  dragAndDrop?: HTMLAttributes<HTMLElement> | undefined
   className: string
   hasRecipe: boolean
   hasCycle: boolean
@@ -11,6 +12,7 @@ interface ItemTreeRowProps {
 }
 
 export function ItemTreeRow({
+  dragAndDrop,
   className,
   hasRecipe,
   hasCycle,
@@ -22,9 +24,10 @@ export function ItemTreeRow({
 
   return (
     <article
-      className={`item-tree-row ${className}`}
+      {...dragAndDrop}
+      className={`item-tree-row ${className} ${dragAndDrop?.className ?? ''}`}
       role={canExpand ? 'button' : undefined}
-      tabIndex={canExpand ? 0 : undefined}
+      tabIndex={canExpand || dragAndDrop ? 0 : undefined}
       aria-label={
         canExpand ? (isExpanded ? 'Свернуть рецепт' : 'Развернуть рецепт') : undefined
       }
@@ -41,7 +44,9 @@ export function ItemTreeRow({
         }
       }}
       onKeyDown={(event) => {
+        dragAndDrop?.onKeyDown?.(event)
         if (
+          !event.defaultPrevented &&
           canExpand &&
           event.target === event.currentTarget &&
           (event.key === 'Enter' || event.key === ' ')

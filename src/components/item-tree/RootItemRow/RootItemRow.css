@@ -15,6 +15,16 @@
   border-color: var(--border-strong);
 }
 
+.root-item-row--draggable {
+  cursor: grab;
+  touch-action: none;
+}
+
+.root-item-row--dragging {
+  cursor: grabbing;
+  box-shadow: var(--shadow);
+}
+
 .root-item-row__prices.item-row__prices {
   grid-template-columns: repeat(3, minmax(max-content, 1fr));
   gap: 24px;

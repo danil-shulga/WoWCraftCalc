@@ -6,6 +6,8 @@ import type { PriceSource, TsmSettings } from './tsm'
 export type ItemId = string
 
 export type ItemSection = 'crafts' | 'reagents'
+export type RootItemSection = ItemSection | 'favorites'
+export type RootItemOrder = Partial<Record<RootItemSection, ItemId[] | undefined>>
 
 export type AcquisitionMethod = 'auto' | 'buy' | 'craft'
 
@@ -60,6 +62,7 @@ export interface ItemNamesUpdate {
 }
 
 export interface VersionWorkspace {
+  rootItemOrder?: RootItemOrder | undefined
   items: ItemCatalog
   ownedProfessions: Profession[]
 }

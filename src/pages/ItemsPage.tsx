@@ -4,6 +4,8 @@ import { Checkbox } from '../components/ui/Checkbox/Checkbox'
 import { useDraftGuard } from '../app/draft-guard'
 import { selectActiveItems, selectActiveProfessions } from '../store/craft.selectors'
 import { useCallback, useMemo, useRef, useState } from 'react'
+import { selectActiveWorkspace } from '../store/craft.selectors'
+import { useRootItemDrag } from './useRootItemDrag'
 
 import { ItemTree } from '../components/item-tree/ItemTree/ItemTree'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog/ConfirmDialog'
@@ -56,6 +58,10 @@ export function ItemsPage({ section }: ItemsPageProps) {
     revision: useCraftStore.getState().workspaceRevision,
   }))
   const items = useCraftStore(selectActiveItems)
+  const rootItemOrder = useCraftStore(
+    (state) => selectActiveWorkspace(state).rootItemOrder,
+  )
+  const moveRootItem = useCraftStore((state) => state.moveRootItem)
   const itemLanguage = useCraftStore((state) => state.itemLanguage)
   const ownedProfessions = useCraftStore(selectActiveProfessions)
   const createItem = useCraftStore((state) => state.createItem)
@@ -74,7 +80,7 @@ export function ItemsPage({ section }: ItemsPageProps) {
   } | null>(null)
   const closeNotification = useCallback(() => {
     setNotification(null)
-  }, [])
+  }, [setNotification])
   const [editingItemId, setEditingItemId] = useState<ItemId | null>(null)
   const [deletingItemId, setDeletingItemId] = useState<ItemId | null>(null)
   const [removingFavoriteId, setRemovingFavoriteId] = useState<ItemId | null>(null)
@@ -95,8 +101,8 @@ export function ItemsPage({ section }: ItemsPageProps) {
       ),
   )
   const sectionItems = useMemo(
-    () => selectItemsBySection(items, section, itemLanguage),
-    [items, section, itemLanguage],
+    () => selectItemsBySection(items, section, itemLanguage, rootItemOrder?.[section]),
+    [items, section, itemLanguage, rootItemOrder],
   )
   const visibleItems = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLocaleLowerCase('ru-RU')
@@ -107,6 +113,19 @@ export function ItemsPage({ section }: ItemsPageProps) {
 
     return sectionItems.filter((item) => matchesItemName(item, searchQuery))
   }, [searchQuery, sectionItems])
+  const moveDraggedItem = useCallback(
+    (itemId: ItemId, targetId: ItemId, position: 'before' | 'after') => {
+      moveRootItem(section, itemId, targetId, position)
+    },
+    [moveRootItem, section],
+  )
+  const {
+    listRef,
+    draggingId,
+    dropTarget,
+    onPointerDown: startPointerDrag,
+    onClickCapture: suppressDragClick,
+  } = useRootItemDrag(visibleItems, moveDraggedItem)
   const ownedProfessionSet = useMemo(() => new Set(ownedProfessions), [ownedProfessions])
   const calculationSnapshot = useMemo(
     () =>
@@ -246,10 +265,56 @@ export function ItemsPage({ section }: ItemsPageProps) {
               <p>Попробуйте изменить поисковый запрос.</p>
             </div>
           ) : (
-            <div className="item-list">
+            <div
+              className={`item-list${draggingId === null ? '' : ' item-list--dragging'}`}
+              ref={listRef}
+            >
+              {dropTarget ? (
+                <div
+                  className="item-list__drop-gap"
+                  aria-hidden="true"
+                  style={{ top: dropTarget.top, height: dropTarget.height }}
+                />
+              ) : null}
               {visibleItems.map((item) => (
                 <ItemTree
                   key={item.id}
+                  rootDragAndDrop={{
+                    draggable: false,
+                    className: [
+                      'root-item-row--draggable',
+                      draggingId === item.id ? 'root-item-row--dragging' : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' '),
+                    onPointerDown: (event) => {
+                      startPointerDrag(item.id, event)
+                    },
+                    onClickCapture: suppressDragClick,
+                    onDragStart: (event) => {
+                      event.preventDefault()
+                    },
+                    onKeyDown: (event) => {
+                      if (
+                        event.target !== event.currentTarget ||
+                        !event.altKey ||
+                        (event.key !== 'ArrowUp' && event.key !== 'ArrowDown')
+                      )
+                        return
+                      event.preventDefault()
+                      const neighbor =
+                        visibleItems[
+                          visibleItems.indexOf(item) + (event.key === 'ArrowUp' ? -1 : 1)
+                        ]
+                      if (neighbor)
+                        moveRootItem(
+                          section,
+                          item.id,
+                          neighbor.id,
+                          event.key === 'ArrowUp' ? 'before' : 'after',
+                        )
+                    },
+                  }}
                   showPurchasePrice={section !== 'crafts'}
                   rootItemId={item.id}
                   itemLanguage={itemLanguage}

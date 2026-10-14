@@ -8,7 +8,7 @@ import { getItemSearchNames, normalizeItemName } from '../domain/item-names'
 import { itemNamesSchema, itemSchema, recipeSchema } from '../domain/item.schema'
 import { GAME_VERSION_REGISTRY } from '../domain/game-version'
 import type { GameVersion } from '../domain/game-version'
-import { selectActiveWorkspace } from './craft.selectors'
+import { selectActiveWorkspace, selectItemsBySection } from './craft.selectors'
 
 import { getRecipeValidationError } from '../domain/recipe-validation'
 import type {
@@ -22,6 +22,7 @@ import type {
   ItemSection,
   PersistedCraftData,
   Recipe,
+  RootItemSection,
   VersionWorkspace,
 } from '../domain/item.types'
 import { PROFESSION_IDS, type Profession } from '../domain/professions'
@@ -102,6 +103,12 @@ export interface WorkspaceRequest {
 }
 
 interface CraftStore extends PersistedCraftData {
+  moveRootItem: (
+    section: RootItemSection,
+    itemId: ItemId,
+    targetId: ItemId,
+    position: 'before' | 'after',
+  ) => void
   setTbcPricing: (settings: TsmSettings) => void
   workspaceRevision: number
   setActiveVersion: (version: GameVersion) => void
@@ -276,6 +283,25 @@ export const useCraftStore = create<CraftStore>()(
       return {
         ...createEmptyCraftData(),
         workspaceRevision: 0,
+        moveRootItem: (section, itemId, targetId, position) => {
+          const workspace = get()
+          const order = selectItemsBySection(
+            workspace.items,
+            section,
+            getState().itemLanguage,
+            workspace.rootItemOrder?.[section],
+          ).map((item) => item.id)
+          if (itemId === targetId || !order.includes(itemId) || !order.includes(targetId))
+            return
+          const nextOrder = order.filter((id) => id !== itemId)
+          nextOrder.splice(
+            nextOrder.indexOf(targetId) + (position === 'after' ? 1 : 0),
+            0,
+            itemId,
+          )
+          if (nextOrder.every((id, index) => id === order[index])) return
+          set({ rootItemOrder: { ...workspace.rootItemOrder, [section]: nextOrder } })
+        },
         setTbcPricing: (settings) => {
           const parsed = tsmSettingsSchema.parse(settings)
           setState({ tbcPricing: parsed })

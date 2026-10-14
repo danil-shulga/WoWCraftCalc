@@ -49,6 +49,13 @@ export const itemSchema = z.object({
 })
 
 export const versionWorkspaceSchema = z.object({
+  rootItemOrder: z
+    .object({
+      crafts: z.array(z.string().min(1)).optional(),
+      reagents: z.array(z.string().min(1)).optional(),
+      favorites: z.array(z.string().min(1)).optional(),
+    })
+    .optional(),
   items: z.record(z.string(), itemSchema),
   ownedProfessions: z.array(z.enum(PROFESSION_IDS)),
 })
