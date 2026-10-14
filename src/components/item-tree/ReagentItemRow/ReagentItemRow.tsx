@@ -27,6 +27,7 @@ interface ReagentItemRowProps {
   automaticMethod: Exclude<AcquisitionMethod, 'auto'>
   onToggleExpanded: () => void
   onEditItem: (itemId: ItemId) => void
+  onToggleFavorite?: ((itemId: ItemId) => void) | undefined
   onSetAcquisition: (
     ownerItemId: ItemId,
     reagentItemId: ItemId,
@@ -47,6 +48,7 @@ export function ReagentItemRow({
   automaticMethod,
   onToggleExpanded,
   onEditItem,
+  onToggleFavorite,
   onSetAcquisition,
 }: ReagentItemRowProps) {
   const hasRecipe = item.recipe !== null
@@ -70,6 +72,16 @@ export function ReagentItemRow({
     >
       <ItemIdentity
         item={item}
+        favorite={
+          onToggleFavorite === undefined
+            ? undefined
+            : {
+                selected: item.isFavorite ?? false,
+                onToggle: () => {
+                  onToggleFavorite(item.id)
+                },
+              }
+        }
         language={itemLanguage}
         nameAs="strong"
         truncate

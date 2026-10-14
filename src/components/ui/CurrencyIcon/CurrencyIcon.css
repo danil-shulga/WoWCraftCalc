@@ -15,8 +15,8 @@
 }
 
 .currency-icon--gold {
-  border-color: #e5bd4d;
-  background: #bd9130;
+  border-color: var(--gold-highlight);
+  background: var(--gold);
 }
 
 .currency-icon--silver {

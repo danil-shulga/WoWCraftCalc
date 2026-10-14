@@ -29,11 +29,13 @@ function sortByName(items: Item[], language: ItemLanguage): Item[] {
 
 export function selectItemsBySection(
   catalog: ItemCatalog,
-  section: ItemSection,
+  section: ItemSection | 'favorites',
   language: ItemLanguage = 'ru',
 ): Item[] {
   return sortByName(
-    Object.values(catalog).filter((item) => item.sections.includes(section)),
+    Object.values(catalog).filter((item) =>
+      section === 'favorites' ? item.isFavorite : item.sections.includes(section),
+    ),
     language,
   )
 }

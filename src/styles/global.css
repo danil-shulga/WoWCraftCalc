@@ -37,6 +37,8 @@
   --danger: #f27777;
   --danger-strong: rgba(174, 52, 52, 0.7);
   --success: #73d39c;
+  --gold: #bd9130;
+  --gold-highlight: #e5bd4d;
   --shadow: 0 18px 50px rgb(0 0 0 / 28%);
 }
 

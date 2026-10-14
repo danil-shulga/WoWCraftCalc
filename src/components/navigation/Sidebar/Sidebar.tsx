@@ -21,7 +21,7 @@ const tabs: readonly { id: AppTab; label: string; available: boolean }[] = [
   { id: 'reagents', label: 'Реагенты', available: true },
   { id: 'crafts', label: 'Крафты', available: true },
   { id: 'profitable', label: 'Выгодные', available: false },
-  { id: 'favorites', label: 'Избранные', available: false },
+  { id: 'favorites', label: 'Избранное', available: true },
 ]
 
 export function Sidebar({

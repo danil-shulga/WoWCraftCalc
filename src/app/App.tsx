@@ -25,7 +25,7 @@ function CurrentPage({ activeTab }: { activeTab: AppTab }) {
     case 'profitable':
       return <PlaceholderPage title="Выгодные" />
     case 'favorites':
-      return <PlaceholderPage title="Любимые" />
+      return <ItemsPage key="favorites" section="favorites" />
   }
 }
 

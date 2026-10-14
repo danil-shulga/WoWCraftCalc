@@ -30,6 +30,7 @@ interface RootItemRowProps {
   onToggleExpanded: () => void
   onEditItem: (itemId: ItemId) => void
   onDeleteItem: (itemId: ItemId) => void
+  onToggleFavorite?: ((itemId: ItemId) => void) | undefined
 }
 
 export function RootItemRow({
@@ -50,6 +51,7 @@ export function RootItemRow({
   onToggleExpanded,
   onEditItem,
   onDeleteItem,
+  onToggleFavorite,
 }: RootItemRowProps) {
   const itemName = getItemName(item, itemLanguage)
 
@@ -63,6 +65,16 @@ export function RootItemRow({
     >
       <ItemIdentity
         item={item}
+        favorite={
+          onToggleFavorite === undefined
+            ? undefined
+            : {
+                selected: item.isFavorite ?? false,
+                onToggle: () => {
+                  onToggleFavorite(item.id)
+                },
+              }
+        }
         language={itemLanguage}
         nameAs="strong"
         truncate={quickPriceEdit === undefined}

@@ -39,7 +39,7 @@ import {
   parseCurrentPersistedData,
 } from './persistence'
 
-export type ItemInput = Omit<Item, 'id' | 'recipe'>
+export type ItemInput = Omit<Item, 'id' | 'recipe' | 'isFavorite'>
 
 export interface RecipeImportTarget {
   itemId: ItemId
@@ -119,6 +119,7 @@ interface CraftStore extends PersistedCraftData {
     prices: Readonly<Record<ItemId, number | null>>,
   ) => void
   removeItem: (itemId: ItemId) => void
+  setItemFavorite: (itemId: ItemId, isFavorite: boolean) => void
   setRecipe: (itemId: ItemId, recipe: Recipe | null) => string | null
   setAcquisition: (
     ownerItemId: ItemId,
@@ -397,6 +398,18 @@ export const useCraftStore = create<CraftStore>()(
           }
         },
 
+        setItemFavorite: (itemId, isFavorite) => {
+          set((state) => {
+            const item = state.items[itemId]
+            if (item === undefined || (item.isFavorite ?? false) === isFavorite) {
+              return state
+            }
+            return {
+              items: { ...state.items, [itemId]: { ...item, isFavorite } },
+            }
+          })
+        },
+
         removeItem: (itemId) => {
           set((state) => {
             const items = Object.fromEntries(
@@ -575,6 +588,7 @@ export const useCraftStore = create<CraftStore>()(
           const nextItems: ItemCatalog = { ...currentItems }
           const productSections = currentProduct?.sections ?? []
           const importedProduct: Item = {
+            isFavorite: currentProduct?.isFavorite,
             id: productItemId,
             name: data.product.name,
             names: mergeItemNames(currentProduct, data.product),
@@ -636,6 +650,7 @@ export const useCraftStore = create<CraftStore>()(
             }
 
             nextItems[reagentItemId] = {
+              isFavorite: reagent?.isFavorite,
               id: reagentItemId,
               name: importedReagent.name,
               names: mergeItemNames(reagent, importedReagent),

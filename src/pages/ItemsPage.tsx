@@ -3,7 +3,7 @@ import { usePriceContext } from '../features/tsm/tsm-client'
 import { Checkbox } from '../components/ui/Checkbox/Checkbox'
 import { useDraftGuard } from '../app/draft-guard'
 import { selectActiveItems, selectActiveProfessions } from '../store/craft.selectors'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 
 import { ItemTree } from '../components/item-tree/ItemTree/ItemTree'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog/ConfirmDialog'
@@ -21,13 +21,18 @@ import './ItemsPage.css'
 import './PageLayout.css'
 
 interface ItemsPageProps {
-  section: ItemSection
+  section: ItemSection | 'favorites'
 }
 
 const pageContent: Record<
-  ItemSection,
+  ItemSection | 'favorites',
   { title: string; description: string; addLabel: string }
 > = {
+  favorites: {
+    title: 'Избранное',
+    description: 'Избранные крафты и реагенты текущей версии игры.',
+    addLabel: '',
+  },
   crafts: {
     title: 'Крафты',
     description:
@@ -57,6 +62,7 @@ export function ItemsPage({ section }: ItemsPageProps) {
   const saveItemEdit = useCraftStore((state) => state.saveItemEdit)
   const setItemPrices = useCraftStore((state) => state.setItemPrices)
   const removeItem = useCraftStore((state) => state.removeItem)
+  const setItemFavorite = useCraftStore((state) => state.setItemFavorite)
   const setAcquisition = useCraftStore((state) => state.setAcquisition)
   const importRecipe = useCraftStore((state) => state.importRecipe)
   const addReferenceItem = useCraftStore((state) => state.addReferenceItem)
@@ -71,6 +77,8 @@ export function ItemsPage({ section }: ItemsPageProps) {
   }, [])
   const [editingItemId, setEditingItemId] = useState<ItemId | null>(null)
   const [deletingItemId, setDeletingItemId] = useState<ItemId | null>(null)
+  const [removingFavoriteId, setRemovingFavoriteId] = useState<ItemId | null>(null)
+  const favoriteTriggerRef = useRef<HTMLElement | null>(null)
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set())
   const [searchQuery, setSearchQuery] = useState('')
   const [priceDrafts, setPriceDrafts] = useState<Record<ItemId, number | null> | null>(
@@ -112,6 +120,21 @@ export function ItemsPage({ section }: ItemsPageProps) {
   )
   const editingItem = editingItemId === null ? undefined : items[editingItemId]
   const deletingItem = deletingItemId === null ? undefined : items[deletingItemId]
+  const removingFavorite =
+    removingFavoriteId === null ? undefined : items[removingFavoriteId]
+
+  const toggleFavorite = (itemId: ItemId) => {
+    if (items[itemId]?.isFavorite) {
+      favoriteTriggerRef.current =
+        document.activeElement instanceof HTMLElement ? document.activeElement : null
+      setRemovingFavoriteId(itemId)
+    } else setItemFavorite(itemId, true)
+  }
+
+  const closeFavoriteConfirmation = () => {
+    favoriteTriggerRef.current?.focus()
+    setRemovingFavoriteId(null)
+  }
 
   const toggleExpanded = (path: string) => {
     setExpandedPaths((current) => {
@@ -154,56 +177,64 @@ export function ItemsPage({ section }: ItemsPageProps) {
           <h1>{content.title}</h1>
           <p>{content.description}</p>
         </div>
-        <div className="page__actions">
-          {priceDrafts === null ? (
-            <>
-              {sectionItems.length === 0 ? null : (
-                <Button variant="secondary" type="button" onClick={startPriceEditing}>
-                  Редактировать цены
+        {section === 'favorites' ? null : (
+          <div className="page__actions">
+            {priceDrafts === null ? (
+              <>
+                {sectionItems.length === 0 ? null : (
+                  <Button variant="secondary" type="button" onClick={startPriceEditing}>
+                    Редактировать цены
+                  </Button>
+                )}
+                <Button
+                  variant="primary"
+                  type="button"
+                  onClick={() => {
+                    setIsCreating(true)
+                  }}
+                >
+                  + {content.addLabel}
                 </Button>
-              )}
-              <Button
-                variant="primary"
-                type="button"
-                onClick={() => {
-                  setIsCreating(true)
-                }}
-              >
-                + {content.addLabel}
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button
-                variant="secondary"
-                type="button"
-                onClick={() => {
-                  setPriceDrafts(null)
-                }}
-              >
-                Отмена
-              </Button>
-              <Button variant="primary" type="button" onClick={savePriceDrafts}>
-                Сохранить все
-              </Button>
-            </>
-          )}
-        </div>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant="secondary"
+                  type="button"
+                  onClick={() => {
+                    setPriceDrafts(null)
+                  }}
+                >
+                  Отмена
+                </Button>
+                <Button variant="primary" type="button" onClick={savePriceDrafts}>
+                  Сохранить все
+                </Button>
+              </>
+            )}
+          </div>
+        )}
       </header>
 
       {sectionItems.length === 0 ? (
         <div className="empty-state">
           <strong>Здесь пока ничего нет</strong>
-          <p>Создайте первый предмет, затем добавьте ему рецепт и цены.</p>
-          <Button
-            variant="primary"
-            type="button"
-            onClick={() => {
-              setIsCreating(true)
-            }}
-          >
-            {content.addLabel}
-          </Button>
+          <p>
+            {section === 'favorites'
+              ? 'Нажмите звёздочку рядом с названием крафта или реагента, чтобы добавить его в избранное.'
+              : 'Создайте первый предмет, затем добавьте ему рецепт и цены.'}
+          </p>
+          {section === 'favorites' ? null : (
+            <Button
+              variant="primary"
+              type="button"
+              onClick={() => {
+                setIsCreating(true)
+              }}
+            >
+              {content.addLabel}
+            </Button>
+          )}
         </div>
       ) : (
         <div className="items-content">
@@ -219,7 +250,7 @@ export function ItemsPage({ section }: ItemsPageProps) {
               {visibleItems.map((item) => (
                 <ItemTree
                   key={item.id}
-                  showPurchasePrice={section === 'reagents'}
+                  showPurchasePrice={section !== 'crafts'}
                   rootItemId={item.id}
                   itemLanguage={itemLanguage}
                   catalog={items}
@@ -241,6 +272,7 @@ export function ItemsPage({ section }: ItemsPageProps) {
                   onToggleExpanded={toggleExpanded}
                   onEditItem={setEditingItemId}
                   onDeleteItem={setDeletingItemId}
+                  onToggleFavorite={toggleFavorite}
                   onSetAcquisition={setAcquisition}
                 />
               ))}
@@ -271,7 +303,7 @@ export function ItemsPage({ section }: ItemsPageProps) {
           ))}
         </fieldset>
       ) : null}
-      {isCreating ? (
+      {isCreating && section !== 'favorites' ? (
         <ItemAddModal
           prices={prices}
           gameVersion={gameVersion}
@@ -307,7 +339,9 @@ export function ItemsPage({ section }: ItemsPageProps) {
           catalog={items}
           gameVersion={gameVersion}
           itemLanguage={itemLanguage}
-          defaultSection={section}
+          defaultSection={
+            section === 'favorites' ? (editingItem.sections[0] ?? 'crafts') : section
+          }
           ownedProfessions={ownedProfessions}
           onSave={(input, recipe) => saveItemEdit(editingItem.id, input, recipe, request)}
           onImport={(data, input) =>
@@ -318,6 +352,27 @@ export function ItemsPage({ section }: ItemsPageProps) {
           }}
           onClose={() => {
             setEditingItemId(null)
+          }}
+        />
+      )}
+
+      {removingFavorite === undefined ? null : (
+        <ConfirmDialog
+          title="Удалить из избранного?"
+          message={
+            <>
+              <ItemIdentity item={removingFavorite} language={itemLanguage} />
+              <span className="items-delete-warning">
+                Будет удалён только из избранного. Предмет и его рецепты сохранятся в
+                каталоге.
+              </span>
+            </>
+          }
+          confirmLabel="Удалить из избранного"
+          onCancel={closeFavoriteConfirmation}
+          onConfirm={() => {
+            setItemFavorite(removingFavorite.id, false)
+            closeFavoriteConfirmation()
           }}
         />
       )}

@@ -79,7 +79,7 @@ it('отмена сохраняет источники и суммы, сохра
 it('все по TSM охватывает покупку/продажу, массовое редактирование меняет ручную сумму', async () => {
   const user = userEvent.setup()
   render(<ItemsPage section="reagents" />)
-  await user.click(screen.getByRole('radio', { name: 'Все по TSM' }))
+  await user.click(screen.getByRole('radio', { name: 'По TSM' }))
   const before = useCraftStore.getState().workspaces.tbc.items.cloth
   expect(before).toEqual(item)
   const row = screen.getByText('Ткань').closest('article')
@@ -95,7 +95,7 @@ it('все по TSM охватывает покупку/продажу, масс
     purchasePriceCopper: 99,
     salePriceCopper: 77,
   })
-  await user.click(screen.getByRole('radio', { name: 'Основные цены' }))
+  await user.click(screen.getByRole('radio', { name: 'Выбранные' }))
   expect(within(row).getByText('99')).toBeVisible()
 })
 it('без ID объясняет недоступность, чужой рынок не показывает цену', async () => {

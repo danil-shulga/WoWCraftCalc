@@ -29,6 +29,7 @@ interface ItemTreeProps {
   onToggleExpanded: (path: string) => void
   onEditItem: (itemId: ItemId) => void
   onDeleteItem: (itemId: ItemId) => void
+  onToggleFavorite?: ((itemId: ItemId) => void) | undefined
   onSetAcquisition: (
     ownerItemId: ItemId,
     reagentItemId: ItemId,
@@ -58,6 +59,7 @@ function ItemTreeNode({
   onToggleExpanded,
   onEditItem,
   onDeleteItem,
+  onToggleFavorite,
   onSetAcquisition,
   visited,
   rootItemId,
@@ -108,6 +110,7 @@ function ItemTreeNode({
           }}
           onEditItem={onEditItem}
           onDeleteItem={onDeleteItem}
+          onToggleFavorite={onToggleFavorite}
         />
       ) : parentItemId === null ? null : (
         <ReagentItemRow
@@ -125,6 +128,7 @@ function ItemTreeNode({
             onToggleExpanded(path)
           }}
           onEditItem={onEditItem}
+          onToggleFavorite={onToggleFavorite}
           onSetAcquisition={onSetAcquisition}
         />
       )}
@@ -156,6 +160,7 @@ function ItemTreeNode({
                 onToggleExpanded={onToggleExpanded}
                 onEditItem={onEditItem}
                 onDeleteItem={onDeleteItem}
+                onToggleFavorite={onToggleFavorite}
                 onSetAcquisition={onSetAcquisition}
                 visited={nextVisited}
               />

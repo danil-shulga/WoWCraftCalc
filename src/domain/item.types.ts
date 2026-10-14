@@ -36,6 +36,7 @@ export interface Item {
       }
     | undefined
   sections: ItemSection[]
+  isFavorite?: boolean | undefined
   purchasePriceCopper: number | null
   salePriceCopper: number | null
   purchasePriceSource?: PriceSource | undefined

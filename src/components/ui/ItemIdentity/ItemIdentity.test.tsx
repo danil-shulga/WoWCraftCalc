@@ -8,6 +8,38 @@ const item = {
 }
 
 describe('иконка и название предмета', () => {
+  it('показывает избранное рядом с названием даже без иконки и сохраняет управление', () => {
+    const onToggle = vi.fn()
+    const { rerender } = render(
+      <ItemIdentity
+        item={item}
+        language="ru"
+        nameAs="h3"
+        favorite={{ selected: false, onToggle }}
+      />,
+    )
+    const star = screen.getByRole('button', { name: 'Добавить в избранное: Нефрит' })
+    expect(star.parentElement).toBe(
+      screen.getByRole('heading').parentElement?.parentElement,
+    )
+    expect(star.previousElementSibling).toContainElement(screen.getByRole('heading'))
+    expect(star).toHaveAttribute('aria-pressed', 'false')
+    fireEvent.click(star)
+    expect(onToggle).toHaveBeenCalledOnce()
+    rerender(
+      <ItemIdentity
+        item={item}
+        language="en"
+        showIcon={false}
+        favorite={{ selected: true, onToggle }}
+      />,
+    )
+    expect(
+      screen.getByRole('button', { name: 'Удалить из избранного: Jade' }),
+    ).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.queryByRole('img')).not.toBeInTheDocument()
+  })
+
   it('сжимает название до самой широкой видимой строки с учётом перевода', () => {
     const createRange = document.createRange.bind(document)
     const spy = vi.spyOn(document, 'createRange').mockImplementation(() => {

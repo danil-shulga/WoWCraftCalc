@@ -33,6 +33,18 @@ const backupData: PersistedCraftData = testCraftData({
   itemLanguage: 'ru',
 })
 
+it('открывает избранное из меню и показывает отмеченный предмет', async () => {
+  const user = userEvent.setup()
+  useCraftStore.getState().replaceData(backupData)
+  render(<App />)
+  await user.click(
+    screen.getByRole('button', { name: 'Добавить в избранное: Восстановленная ткань' }),
+  )
+  await user.click(screen.getByRole('button', { name: 'Избранное' }))
+  expect(screen.getByRole('heading', { name: 'Избранное' })).toBeVisible()
+  expect(screen.getByText('Восстановленная ткань')).toBeVisible()
+})
+
 describe('возврат наверх страницы', () => {
   afterEach(() => {
     cleanup()

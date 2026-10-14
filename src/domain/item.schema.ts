@@ -40,6 +40,7 @@ export const itemSchema = z.object({
     })
     .optional(),
   sections: z.array(z.enum(['crafts', 'reagents'])).min(1),
+  isFavorite: z.boolean().optional(),
   purchasePriceCopper: nullableCopperSchema,
   salePriceCopper: nullableCopperSchema,
   purchasePriceSource: z.enum(['manual', 'tsm']).optional(),
