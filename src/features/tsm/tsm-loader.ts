@@ -8,9 +8,27 @@ const cacheSchema = z.object({
   snapshot: tsmSnapshotSchema,
   contentId: z.string().regex(/^[a-f0-9]{64}$/),
 })
+export function pruneTsmCache(market: TsmMarket | null): string | null {
+  try {
+    const selectedKey = market ? `${CACHE_PREFIX}${tsmMarketKey(market)}` : null
+    for (const storage of [localStorage, sessionStorage]) {
+      for (let index = storage.length - 1; index >= 0; index--) {
+        const key = storage.key(index)
+        if (
+          key?.startsWith(CACHE_PREFIX) &&
+          (storage === localStorage || key !== selectedKey)
+        )
+          storage.removeItem(key)
+      }
+    }
+    return null
+  } catch {
+    return 'Не удалось удалить прежний кэш TSM.'
+  }
+}
 export function readTsmCache(market: TsmMarket): TsmSnapshot | null {
   try {
-    const raw = localStorage.getItem(`${CACHE_PREFIX}${tsmMarketKey(market)}`)
+    const raw = sessionStorage.getItem(`${CACHE_PREFIX}${tsmMarketKey(market)}`)
     const parsed = cacheSchema.safeParse(raw ? (JSON.parse(raw) as unknown) : null)
     if (
       !parsed.success ||
@@ -25,8 +43,10 @@ export function readTsmCache(market: TsmMarket): TsmSnapshot | null {
   }
 }
 export function writeTsmCache(snapshot: TsmSnapshot): string | null {
+  const error = pruneTsmCache(snapshot.market)
+  if (error) return error
   try {
-    localStorage.setItem(
+    sessionStorage.setItem(
       `${CACHE_PREFIX}${tsmMarketKey(snapshot.market)}`,
       JSON.stringify({ snapshot, contentId: contentIds.get(snapshot) }),
     )

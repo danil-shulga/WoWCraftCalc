@@ -39,6 +39,7 @@ function jsonResponse(value: unknown) {
 }
 beforeEach(() => {
   localStorage.clear()
+  sessionStorage.clear()
   vi.stubGlobal('crypto', webcrypto)
   const data = createEmptyCraftData()
   data.activeVersion = 'tbc'
@@ -50,6 +51,87 @@ afterEach(() => {
   vi.unstubAllGlobals()
   vi.restoreAllMocks()
   vi.useRealTimers()
+})
+
+it('удаляет старые цены из localStorage и оставляет в сессии только выбранный рынок', async () => {
+  vi.useFakeTimers()
+  const selected = fixture()
+  const otherMarket: TsmMarket = { ...market, faction: 'horde' }
+  const other = fixture(otherMarket)
+  const selectedKey = `craftcalc-tsm-v1-${tsmMarketKey(market)}`
+  const otherKey = `craftcalc-tsm-v1-${tsmMarketKey(otherMarket)}`
+  for (const data of [selected, other]) {
+    const key = `craftcalc-tsm-v1-${tsmMarketKey(data.snapshot.market)}`
+    const raw = JSON.stringify({
+      snapshot: data.snapshot,
+      contentId: data.entry.contentId,
+    })
+    sessionStorage.setItem(key, raw)
+    localStorage.setItem(key, raw)
+  }
+  localStorage.setItem('unrelated', 'keep')
+  sessionStorage.setItem('unrelated', 'keep')
+  vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')))
+  const stop = startTsmClient()
+  try {
+    expect(localStorage.getItem(selectedKey)).toBeNull()
+    expect(localStorage.getItem(otherKey)).toBeNull()
+    expect(sessionStorage.getItem(otherKey)).toBeNull()
+    expect(readTsmCache(market)).toEqual(selected.snapshot)
+    await vi.advanceTimersByTimeAsync(1)
+    expect(useTsmStore.getState().snapshot).toEqual(selected.snapshot)
+    useCraftStore.getState().setTbcPricing({
+      ...useCraftStore.getState().tbcPricing,
+      market: otherMarket,
+    })
+    expect(sessionStorage.getItem(selectedKey)).toBeNull()
+    expect(useTsmStore.getState().snapshot).toBeNull()
+    expect(localStorage.getItem('unrelated')).toBe('keep')
+    expect(sessionStorage.getItem('unrelated')).toBe('keep')
+    await vi.advanceTimersByTimeAsync(1)
+  } finally {
+    stop()
+  }
+})
+
+it('очищает кэш без выбранного рынка, в том числе вне TBC', () => {
+  useCraftStore.getState().setActiveVersion('classic')
+  const key = `craftcalc-tsm-v1-${tsmMarketKey(market)}`
+  sessionStorage.setItem(key, 'cached')
+  localStorage.setItem(key, 'legacy')
+  const stop = startTsmClient()
+  try {
+    expect(localStorage.getItem(key)).toBeNull()
+    expect(sessionStorage.getItem(key)).toBe('cached')
+    useCraftStore.getState().setTbcPricing({
+      ...useCraftStore.getState().tbcPricing,
+      market: null,
+    })
+    expect(sessionStorage.getItem(key)).toBeNull()
+  } finally {
+    stop()
+  }
+})
+
+it('сообщает об ошибке очистки кэша и сохраняет загруженный снимок в памяти', async () => {
+  localStorage.setItem('craftcalc-tsm-v1-old-market', 'cached')
+  vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
+    throw new DOMException('Storage denied', 'SecurityError')
+  })
+  const data = fixture()
+  vi.stubGlobal(
+    'fetch',
+    vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse(data.manifest))
+      .mockResolvedValueOnce(new Response(data.raw)),
+  )
+  await checkTsmUpdate()
+  expect(useTsmStore.getState()).toMatchObject({
+    status: 'ready',
+    snapshot: data.snapshot,
+    cacheError: 'Не удалось удалить прежний кэш TSM.',
+  })
 })
 
 it.each(['404', 'html'] as const)(
@@ -103,6 +185,10 @@ it('проверяет manifest, контрольную сумму, выбран
     snapshot: data.snapshot,
   })
   expect(readTsmCache(market)).toEqual(data.snapshot)
+  expect(localStorage.getItem(`craftcalc-tsm-v1-${tsmMarketKey(market)}`)).toBeNull()
+  expect(
+    sessionStorage.getItem(`craftcalc-tsm-v1-${tsmMarketKey(market)}`),
+  ).not.toBeNull()
   await checkTsmUpdate()
   expect(fetcher).toHaveBeenCalledTimes(3)
   expect(fetcher.mock.calls[1]?.[0]).toContain(data.entry.path)
@@ -184,7 +270,7 @@ it('игнорирует повреждённый кэш и сохраняет �
       contentId: data.entry.contentId,
     }),
   ]) {
-    localStorage.setItem(key, raw)
+    sessionStorage.setItem(key, raw)
     expect(readTsmCache(market)).toBeNull()
   }
   vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {

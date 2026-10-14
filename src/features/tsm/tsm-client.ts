@@ -3,7 +3,7 @@ import { useMemo } from 'react'
 import { useCraftStore } from '../../store/useCraftStore'
 import { tsmMarketKey } from '../../domain/tsm'
 import type { PriceContext, TsmSnapshot } from '../../domain/tsm'
-import { loadTsmSnapshot, readTsmCache, writeTsmCache } from './tsm-loader'
+import { loadTsmSnapshot, pruneTsmCache, readTsmCache, writeTsmCache } from './tsm-loader'
 
 export const TSM_CHECK_INTERVAL = 15 * 60 * 1000
 export interface TsmState {
@@ -34,6 +34,7 @@ let lastCheck = 0
 export async function checkTsmUpdate(): Promise<void> {
   const scope = currentScope()
   const market = useCraftStore.getState().tbcPricing.market
+  const cacheError = pruneTsmCache(market)
   if (!scope || !market) return
   activeRequest?.abort()
   const controller = new AbortController()
@@ -46,7 +47,7 @@ export async function checkTsmUpdate(): Promise<void> {
     snapshot,
     status: 'loading',
     error: null,
-    cacheError: null,
+    cacheError,
     loadedAt: current.scope === scope ? current.loadedAt : null,
   })
   const isCurrent = () =>
@@ -66,7 +67,7 @@ export async function checkTsmUpdate(): Promise<void> {
       snapshot: loaded ?? snapshot,
       status: loaded ? 'ready' : 'unavailable',
       loadedAt: Date.now(),
-      cacheError: loaded ? writeTsmCache(loaded) : null,
+      cacheError: loaded ? writeTsmCache(loaded) : cacheError,
     })
   } catch (error) {
     if (isCurrent())
@@ -82,7 +83,14 @@ export async function checkTsmUpdate(): Promise<void> {
 
 export function startTsmClient(): () => void {
   let scope: string | null | undefined
+  let marketKey: string | null | undefined
   const sync = () => {
+    const market = useCraftStore.getState().tbcPricing.market
+    const nextMarketKey = market ? tsmMarketKey(market) : null
+    if (marketKey !== nextMarketKey) {
+      marketKey = nextMarketKey
+      useTsmStore.setState({ cacheError: pruneTsmCache(market) })
+    }
     const next = currentScope()
     if (scope === next) return
     scope = next
@@ -93,7 +101,7 @@ export function startTsmClient(): () => void {
       snapshot: null,
       status: 'idle',
       error: null,
-      cacheError: null,
+      cacheError: useTsmStore.getState().cacheError,
       loadedAt: null,
     })
     if (next) void checkTsmUpdate()
