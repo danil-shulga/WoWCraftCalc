@@ -6,8 +6,12 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type ComponentProps,
 } from 'react'
 import { createPortal } from 'react-dom'
+import { ItemIdentity } from '../ItemIdentity/ItemIdentity'
+import { ItemIcon } from '../ItemIcon/ItemIcon'
+import type { ItemLanguage } from '../../../domain/user-settings'
 import { normalizeItemName } from '../../../domain/item-names'
 
 import './SearchableSelect.css'
@@ -17,16 +21,19 @@ export interface SearchableSelectOption {
   label: string
   secondaryLabel?: string | null
   searchNames?: readonly string[]
+  item?: ComponentProps<typeof ItemIdentity>['item']
 }
 
 interface SearchableSelectProps {
   label: string
+  itemLanguage?: ItemLanguage
   options: readonly SearchableSelectOption[]
   value: string
   placeholder?: string
   emptyMessage?: string
   searchable?: boolean
   hideLabel?: boolean
+  showSecondaryLabel?: boolean
   disabled?: boolean
   onChange: (value: string) => void
 }
@@ -39,18 +46,22 @@ interface ListPosition extends CSSProperties {
 
 export function SearchableSelect({
   label,
+  itemLanguage = 'ru',
   options,
   value,
   placeholder = 'Начните вводить название…',
   emptyMessage = 'Ничего не найдено',
   searchable = true,
   hideLabel = false,
+  showSecondaryLabel = true,
   disabled = false,
   onChange,
 }: SearchableSelectProps) {
   const listboxId = useId()
   const selectedOption = options.find((option) => option.value === value)
   const [inputValue, setInputValue] = useState(selectedOption?.label ?? '')
+  const selectedItem =
+    inputValue === selectedOption?.label ? selectedOption.item : undefined
   const [isOpen, setIsOpen] = useState(false)
   const [highlightedIndex, setHighlightedIndex] = useState(0)
   const [listPosition, setListPosition] = useState<ListPosition | null>(null)
@@ -167,7 +178,16 @@ export function SearchableSelect({
       >
         {label}
       </label>
-      <div ref={controlRef} className="searchable-select__control">
+      <div
+        ref={controlRef}
+        className="searchable-select__control"
+        data-has-icon={selectedItem !== undefined || undefined}
+      >
+        {selectedItem ? (
+          <span className="searchable-select__icon">
+            <ItemIcon iconUrl={selectedItem.iconUrl} itemName={inputValue} size="small" />
+          </span>
+        ) : null}
         <input
           id={`${listboxId}-input`}
           role="combobox"
@@ -233,7 +253,9 @@ export function SearchableSelect({
         </span>
       </div>
 
-      {selectedOption?.secondaryLabel && inputValue === selectedOption.label ? (
+      {showSecondaryLabel &&
+      selectedOption?.secondaryLabel &&
+      inputValue === selectedOption.label ? (
         <small className="searchable-select__secondary">
           {selectedOption.secondaryLabel}
         </small>
@@ -269,12 +291,22 @@ export function SearchableSelect({
                       selectOption(option)
                     }}
                   >
-                    {option.label}
-                    {option.secondaryLabel ? (
-                      <small className="searchable-select__secondary">
-                        {option.secondaryLabel}
-                      </small>
-                    ) : null}
+                    {option.item ? (
+                      <ItemIdentity
+                        item={option.item}
+                        language={itemLanguage}
+                        iconSize="small"
+                      />
+                    ) : (
+                      <>
+                        {option.label}
+                        {option.secondaryLabel ? (
+                          <small className="searchable-select__secondary">
+                            {option.secondaryLabel}
+                          </small>
+                        ) : null}
+                      </>
+                    )}
                   </li>
                 ))
               )}

@@ -3,19 +3,13 @@ import { Button } from '../../components/ui/Button/Button'
 import { useDraftSnapshot } from '../../app/draft-guard'
 import { useMemo, useState, type SyntheticEvent } from 'react'
 
-import { AcquisitionMethodPicker } from '../../components/ui/AcquisitionMethodPicker/AcquisitionMethodPicker'
 import { NumberInput } from '../../components/ui/NumberInput/NumberInput'
-import { ItemName } from '../../components/ui/ItemName/ItemName'
+import { ItemIdentity } from '../../components/ui/ItemIdentity/ItemIdentity'
 import { SearchableSelect } from '../../components/ui/SearchableSelect/SearchableSelect'
-import {
-  getAutomaticAcquisitionMethod,
-  getCraftUnitCost,
-} from '../../domain/calculations'
 import type { Item, ItemCatalog, Recipe, RecipeLine } from '../../domain/item.types'
 import type { Profession } from '../../domain/professions'
 import { professionOptionsFor } from '../../domain/game-version'
 import type { GameVersion } from '../../domain/game-version'
-import { resolveItemPrice } from '../../domain/tsm'
 import type { PriceContext } from '../../domain/tsm'
 import { selectAvailableReagents } from '../../store/craft.selectors'
 import {
@@ -41,12 +35,10 @@ interface RecipeEditorProps {
 }
 
 export function RecipeEditor({
-  prices,
   item,
   gameVersion = 'forever',
   itemLanguage = 'ru',
   catalog,
-  ownedProfessions,
   onDraftChange,
   onSave,
   onRemove,
@@ -60,14 +52,14 @@ export function RecipeEditor({
   const [reagents, setReagents] = useState<RecipeLine[]>(
     item.recipe?.reagents.map((line) => ({ ...line })) ?? [],
   )
+  const [reagentRows, setReagentRows] = useState(reagents)
   const [selectedItemId, setSelectedItemId] = useState('')
   useDraftSnapshot({ outputQuantity, profession, reagents, selectedItemId })
   const [error, setError] = useState<string | null>(null)
-  const ownedProfessionSet = useMemo(() => new Set(ownedProfessions), [ownedProfessions])
 
   const selectedIds = useMemo(
-    () => new Set(reagents.map((line) => line.itemId)),
-    [reagents],
+    () => new Set(reagentRows.map((line) => line.itemId)),
+    [reagentRows],
   )
   const availableItems = useMemo(
     () => selectAvailableReagents(catalog, item.id, selectedIds, itemLanguage),
@@ -80,6 +72,7 @@ export function RecipeEditor({
         label: getItemName(availableItem, itemLanguage),
         secondaryLabel: getSecondaryItemName(availableItem, itemLanguage),
         searchNames: getItemSearchNames(availableItem),
+        item: availableItem,
       })),
     [availableItems, itemLanguage],
   )
@@ -94,6 +87,9 @@ export function RecipeEditor({
     setOutputQuantity(next.outputQuantity)
     setProfession(next.profession ?? '')
     setReagents(next.reagents)
+    setReagentRows((rows) =>
+      rows.map((row) => next.reagents.find((line) => line.itemId === row.itemId) ?? row),
+    )
     onDraftChange?.(next)
   }
 
@@ -104,22 +100,15 @@ export function RecipeEditor({
       return
     }
 
-    changeDraft({
-      reagents: [
-        ...reagents,
-        {
-          itemId: selectedItem.id,
-          quantity: 1,
-          acquisition: 'auto',
-        },
-      ],
-    })
+    const line: RecipeLine = { itemId: selectedItem.id, quantity: 1, acquisition: 'auto' }
+    changeDraft({ reagents: [...reagents, line] })
+    setReagentRows((rows) => [...rows, line])
     setSelectedItemId('')
   }
 
   const updateLine = (
     reagentItemId: string,
-    updates: Partial<Pick<RecipeLine, 'quantity' | 'acquisition'>>,
+    updates: Partial<Pick<RecipeLine, 'quantity'>>,
   ) => {
     changeDraft({
       reagents: reagents.map((line) =>
@@ -184,90 +173,87 @@ export function RecipeEditor({
 
       <section>
         <h3>Состав рецепта</h3>
-        {reagents.length === 0 ? (
-          <p className="empty-hint">Добавьте хотя бы один реагент.</p>
-        ) : (
+        <div className="recipe-editor__composition">
+          <p
+            className="empty-hint"
+            data-populated={reagentRows.length > 0 || undefined}
+            aria-hidden={reagentRows.length > 0}
+          >
+            Добавьте хотя бы один реагент.
+          </p>
           <ul className="recipe-editor__list">
-            {reagents.map((line) => {
+            {reagentRows.map((row) => {
+              const activeLine = reagents.find((line) => line.itemId === row.itemId)
+              const line = activeLine ?? row
+              const isRemoving = activeLine === undefined
               const reagent = catalog[line.itemId]
 
               if (reagent === undefined) {
                 return null
               }
 
-              const calculationOptions = { ownedProfessions: ownedProfessionSet, prices }
-              const purchasePrice = resolveItemPrice(
-                reagent,
-                'purchasePriceCopper',
-                prices,
-              )
-              const craftUnitCost = getCraftUnitCost(
-                catalog,
-                reagent.id,
-                calculationOptions,
-              )
-              const automaticMethod = getAutomaticAcquisitionMethod(
-                catalog,
-                reagent.id,
-                ownedProfessionSet,
-                prices,
-              )
-
               return (
-                <li key={line.itemId}>
-                  <strong>
-                    <ItemName item={reagent} language={itemLanguage} />
-                  </strong>
-                  <div className="recipe-editor__quantity">
-                    <label htmlFor={`reagent-quantity-${line.itemId}`}>Количество</label>
-                    <NumberInput
-                      id={`reagent-quantity-${line.itemId}`}
-                      min={1}
-                      step={1}
-                      value={line.quantity}
-                      onChange={(nextValue) => {
-                        updateLine(line.itemId, {
-                          quantity: nextValue,
-                        })
-                      }}
-                    />
+                <li
+                  key={line.itemId}
+                  className="recipe-editor__reagent"
+                  data-removing={isRemoving || undefined}
+                  aria-hidden={isRemoving}
+                  inert={isRemoving}
+                  onAnimationEnd={(event) => {
+                    if (event.target === event.currentTarget && isRemoving) {
+                      setReagentRows((rows) =>
+                        rows.filter((current) => current.itemId !== line.itemId),
+                      )
+                    }
+                  }}
+                >
+                  <div className="recipe-editor__reagent-clip">
+                    <div className="recipe-editor__reagent-content">
+                      <ItemIdentity
+                        item={reagent}
+                        language={itemLanguage}
+                        nameAs="strong"
+                      />
+                      <NumberInput
+                        id={`reagent-quantity-${line.itemId}`}
+                        ariaLabel={`Количество: ${getItemName(reagent, itemLanguage)}`}
+                        min={1}
+                        step={1}
+                        value={line.quantity}
+                        onChange={(nextValue) => {
+                          updateLine(line.itemId, {
+                            quantity: nextValue,
+                          })
+                        }}
+                      />
+                      <Button
+                        variant="danger-text"
+                        type="button"
+                        onClick={() => {
+                          changeDraft({
+                            reagents: reagents.filter(
+                              (currentLine) => currentLine.itemId !== line.itemId,
+                            ),
+                          })
+                        }}
+                      >
+                        Удалить
+                      </Button>
+                    </div>
                   </div>
-                  <AcquisitionMethodPicker
-                    value={line.acquisition}
-                    purchasePrice={purchasePrice}
-                    craftPrice={craftUnitCost}
-                    automaticMethod={automaticMethod}
-                    canBuy={purchasePrice !== null}
-                    canCraft={reagent.recipe !== null}
-                    showLegend
-                    onChange={(acquisition) => {
-                      updateLine(line.itemId, { acquisition })
-                    }}
-                  />
-                  <Button
-                    variant="danger-text"
-                    type="button"
-                    onClick={() => {
-                      changeDraft({
-                        reagents: reagents.filter(
-                          (currentLine) => currentLine.itemId !== line.itemId,
-                        ),
-                      })
-                    }}
-                  >
-                    Удалить
-                  </Button>
                 </li>
               )
             })}
           </ul>
-        )}
+        </div>
       </section>
 
       <div className="add-reagent">
         <SearchableSelect
           hideLabel
+          showSecondaryLabel={false}
           label="Поиск и выбор реагента"
+          itemLanguage={itemLanguage}
           options={availableOptions}
           value={selectedItemId}
           placeholder="Выберите предмет…"

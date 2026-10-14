@@ -78,3 +78,16 @@
 .searchable-select__empty {
   color: var(--muted);
 }
+
+.searchable-select__control[data-has-icon] input {
+  padding-left: 46px;
+}
+
+.searchable-select__icon {
+  position: absolute;
+  top: 50%;
+  left: 10px;
+  display: flex;
+  pointer-events: none;
+  transform: translateY(-50%);
+}

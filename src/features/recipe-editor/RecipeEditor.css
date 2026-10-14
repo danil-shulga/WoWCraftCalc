@@ -11,8 +11,7 @@
   gap: 32px;
 }
 
-.compact-field > label,
-.recipe-editor__quantity > label {
+.compact-field > label {
   color: var(--muted);
   font-size: 0.8rem;
 }
@@ -22,18 +21,31 @@
   font-size: 1rem;
 }
 
+.recipe-editor__composition {
+  display: grid;
+}
+
+.recipe-editor__composition > .empty-hint,
+.recipe-editor__list {
+  grid-area: 1 / 1;
+}
+
+.recipe-editor__composition > .empty-hint[data-populated] {
+  visibility: hidden;
+}
+
 .recipe-editor__list {
   display: grid;
-  gap: 8px;
+  align-self: start;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.recipe-editor__list li {
+.recipe-editor__reagent-content {
   display: grid;
-  grid-template-columns: minmax(130px, 1fr) 100px minmax(250px, 1.25fr) auto;
-  align-items: end;
+  grid-template-columns: minmax(0, 1fr) 100px auto;
+  align-items: center;
   gap: 9px;
   padding: 10px;
   border: 1px solid var(--border);
@@ -41,18 +53,63 @@
   background: var(--field);
 }
 
-.recipe-editor__quantity {
-  display: grid;
-  gap: 4px;
-}
-
 .add-reagent {
   display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: end;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
   gap: 9px;
 }
 
 .empty-hint {
   color: var(--muted);
+}
+
+.recipe-editor__reagent {
+  display: grid;
+  grid-template-rows: 1fr;
+  opacity: 1;
+  animation: recipe-reagent-enter 150ms ease-out;
+}
+
+.recipe-editor__reagent-clip {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.recipe-editor__reagent-content {
+  margin-bottom: 8px;
+}
+
+.recipe-editor__reagent[data-removing] {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  animation: recipe-reagent-exit 150ms ease-out;
+}
+
+@keyframes recipe-reagent-enter {
+  from {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+  to {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+}
+
+@keyframes recipe-reagent-exit {
+  from {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+  to {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recipe-editor__reagent {
+    animation-duration: 1ms;
+  }
 }
