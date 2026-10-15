@@ -1,6 +1,6 @@
 import { Button } from '../components/ui/Button/Button'
 import { usePriceContext } from '../features/tsm/tsm-client'
-import { Checkbox } from '../components/ui/Checkbox/Checkbox'
+import { PriceModeSelector } from '../features/tsm/PriceModeSelector'
 import { useDraftGuard } from '../app/draft-guard'
 import { selectActiveItems, selectActiveProfessions } from '../store/craft.selectors'
 import { useCallback, useMemo, useRef, useState } from 'react'
@@ -362,28 +362,11 @@ export function ItemsPage({ section }: ItemsPageProps) {
         </div>
       )}
 
-      {gameVersion === 'tbc' ? (
-        <fieldset className="items-price-mode">
-          <legend>Цены для расчётов</legend>
-          {(
-            [
-              { value: 'individual', label: 'Выбранные' },
-              { value: 'tsm', label: 'По TSM' },
-            ] as const
-          ).map((mode) => (
-            <Checkbox
-              key={mode.value}
-              controlType="radio"
-              name="tsm-price-mode"
-              label={mode.label}
-              checked={prices.settings.priceMode === mode.value}
-              onChange={(checked) => {
-                if (checked) setTbcPricing({ ...prices.settings, priceMode: mode.value })
-              }}
-            />
-          ))}
-        </fieldset>
-      ) : null}
+      <PriceModeSelector
+        gameVersion={gameVersion}
+        settings={prices.settings}
+        onChange={setTbcPricing}
+      />
       {isCreating && section !== 'favorites' ? (
         <ItemAddModal
           prices={prices}

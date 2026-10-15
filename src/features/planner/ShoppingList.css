@@ -55,8 +55,12 @@
   margin: 0;
 }
 
-.shopping-list__dependencies p {
+.shopping-list__dependency-items {
+  display: grid;
+  gap: 6px;
   margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
 }
 
 .shopping-list__dependencies summary {

@@ -77,7 +77,7 @@ export function App() {
   return (
     <DraftContext.Provider value={drafts}>
       <div
-        className={`app-shell${activeTab === 'planner' ? '' : ' app-shell--catalog'}`}
+        className={`app-shell${activeTab === 'planner' ? (activeVersion === 'tbc' ? ' app-shell--planner-prices' : '') : ' app-shell--catalog'}`}
         data-currency-display={currencyDisplay}
       >
         <Sidebar

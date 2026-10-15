@@ -3,7 +3,7 @@ import './ItemIcon.css'
 interface ItemIconProps {
   iconUrl: string
   itemName: string
-  size?: 'small' | 'medium' | 'large'
+  size?: 'extra-small' | 'small' | 'medium' | 'large'
 }
 
 const placeholderUrl = `${import.meta.env.BASE_URL}item-placeholder.svg`

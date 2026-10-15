@@ -1,0 +1,20 @@
+.price-mode-selector {
+  position: fixed;
+  z-index: 5;
+  bottom: 24px;
+  left: calc(var(--sidebar-width, 230px) + 16px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  width: fit-content;
+  margin: 0;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--panel);
+}
+.price-mode-selector legend {
+  color: var(--muted);
+  font-size: 0.8rem;
+}

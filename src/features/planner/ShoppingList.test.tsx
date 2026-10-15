@@ -108,3 +108,51 @@ it('обновляет бюджет в свёрнутом виде и скрыв
   )
   expect(screen.queryByRole('complementary', { name: 'Список покупок' })).toBeNull()
 })
+
+it('показывает зависимости отдельными строками с маленькими иконками и одним названием', async () => {
+  const user = userEvent.setup()
+  const crafts: ItemCatalog = { ...catalog }
+  for (const [id, name] of [
+    ['first', 'Длинное название первого изделия из общей руды'],
+    ['second', 'Второе изделие'],
+  ]) {
+    if (!id || !name) throw new Error('Нет данных изделия')
+    crafts[id] = {
+      id,
+      name,
+      names: { ru: name, en: `English ${id}` },
+      iconUrl: `https://example.com/${id}.png`,
+      sections: ['crafts'],
+      purchasePriceCopper: null,
+      salePriceCopper: null,
+      recipe: {
+        outputQuantity: 1,
+        profession: null,
+        reagents: [{ itemId: 'ore', quantity: 1, acquisition: 'buy' }],
+      },
+    }
+  }
+  render(
+    <ShoppingList
+      catalog={crafts}
+      itemLanguage="ru"
+      plan={calculateCraftPlan(crafts, [
+        { itemId: 'first', quantity: 1 },
+        { itemId: 'second', quantity: 1 },
+      ])}
+    />,
+  )
+  await user.click(screen.getByText('Нужен для'))
+  const dependencies = screen.getByText('Нужен для').parentElement
+  if (!dependencies) throw new Error('Нет зависимостей')
+  const rows = within(dependencies).getAllByRole('listitem')
+  expect(rows).toHaveLength(2)
+  for (const row of rows) {
+    expect(row.querySelector('.item-icon--small')).toBeVisible()
+    expect(row.querySelector('.item-name__secondary')).toBeNull()
+  }
+  expect(
+    within(dependencies).getByText('Длинное название первого изделия из общей руды'),
+  ).toBeVisible()
+  expect(within(dependencies).getByText('Второе изделие')).toBeVisible()
+})

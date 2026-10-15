@@ -2,6 +2,8 @@ import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { App } from '../../app/App'
 import { ItemsPage } from '../../pages/ItemsPage'
+import { PlannerPage } from '../../pages/PlannerPage'
+import { usePlanner } from '../planner/usePlanner'
 import { useCraftStore } from '../../store/useCraftStore'
 import { createEmptyCraftData } from '../../store/persistence'
 import { useTsmStore } from './tsm-client'
@@ -164,4 +166,28 @@ it('настройки ищут мир, сохраняют общий показ
   await user.keyboard('{Escape}')
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   expect(opener).toHaveFocus()
+})
+
+it('переключает цены бюджета в Планировщике и сохраняет выбор при переходе в каталог', async () => {
+  const user = userEvent.setup()
+  useCraftStore.getState().setPlannerQuantity('cloth', 1)
+  function Planner() {
+    const plan = usePlanner()
+    return <PlannerPage plan={plan} catalog={{ cloth: item }} itemLanguage="ru" />
+  }
+  const view = render(<Planner />)
+  const budget = screen.getByText('Бюджет').closest('div')
+  if (!budget) throw new Error('Нет бюджета')
+  expect(within(budget).getByText('55')).toBeVisible()
+  await user.click(screen.getByRole('radio', { name: 'По TSM' }))
+  expect(within(budget).getByText('23')).toBeVisible()
+  expect(within(budget).getByText('22')).toBeVisible()
+  expect(useCraftStore.getState().workspaces.tbc.items.cloth).toEqual(item)
+  view.rerender(<ItemsPage section="reagents" />)
+  expect(screen.getByRole('radio', { name: 'По TSM' })).toBeChecked()
+  await user.click(screen.getByRole('radio', { name: 'Выбранные' }))
+  view.rerender(<Planner />)
+  const restoredBudget = screen.getByText('Бюджет').closest('div')
+  if (!restoredBudget) throw new Error('Нет бюджета')
+  expect(within(restoredBudget).getByText('55')).toBeVisible()
 })

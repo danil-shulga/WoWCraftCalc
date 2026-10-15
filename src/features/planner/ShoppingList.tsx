@@ -1,7 +1,6 @@
 import { ItemIdentity } from '../../components/ui/ItemIdentity/ItemIdentity'
 import { MoneyDisplay } from '../../components/ui/MoneyDisplay/MoneyDisplay'
 import { FormError } from '../../components/ui/FormError/FormError'
-import { getItemName } from '../../domain/item-names'
 import type { ItemCatalog } from '../../domain/item.types'
 import type { PlannerResult } from '../../domain/planner.types'
 import type { ItemLanguage } from '../../domain/user-settings'
@@ -61,13 +60,22 @@ export function ShoppingList({
               {!compact && line.neededFor.length > 0 ? (
                 <details className="shopping-list__dependencies">
                   <summary>Нужен для</summary>
-                  <p>
-                    {line.neededFor
-                      .map((id) =>
-                        catalog[id] ? getItemName(catalog[id], itemLanguage) : id,
-                      )
-                      .join(', ')}
-                  </p>
+                  <ul className="shopping-list__dependency-items">
+                    {line.neededFor.map((id) => (
+                      <li key={id}>
+                        {catalog[id] ? (
+                          <ItemIdentity
+                            item={catalog[id]}
+                            language={itemLanguage}
+                            iconSize="extra-small"
+                            showSecondaryName={false}
+                          />
+                        ) : (
+                          id
+                        )}
+                      </li>
+                    ))}
+                  </ul>
                 </details>
               ) : null}
               {!compact && line.additionalQuantity > 0 ? (

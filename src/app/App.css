@@ -18,6 +18,10 @@
   padding: 22px var(--content-padding) 52px;
 }
 
+.app-shell--planner-prices .main-content {
+  padding-left: 184px;
+}
+
 .persistence-error {
   display: grid;
   gap: 4px;

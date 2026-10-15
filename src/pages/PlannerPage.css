@@ -44,7 +44,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 10px;
+  gap: 4px 10px;
 }
 
 .planner-page__note {
@@ -64,7 +64,7 @@
 }
 
 .planner-page__steps p {
-  margin: 8px 0 0;
+  margin: 4px 0 0;
   color: var(--muted);
   font-size: 0.85rem;
   line-height: 1.6;

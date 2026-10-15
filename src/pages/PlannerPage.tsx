@@ -10,12 +10,16 @@ import {
   getSecondaryItemName,
 } from '../domain/item-names'
 import { PlanQuantityControl } from '../features/planner/PlanQuantityControl'
+import { PriceModeSelector } from '../features/tsm/PriceModeSelector'
+import { usePriceContext } from '../features/tsm/tsm-client'
 import { ShoppingList, type ShoppingListProps } from '../features/planner/ShoppingList'
 import { useCraftStore } from '../store/useCraftStore'
 import './PageLayout.css'
 import './PlannerPage.css'
 
 export function PlannerPage({ plan, catalog, itemLanguage }: ShoppingListProps) {
+  const prices = usePriceContext()
+  const setTbcPricing = useCraftStore((state) => state.setTbcPricing)
   const setQuantity = useCraftStore((state) => state.setPlannerQuantity)
   const removeTarget = useCraftStore((state) => state.removePlannerTarget)
   const clearPlanner = useCraftStore((state) => state.clearPlanner)
@@ -110,6 +114,7 @@ export function PlannerPage({ plan, catalog, itemLanguage }: ShoppingListProps) 
                           iconSize="medium"
                         />
                         <PlanQuantityControl
+                          buttonIcon="remove"
                           itemName={getItemName(item, itemLanguage)}
                           quantity={target.quantity}
                           step={item.recipe?.outputQuantity ?? 1}
@@ -228,6 +233,11 @@ export function PlannerPage({ plan, catalog, itemLanguage }: ShoppingListProps) 
           ) : null}
         </div>
       </div>
+      <PriceModeSelector
+        gameVersion={prices.version}
+        settings={prices.settings}
+        onChange={setTbcPricing}
+      />
       {confirmClear ? (
         <ConfirmDialog
           title="Очистить план?"

@@ -10,6 +10,7 @@ export interface PlanQuantityControlProps {
   step: number
   onChange: (quantity: number) => void
   onRemove: () => void
+  buttonIcon?: 'cart' | 'remove'
 }
 
 export function PlanQuantityControl({
@@ -18,6 +19,7 @@ export function PlanQuantityControl({
   step,
   onChange,
   onRemove,
+  buttonIcon = 'cart',
 }: PlanQuantityControlProps) {
   const [focusOnAdd, setFocusOnAdd] = useState(false)
   const [visibleQuantity, setVisibleQuantity] = useState(quantity)
@@ -57,7 +59,8 @@ export function PlanQuantityControl({
       <IconButton
         aria-label={label}
         title={label}
-        aria-pressed={selected}
+        aria-pressed={buttonIcon === 'cart' ? selected : undefined}
+        variant={buttonIcon === 'remove' ? 'danger' : 'default'}
         className="plan-quantity-control__cart"
         onClick={() => {
           setFocusOnAdd(!selected)
@@ -76,9 +79,15 @@ export function PlanQuantityControl({
           strokeLinejoin="round"
           aria-hidden="true"
         >
-          <path d="M3 3h2l3 13h10l3-9H6" />
-          <circle cx="9" cy="20" r="1" />
-          <circle cx="18" cy="20" r="1" />
+          {buttonIcon === 'remove' ? (
+            <path d="m6 6 12 12M18 6 6 18" />
+          ) : (
+            <>
+              <path d="M3 3h2l3 13h10l3-9H6" />
+              <circle cx="9" cy="20" r="1" />
+              <circle cx="18" cy="20" r="1" />
+            </>
+          )}
         </svg>
       </IconButton>
     </div>
