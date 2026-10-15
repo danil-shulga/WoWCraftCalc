@@ -6,6 +6,10 @@
   margin-bottom: 24px;
 }
 
+.planner-page__add > .button {
+  min-height: 40px;
+}
+
 .planner-page__layout {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
