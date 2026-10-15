@@ -7,6 +7,12 @@
   min-height: 100vh;
 }
 
+.app-shell--catalog {
+  --content-padding: 184px;
+
+  grid-template-columns: var(--sidebar-width) minmax(1548px, 1fr);
+}
+
 .main-content {
   min-width: 0;
   padding: 22px var(--content-padding) 52px;

@@ -1,0 +1,52 @@
+.shopping-list-panel {
+  position: fixed;
+  z-index: 6;
+  top: 22px;
+  right: 16px;
+  width: 290px;
+  max-height: min(740px, calc(100vh - 88px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  font-size: 0.875rem;
+}
+
+.shopping-list-panel__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  padding: 10px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.shopping-list-panel__toggle:hover {
+  background: var(--hover);
+}
+
+.shopping-list-panel__toggle:focus-visible {
+  outline-offset: -2px;
+}
+
+.shopping-list-panel__toggle[aria-expanded='true'] {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.shopping-list-panel__content:not([hidden]) {
+  display: grid;
+  gap: 10px;
+  padding: 0 10px 10px;
+}
+
+.shopping-list-panel__count {
+  color: var(--muted);
+  font-size: 0.75rem;
+}

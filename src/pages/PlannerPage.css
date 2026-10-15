@@ -1,0 +1,92 @@
+.planner-page__add {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.planner-page__layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 20px;
+}
+
+.planner-page__production {
+  display: grid;
+  min-width: 0;
+  gap: 20px;
+}
+
+.planner-page__card {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--panel);
+}
+
+.planner-page__card h2 {
+  margin: 0 0 16px;
+  font-size: 1.15rem;
+}
+
+.planner-page__rows {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.planner-page__target {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.planner-page__note {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.planner-page__steps,
+.planner-page__warnings {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+  padding-left: 24px;
+}
+
+.planner-page__steps p {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.planner-page__totals {
+  display: grid;
+  gap: 14px;
+  margin: 0;
+}
+
+.planner-page__totals > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.planner-page__totals dt {
+  color: var(--muted);
+}
+
+.planner-page__totals dd {
+  margin: 0;
+}

@@ -1,6 +1,6 @@
 .root-item-row {
   display: grid;
-  grid-template-columns: 28px 48px minmax(180px, 1fr) minmax(max-content, 1.6fr) auto;
+  grid-template-columns: 28px 48px minmax(180px, 1fr) minmax(max-content, 1.4fr) auto;
   align-items: center;
   gap: 10px;
   min-height: 63px;
@@ -13,6 +13,10 @@
 
 .root-item-row:hover {
   border-color: var(--border-strong);
+}
+
+.root-item-row > .item-row__actions {
+  align-items: center;
 }
 
 .root-item-row--draggable {

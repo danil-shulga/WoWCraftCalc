@@ -2,6 +2,7 @@ import type { Profession } from './professions'
 import type { GameVersion } from './game-version'
 import type { CurrencyDisplayMode, ItemLanguage, WowheadVersion } from './user-settings'
 import type { PriceSource, TsmSettings } from './tsm'
+import type { CraftPlan } from './planner.types'
 
 export type ItemId = string
 
@@ -62,6 +63,7 @@ export interface ItemNamesUpdate {
 }
 
 export interface VersionWorkspace {
+  planner?: CraftPlan | undefined
   rootItemOrder?: RootItemOrder | undefined
   items: ItemCatalog
   ownedProfessions: Profession[]

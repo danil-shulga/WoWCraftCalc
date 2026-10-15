@@ -12,6 +12,7 @@ import type {
 import { ReagentItemRow } from '../ReagentItemRow/ReagentItemRow'
 import { RootItemRow } from '../RootItemRow/RootItemRow'
 import './ItemTree.css'
+import type { PlanQuantityControlProps } from '../../../features/planner/PlanQuantityControl'
 
 interface QuickPriceEdit {
   field: ItemPriceField
@@ -20,6 +21,7 @@ interface QuickPriceEdit {
 }
 
 interface ItemTreeProps {
+  planner?: PlanQuantityControlProps | undefined
   rootDragAndDrop?: HTMLAttributes<HTMLElement> | undefined
   showPurchasePrice?: boolean
   rootItemId: ItemId
@@ -48,6 +50,7 @@ interface ItemTreeNodeProps extends ItemTreeProps {
 }
 
 function ItemTreeNode({
+  planner,
   rootDragAndDrop,
   showPurchasePrice = true,
   itemId,
@@ -101,6 +104,7 @@ function ItemTreeNode({
     <li className="item-tree__node">
       {recipeLine === null ? (
         <RootItemRow
+          planner={planner}
           dragAndDrop={rootDragAndDrop}
           showPurchasePrice={showPurchasePrice}
           purchasePrice={calculation.purchasePrice}

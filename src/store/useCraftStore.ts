@@ -5,6 +5,7 @@ import { persist } from 'zustand/middleware'
 import { z } from 'zod'
 
 import { getItemSearchNames, normalizeItemName } from '../domain/item-names'
+import { isPlannerQuantity } from '../domain/planner'
 import { itemNamesSchema, itemSchema, recipeSchema } from '../domain/item.schema'
 import { GAME_VERSION_REGISTRY } from '../domain/game-version'
 import type { GameVersion } from '../domain/game-version'
@@ -103,6 +104,9 @@ export interface WorkspaceRequest {
 }
 
 interface CraftStore extends PersistedCraftData {
+  setPlannerQuantity: (itemId: ItemId, quantity: number) => void
+  removePlannerTarget: (itemId: ItemId) => void
+  clearPlanner: () => void
   moveRootItem: (
     section: RootItemSection,
     itemId: ItemId,
@@ -283,6 +287,32 @@ export const useCraftStore = create<CraftStore>()(
       return {
         ...createEmptyCraftData(),
         workspaceRevision: 0,
+        setPlannerQuantity: (itemId, quantity) => {
+          const workspace = get()
+          if (!workspace.items[itemId] || !isPlannerQuantity(quantity)) return
+          const targets = workspace.planner?.targets ?? []
+          const current = targets.find((target) => target.itemId === itemId)
+          if (current?.quantity === quantity) return
+          set({
+            planner: {
+              targets: current
+                ? targets.map((target) =>
+                    target.itemId === itemId ? { itemId, quantity } : target,
+                  )
+                : [...targets, { itemId, quantity }],
+            },
+          })
+        },
+        removePlannerTarget: (itemId) => {
+          const targets = get().planner?.targets
+          if (!targets?.some((target) => target.itemId === itemId)) return
+          set({
+            planner: { targets: targets.filter((target) => target.itemId !== itemId) },
+          })
+        },
+        clearPlanner: () => {
+          if (get().planner?.targets.length) set({ planner: { targets: [] } })
+        },
         moveRootItem: (section, itemId, targetId, position) => {
           const workspace = get()
           const order = selectItemsBySection(
@@ -459,7 +489,18 @@ export const useCraftStore = create<CraftStore>()(
                 ]),
             )
 
-            return { items }
+            return {
+              items,
+              ...(state.planner
+                ? {
+                    planner: {
+                      targets: state.planner.targets.filter(
+                        (target) => target.itemId !== itemId,
+                      ),
+                    },
+                  }
+                : {}),
+            }
           })
         },
 

@@ -6,7 +6,7 @@ import { GAME_VERSION_REGISTRY } from '../../../domain/game-version'
 import type { GameVersion } from '../../../domain/game-version'
 import { formatStorageUsage } from '../../../domain/storage-usage'
 
-export type AppTab = 'reagents' | 'crafts' | 'profitable' | 'favorites'
+export type AppTab = 'reagents' | 'crafts' | 'profitable' | 'favorites' | 'planner'
 
 interface SidebarProps {
   onOpenSettings: () => void
@@ -22,6 +22,7 @@ const tabs: readonly { id: AppTab; label: string; available: boolean }[] = [
   { id: 'crafts', label: 'Крафты', available: true },
   { id: 'profitable', label: 'Выгодные', available: false },
   { id: 'favorites', label: 'Избранное', available: true },
+  { id: 'planner', label: 'Планировщик', available: true },
 ]
 
 export function Sidebar({

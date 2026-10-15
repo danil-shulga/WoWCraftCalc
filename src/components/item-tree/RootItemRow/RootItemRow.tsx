@@ -8,8 +8,13 @@ import { ItemPriceCell } from './ItemPriceCell'
 import { ItemIdentity } from '../../ui/ItemIdentity/ItemIdentity'
 import { MoneyDisplay } from '../../ui/MoneyDisplay/MoneyDisplay'
 import './RootItemRow.css'
+import {
+  PlanQuantityControl,
+  type PlanQuantityControlProps,
+} from '../../../features/planner/PlanQuantityControl'
 
 interface RootItemRowProps {
+  planner?: PlanQuantityControlProps | undefined
   dragAndDrop?: HTMLAttributes<HTMLElement> | undefined
   showPurchasePrice?: boolean
   purchasePrice: number | null
@@ -36,6 +41,7 @@ interface RootItemRowProps {
 }
 
 export function RootItemRow({
+  planner,
   dragAndDrop,
   showPurchasePrice = true,
   purchasePrice,
@@ -142,6 +148,7 @@ export function RootItemRow({
       </dl>
 
       <div className="item-row__actions">
+        {planner ? <PlanQuantityControl {...planner} /> : null}
         <IconButton
           type="button"
           title="Редактировать предмет"

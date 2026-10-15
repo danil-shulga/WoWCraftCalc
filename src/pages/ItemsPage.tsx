@@ -13,7 +13,7 @@ import { ItemIdentity } from '../components/ui/ItemIdentity/ItemIdentity'
 import { SearchField } from '../components/ui/SearchField/SearchField'
 import { Toast } from '../components/ui/Toast/Toast'
 import { createCatalogCalculationSnapshot } from '../domain/calculations'
-import { matchesItemName } from '../domain/item-names'
+import { getItemName, matchesItemName } from '../domain/item-names'
 import type { ItemId, ItemPriceField, ItemSection } from '../domain/item.types'
 import { ItemAddModal } from '../features/item-editor/ItemAddModal'
 import { ItemEditModal } from '../features/item-editor/ItemEditModal'
@@ -21,6 +21,7 @@ import { selectItemsBySection } from '../store/craft.selectors'
 import { useCraftStore } from '../store/useCraftStore'
 import './ItemsPage.css'
 import './PageLayout.css'
+import { selectPlannerTargets } from '../store/craft.selectors'
 
 interface ItemsPageProps {
   section: ItemSection | 'favorites'
@@ -50,6 +51,9 @@ const pageContent: Record<
 }
 
 export function ItemsPage({ section }: ItemsPageProps) {
+  const plannerTargets = useCraftStore(selectPlannerTargets)
+  const setPlannerQuantity = useCraftStore((state) => state.setPlannerQuantity)
+  const removePlannerTarget = useCraftStore((state) => state.removePlannerTarget)
   const prices = usePriceContext()
   const setTbcPricing = useCraftStore((state) => state.setTbcPricing)
   const gameVersion = useCraftStore((state) => state.activeVersion)
@@ -278,6 +282,18 @@ export function ItemsPage({ section }: ItemsPageProps) {
               ) : null}
               {visibleItems.map((item) => (
                 <ItemTree
+                  planner={{
+                    itemName: getItemName(item, itemLanguage),
+                    quantity: plannerTargets.find((target) => target.itemId === item.id)
+                      ?.quantity,
+                    step: item.recipe?.outputQuantity ?? 1,
+                    onChange: (quantity) => {
+                      setPlannerQuantity(item.id, quantity)
+                    },
+                    onRemove: () => {
+                      removePlannerTarget(item.id)
+                    },
+                  }}
                   key={item.id}
                   rootDragAndDrop={{
                     draggable: false,

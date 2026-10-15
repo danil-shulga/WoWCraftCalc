@@ -49,6 +49,16 @@ export const itemSchema = z.object({
 })
 
 export const versionWorkspaceSchema = z.object({
+  planner: z
+    .object({
+      targets: z.array(
+        z.object({
+          itemId: z.string().min(1),
+          quantity: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+        }),
+      ),
+    })
+    .optional(),
   rootItemOrder: z
     .object({
       crafts: z.array(z.string().min(1)).optional(),

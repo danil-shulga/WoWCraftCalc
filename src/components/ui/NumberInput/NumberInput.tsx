@@ -13,6 +13,7 @@ interface NumberInputProps {
   ariaDescribedBy?: string
   autoFocus?: boolean
   disabled?: boolean
+  isValidValue?: (value: number) => boolean
   onChange: (value: number) => void
 }
 
@@ -33,6 +34,7 @@ export function NumberInput({
   ariaDescribedBy,
   autoFocus = false,
   disabled = false,
+  isValidValue,
   onChange,
 }: NumberInputProps) {
   const [draftValue, setDraftValue] = useState<string | null>(null)
@@ -41,7 +43,8 @@ export function NumberInput({
 
   const changeBy = (direction: -1 | 1) => {
     setDraftValue(null)
-    onChange(clamp(value + step * direction, min, max))
+    const next = clamp(value + step * direction, min, max)
+    if (!isValidValue || isValidValue(next)) onChange(next)
   }
 
   useEffect(() => {
@@ -59,7 +62,8 @@ export function NumberInput({
       event.preventDefault()
       inputRef.current?.focus()
       setDraftValue(null)
-      onChange(clamp(value + step * (event.deltaY < 0 ? 1 : -1), min, max))
+      const next = clamp(value + step * (event.deltaY < 0 ? 1 : -1), min, max)
+      if (!isValidValue || isValidValue(next)) onChange(next)
     }
 
     container.addEventListener('wheel', handleWheel, { passive: false })
@@ -67,7 +71,7 @@ export function NumberInput({
     return () => {
       container.removeEventListener('wheel', handleWheel)
     }
-  }, [disabled, max, min, onChange, step, value])
+  }, [disabled, max, min, onChange, step, value, isValidValue])
 
   return (
     <div
@@ -88,6 +92,16 @@ export function NumberInput({
         inputMode="numeric"
         disabled={disabled}
         value={draftValue ?? value}
+        onKeyDown={(event) => {
+          if (
+            isValidValue &&
+            !disabled &&
+            (event.key === 'ArrowUp' || event.key === 'ArrowDown')
+          ) {
+            event.preventDefault()
+            changeBy(event.key === 'ArrowUp' ? 1 : -1)
+          }
+        }}
         onFocus={() => {
           if (value === 0) {
             setDraftValue('')
@@ -98,12 +112,12 @@ export function NumberInput({
 
           const nextValue = event.currentTarget.valueAsNumber
 
-          if (Number.isFinite(nextValue)) {
+          if (Number.isFinite(nextValue) && (!isValidValue || isValidValue(nextValue))) {
             onChange(clamp(nextValue, min, max))
           }
         }}
         onBlur={() => {
-          if (draftValue === '') {
+          if (draftValue === '' && !isValidValue) {
             const fallbackValue = clamp(0, min, max)
             onChange(fallbackValue)
           }

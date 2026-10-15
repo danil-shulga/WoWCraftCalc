@@ -134,6 +134,12 @@ function assertCatalogIsValid(data: NormalizedCraftData): NormalizedCraftData {
   for (const version of GAME_VERSIONS) {
     const workspace = data.workspaces[version]
     const definition = GAME_VERSION_REGISTRY[version]
+    const targetIds = new Set<string>()
+    for (const target of workspace.planner?.targets ?? []) {
+      if (targetIds.has(target.itemId) || !workspace.items[target.itemId])
+        throw new Error(`${definition.name}: повторяющаяся или отсутствующая цель плана`)
+      targetIds.add(target.itemId)
+    }
     const validationError = getCatalogValidationError(workspace.items, data.itemLanguage)
     if (validationError !== null)
       throw new Error(`${definition.name}: ${validationError}`)

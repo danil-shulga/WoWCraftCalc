@@ -15,9 +15,18 @@ import { PlaceholderPage } from '../pages/PlaceholderPage'
 import { useCraftStore, usePersistenceStatusStore } from '../store/useCraftStore'
 import { useLocalStorageUsage } from './useLocalStorageUsage'
 import './App.css'
+import { PlannerPage } from '../pages/PlannerPage'
+import { ShoppingListPanel } from '../features/planner/ShoppingListPanel'
+import type { ShoppingListProps } from '../features/planner/ShoppingList'
+import { usePlanner } from '../features/planner/usePlanner'
 
-function CurrentPage({ activeTab }: { activeTab: AppTab }) {
+function CurrentPage({
+  activeTab,
+  ...plannerProps
+}: { activeTab: AppTab } & ShoppingListProps) {
   switch (activeTab) {
+    case 'planner':
+      return <PlannerPage {...plannerProps} />
     case 'crafts':
       return <ItemsPage key="crafts" section="crafts" />
     case 'reagents':
@@ -30,6 +39,7 @@ function CurrentPage({ activeTab }: { activeTab: AppTab }) {
 }
 
 export function App() {
+  const plan = usePlanner()
   const storageBytes = useLocalStorageUsage()
   useEffect(startTsmClient, [])
   const [activeTab, setActiveTab] = useState<AppTab>('crafts')
@@ -66,7 +76,10 @@ export function App() {
 
   return (
     <DraftContext.Provider value={drafts}>
-      <div className="app-shell" data-currency-display={currencyDisplay}>
+      <div
+        className={`app-shell${activeTab === 'planner' ? '' : ' app-shell--catalog'}`}
+        data-currency-display={currencyDisplay}
+      >
         <Sidebar
           onOpenSettings={() => {
             setAreSettingsOpen(true)
@@ -101,10 +114,24 @@ export function App() {
             </div>
           ) : null}
           <CurrentPage
+            plan={plan}
+            catalog={items}
+            itemLanguage={itemLanguage}
             key={`${activeVersion}-${String(workspaceRevision)}`}
             activeTab={activeTab}
           />
         </main>
+        {activeTab === 'planner' || plan.purchases.length === 0 ? null : (
+          <ShoppingListPanel
+            key={`${activeVersion}-${String(workspaceRevision)}`}
+            plan={plan}
+            catalog={items}
+            itemLanguage={itemLanguage}
+            onOpenPlanner={() => {
+              setActiveTab('planner')
+            }}
+          />
+        )}
         <Button
           variant="plain"
           className="scroll-to-top"

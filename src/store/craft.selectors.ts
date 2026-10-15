@@ -2,6 +2,32 @@ import type { Item, ItemCatalog, ItemId, ItemSection } from '../domain/item.type
 import { getItemName } from '../domain/item-names'
 import type { ItemLanguage } from '../domain/user-settings'
 import type { PersistedCraftData } from '../domain/item.types'
+import type { PlannerTarget } from '../domain/planner.types'
+
+const emptyPlannerTargets: PlannerTarget[] = []
+
+export function selectPlannerTargets(
+  state: Pick<PersistedCraftData, 'activeVersion' | 'workspaces'>,
+) {
+  return selectActiveWorkspace(state).planner?.targets ?? emptyPlannerTargets
+}
+
+export function selectPlannerQuantity(
+  state: Pick<PersistedCraftData, 'activeVersion' | 'workspaces'>,
+  itemId: ItemId,
+) {
+  return selectPlannerTargets(state).find((target) => target.itemId === itemId)?.quantity
+}
+
+export function selectPlannerItems(
+  state: Pick<PersistedCraftData, 'activeVersion' | 'workspaces'>,
+) {
+  const items = selectActiveItems(state)
+  return selectPlannerTargets(state).flatMap((target) => {
+    const item = items[target.itemId]
+    return item ? [{ ...target, item }] : []
+  })
+}
 
 export function selectActiveWorkspace(
   state: Pick<PersistedCraftData, 'activeVersion' | 'workspaces'>,
