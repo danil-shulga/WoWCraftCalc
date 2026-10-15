@@ -4,7 +4,6 @@ import type { WowheadVersion } from './user-settings'
 
 export const GAME_VERSIONS = ['forever', 'tbc', 'classic'] as const
 export type GameVersion = (typeof GAME_VERSIONS)[number]
-export const DEFAULT_GAME_VERSION: GameVersion = 'forever'
 
 interface GameVersionDefinition {
   name: string

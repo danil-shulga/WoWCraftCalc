@@ -8,9 +8,7 @@ export const TSM_METRIC_LABELS = {
   recent: 'Текущая оценка',
   marketValue: 'Рыночная цена',
 } as const
-export type TsmMetric = keyof typeof TSM_METRIC_LABELS
 export type PriceSource = 'manual' | 'tsm'
-export type PriceMode = 'individual' | 'tsm'
 export const tsmMarketSchema = z
   .object({
     region: z.enum(['eu', 'us']),
@@ -77,7 +75,6 @@ export const tsmManifestSchema = z
       new Set(manifest.markets.map((entry) => tsmMarketKey(entry.market))).size ===
       manifest.markets.length,
   )
-export type TsmManifest = z.output<typeof tsmManifestSchema>
 
 export interface PriceContext {
   version: GameVersion

@@ -12,23 +12,6 @@ export function selectPlannerTargets(
   return selectActiveWorkspace(state).planner?.targets ?? emptyPlannerTargets
 }
 
-export function selectPlannerQuantity(
-  state: Pick<PersistedCraftData, 'activeVersion' | 'workspaces'>,
-  itemId: ItemId,
-) {
-  return selectPlannerTargets(state).find((target) => target.itemId === itemId)?.quantity
-}
-
-export function selectPlannerItems(
-  state: Pick<PersistedCraftData, 'activeVersion' | 'workspaces'>,
-) {
-  const items = selectActiveItems(state)
-  return selectPlannerTargets(state).flatMap((target) => {
-    const item = items[target.itemId]
-    return item ? [{ ...target, item }] : []
-  })
-}
-
 export function selectActiveWorkspace(
   state: Pick<PersistedCraftData, 'activeVersion' | 'workspaces'>,
 ) {
