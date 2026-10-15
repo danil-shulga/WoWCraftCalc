@@ -63,10 +63,16 @@ export function SearchableSelect({
   const selectedItem =
     inputValue === selectedOption?.label ? selectedOption.item : undefined
   const [isOpen, setIsOpen] = useState(false)
+  const [isListMounted, setIsListMounted] = useState(false)
+  const isListOpen = isOpen && !disabled
   const [highlightedIndex, setHighlightedIndex] = useState(0)
   const [listPosition, setListPosition] = useState<ListPosition | null>(null)
   const controlRef = useRef<HTMLDivElement>(null)
   const isClearingSelectionByTyping = useRef(false)
+
+  if (isListOpen && !isListMounted) {
+    setIsListMounted(true)
+  }
 
   useEffect(() => {
     if (isClearingSelectionByTyping.current) {
@@ -78,7 +84,7 @@ export function SearchableSelect({
   }, [selectedOption?.label])
 
   useLayoutEffect(() => {
-    if (!isOpen) {
+    if (!isListOpen) {
       return
     }
 
@@ -124,7 +130,7 @@ export function SearchableSelect({
       window.removeEventListener('resize', updateListPosition)
       window.removeEventListener('scroll', updateListPosition, true)
     }
-  }, [isOpen])
+  }, [isListOpen])
 
   const filteredOptions = useMemo(() => {
     const isSelectedLabel = inputValue === selectedOption?.label
@@ -175,6 +181,12 @@ export function SearchableSelect({
       <label
         className={hideLabel ? 'searchable-select__label--hidden' : undefined}
         htmlFor={`${listboxId}-input`}
+        onMouseDown={(event) => {
+          event.preventDefault()
+        }}
+        onClick={(event) => {
+          event.preventDefault()
+        }}
       >
         {label}
       </label>
@@ -208,8 +220,7 @@ export function SearchableSelect({
           onClick={() => {
             setIsOpen(true)
           }}
-          onFocus={(event) => {
-            event.currentTarget.select()
+          onFocus={() => {
             setHighlightedIndex(0)
             setIsOpen(true)
           }}
@@ -261,56 +272,76 @@ export function SearchableSelect({
         </small>
       ) : null}
 
-      {isOpen && !disabled && listPosition !== null
+      {isListMounted && listPosition !== null
         ? createPortal(
-            <ul
+            <div
               id={listboxId}
               className="searchable-select__list"
               role="listbox"
               style={listPosition}
+              data-state={isListOpen ? 'open' : 'closed'}
+              inert={!isListOpen}
+              aria-hidden={!isListOpen}
+              onAnimationEnd={(event) => {
+                if (
+                  event.target === event.currentTarget &&
+                  event.animationName === 'select-close' &&
+                  !isListOpen
+                ) {
+                  setIsListMounted(false)
+                }
+              }}
             >
-              {filteredOptions.length === 0 ? (
-                <li className="searchable-select__empty">{emptyMessage}</li>
-              ) : (
-                filteredOptions.map((option, index) => (
-                  <li
-                    id={`${listboxId}-option-${String(index)}`}
-                    className="searchable-select__option"
-                    key={option.value}
-                    role="option"
-                    aria-label={option.label}
-                    aria-selected={option.value === value}
-                    data-highlighted={index === highlightedIndex}
-                    onMouseDown={(event) => {
-                      event.preventDefault()
-                    }}
-                    onMouseEnter={() => {
-                      setHighlightedIndex(index)
-                    }}
-                    onClick={() => {
-                      selectOption(option)
-                    }}
-                  >
-                    {option.item ? (
-                      <ItemIdentity
-                        item={option.item}
-                        language={itemLanguage}
-                        iconSize="small"
-                      />
-                    ) : (
-                      <>
-                        {option.label}
-                        {option.secondaryLabel ? (
-                          <small className="searchable-select__secondary">
-                            {option.secondaryLabel}
-                          </small>
-                        ) : null}
-                      </>
-                    )}
-                  </li>
-                ))
-              )}
-            </ul>,
+              <div className="searchable-select__clip">
+                <ul
+                  className="searchable-select__options"
+                  role="presentation"
+                  style={{ maxHeight: listPosition.maxHeight }}
+                >
+                  {filteredOptions.length === 0 ? (
+                    <li className="searchable-select__empty">{emptyMessage}</li>
+                  ) : (
+                    filteredOptions.map((option, index) => (
+                      <li
+                        id={`${listboxId}-option-${String(index)}`}
+                        className="searchable-select__option"
+                        key={option.value}
+                        role="option"
+                        aria-label={option.label}
+                        aria-selected={option.value === value}
+                        data-highlighted={index === highlightedIndex}
+                        onMouseDown={(event) => {
+                          event.preventDefault()
+                        }}
+                        onMouseEnter={() => {
+                          setHighlightedIndex(index)
+                        }}
+                        onClick={() => {
+                          selectOption(option)
+                        }}
+                      >
+                        {option.item ? (
+                          <ItemIdentity
+                            item={option.item}
+                            language={itemLanguage}
+                            iconSize="small"
+                          />
+                        ) : (
+                          <>
+                            {option.label}
+                            {option.secondaryLabel ? (
+                              <small className="searchable-select__secondary">
+                                {option.secondaryLabel}
+                              </small>
+                            ) : null}
+                          </>
+                        )}
+                      </li>
+                    ))
+                  )}
+                </ul>
+              </div>
+            </div>,
             document.body,
           )
         : null}
