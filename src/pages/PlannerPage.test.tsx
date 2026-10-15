@@ -48,6 +48,74 @@ beforeEach(() => {
   useCraftStore.getState().replaceData(testCraftData({ items: catalog }))
 })
 
+it.each([
+  { name: 'Меч', heading: 'К изготовлению' },
+  { name: 'Руда', heading: 'Дополнительные покупки' },
+])(
+  'анимирует добавление и удаление последней строки: $heading',
+  async ({ name, heading }) => {
+    const user = userEvent.setup()
+    render(<App />)
+    await user.click(screen.getByRole('button', { name: 'Планировщик' }))
+    await user.click(screen.getByRole('combobox', { name: 'Предмет для плана' }))
+    await user.click(screen.getByRole('option', { name }))
+    await user.click(screen.getByRole('button', { name: 'Добавить в план' }))
+    const remove = screen.getByRole('button', { name: `Убрать из плана: ${name}` })
+    const row = remove.closest('li')
+    expect(row).toHaveClass('planner-page__animated-target')
+    await user.click(remove)
+    expect(useCraftStore.getState().workspaces.forever.planner?.targets).toEqual([])
+    expect(row).toBeInTheDocument()
+    expect(row).toHaveAttribute('data-removing', 'true')
+    expect(row).toHaveAttribute('inert')
+    expect(row).toHaveAttribute('aria-hidden', 'true')
+    expect(screen.queryByRole('button', { name: `Убрать из плана: ${name}` })).toBeNull()
+    fireEvent.animationEnd(remove)
+    expect(row).toBeInTheDocument()
+    if (!row) throw new Error('Не найдена строка цели')
+    fireEvent.animationEnd(row)
+    expect(row).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: heading })).toBeNull()
+    expect(screen.getByText('План пока пуст')).toBeVisible()
+  },
+)
+
+it.each([
+  { itemId: 'bar', name: 'Слиток' },
+  { itemId: 'ore', name: 'Руда' },
+])(
+  'сохраняет строки при очистке и повторном добавлении: $name',
+  async ({ itemId, name }) => {
+    const store = useCraftStore.getState()
+    store.setPlannerQuantity('sword', 3)
+    store.setPlannerQuantity(itemId, 2)
+    const user = userEvent.setup()
+    render(<App />)
+    await user.click(screen.getByRole('button', { name: 'Планировщик' }))
+    const swordRow = screen
+      .getByRole('button', { name: 'Убрать из плана: Меч' })
+      .closest('li')
+    const otherRow = screen
+      .getByRole('button', { name: `Убрать из плана: ${name}` })
+      .closest('li')
+    act(() => {
+      store.clearPlanner()
+    })
+    expect(swordRow).toHaveAttribute('data-removing', 'true')
+    expect(otherRow).toHaveAttribute('data-removing', 'true')
+    act(() => {
+      store.setPlannerQuantity(itemId, 6)
+    })
+    expect(otherRow).not.toHaveAttribute('data-removing')
+    expect(screen.getByRole('spinbutton', { name: `Количество: ${name}` })).toHaveValue(6)
+    if (!swordRow || !otherRow) throw new Error('Не найдены строки целей')
+    fireEvent.animationEnd(swordRow)
+    fireEvent.animationEnd(otherRow)
+    expect(otherRow).toBeInTheDocument()
+    expect(swordRow).not.toBeInTheDocument()
+  },
+)
+
 it('синхронизирует каталог, общую панель и страницу; показывает один список покупок', async () => {
   const user = userEvent.setup()
   render(<App />)

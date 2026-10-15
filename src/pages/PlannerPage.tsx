@@ -25,6 +25,19 @@ export function PlannerPage({ plan, catalog, itemLanguage }: ShoppingListProps) 
   const clearPlanner = useCraftStore((state) => state.clearPlanner)
   const [selectedId, setSelectedId] = useState('')
   const [confirmClear, setConfirmClear] = useState(false)
+  const [previousTargets, setPreviousTargets] = useState(plan.targets)
+  const [targetRows, setTargetRows] = useState(plan.targets)
+  if (previousTargets !== plan.targets) {
+    setPreviousTargets(plan.targets)
+    setTargetRows((rows) => [
+      ...rows.map(
+        (row) => plan.targets.find((target) => target.itemId === row.itemId) ?? row,
+      ),
+      ...plan.targets.filter(
+        (target) => !rows.some((row) => row.itemId === target.itemId),
+      ),
+    ])
+  }
   const available = Object.values(catalog)
     .filter((item) => !plan.targets.some((target) => target.itemId === item.id))
     .sort((a, b) =>
@@ -94,7 +107,7 @@ export function PlannerPage({ plan, catalog, itemLanguage }: ShoppingListProps) 
       <div className="planner-page__layout">
         <div className="planner-page__production">
           {(['craft', 'buy'] as const).map((method) => {
-            const targets = plan.targets.filter((target) => target.method === method)
+            const targets = targetRows.filter((target) => target.method === method)
             if (!targets.length) return null
             return (
               <section key={method} className="planner-page__card">
@@ -106,41 +119,61 @@ export function PlannerPage({ plan, catalog, itemLanguage }: ShoppingListProps) 
                     const item = catalog[target.itemId]
                     if (!item) return null
                     const step = plan.steps.find((entry) => entry.itemId === item.id)
+                    const isRemoving = !plan.targets.some(
+                      (entry) => entry.itemId === target.itemId,
+                    )
                     return (
-                      <li key={item.id} className="planner-page__target">
-                        <ItemIdentity
-                          item={item}
-                          language={itemLanguage}
-                          iconSize="medium"
-                        />
-                        <PlanQuantityControl
-                          buttonIcon="remove"
-                          itemName={getItemName(item, itemLanguage)}
-                          quantity={target.quantity}
-                          step={item.recipe?.outputQuantity ?? 1}
-                          onChange={(quantity) => {
-                            setQuantity(item.id, quantity)
-                          }}
-                          onRemove={() => {
-                            removeTarget(item.id)
-                          }}
-                        />
-                        <p className="planner-page__note">
-                          {item.recipe ? (
-                            <>
-                              Выход за крафт: {item.recipe.outputQuantity}.{' '}
-                              {step ? (
+                      <li
+                        key={item.id}
+                        className="planner-page__animated-target"
+                        data-removing={isRemoving || undefined}
+                        aria-hidden={isRemoving}
+                        inert={isRemoving}
+                        onAnimationEnd={(event) => {
+                          if (event.target === event.currentTarget && isRemoving) {
+                            setTargetRows((rows) =>
+                              rows.filter((row) => row.itemId !== item.id),
+                            )
+                          }
+                        }}
+                      >
+                        <div className="planner-page__target-clip">
+                          <div className="planner-page__target">
+                            <ItemIdentity
+                              item={item}
+                              language={itemLanguage}
+                              iconSize="medium"
+                            />
+                            <PlanQuantityControl
+                              buttonIcon="remove"
+                              itemName={getItemName(item, itemLanguage)}
+                              quantity={target.quantity}
+                              step={item.recipe?.outputQuantity ?? 1}
+                              onChange={(quantity) => {
+                                setQuantity(item.id, quantity)
+                              }}
+                              onRemove={() => {
+                                removeTarget(item.id)
+                              }}
+                            />
+                            <p className="planner-page__note">
+                              {item.recipe ? (
                                 <>
-                                  Всего партий: {step.craftCount}; выход:{' '}
-                                  {step.producedQuantity}; остаток: {step.surplusQuantity}
-                                  .
+                                  Выход за крафт: {item.recipe.outputQuantity}.{' '}
+                                  {step ? (
+                                    <>
+                                      Всего партий: {step.craftCount}; выход:{' '}
+                                      {step.producedQuantity}; остаток:{' '}
+                                      {step.surplusQuantity}.
+                                    </>
+                                  ) : null}
                                 </>
-                              ) : null}
-                            </>
-                          ) : (
-                            'Нет рецепта: прямая покупка.'
-                          )}
-                        </p>
+                              ) : (
+                                'Нет рецепта: прямая покупка.'
+                              )}
+                            </p>
+                          </div>
+                        </div>
                       </li>
                     )
                   })}

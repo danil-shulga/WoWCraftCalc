@@ -34,7 +34,6 @@
 
 .planner-page__rows {
   display: grid;
-  gap: 14px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -45,6 +44,55 @@
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 4px 10px;
+}
+
+.planner-page__rows > li + li .planner-page__target {
+  padding-top: 14px;
+}
+
+.planner-page__target-clip {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.planner-page__animated-target {
+  display: grid;
+  grid-template-rows: 1fr;
+  animation: planner-target-enter 150ms ease-out;
+}
+
+.planner-page__animated-target[data-removing] {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  animation: planner-target-exit 150ms ease-out;
+}
+
+@keyframes planner-target-enter {
+  from {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+  to {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+}
+
+@keyframes planner-target-exit {
+  from {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+  to {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .planner-page__animated-target {
+    animation-duration: 1ms;
+  }
 }
 
 .planner-page__note {
