@@ -23,7 +23,7 @@
   background: transparent;
 }
 
-.plan-quantity-control__quantity {
+.plan-quantity-control__quantity--opening {
   animation: plan-quantity-appear 150ms ease-out;
 }
 

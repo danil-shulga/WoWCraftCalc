@@ -164,6 +164,37 @@ describe('ItemsPage', () => {
     },
   )
 
+  it('не повторяет появление полей количества при перестановке строк', () => {
+    vi.useFakeTimers()
+    useCraftStore.getState().setPlannerQuantity('potion', 3)
+    useCraftStore.getState().setPlannerQuantity('bag', 4)
+    render(<ItemsPage section="crafts" />)
+    const list = mockListLayout()
+    const inputs = screen.getAllByRole('spinbutton')
+    const source = screen.getByText('Шерстяная сумка').closest('article')
+    if (!source) throw new Error('Нет строки')
+    for (const input of inputs) {
+      expect(input.closest('.plan-quantity-control__quantity')).not.toHaveClass(
+        'plan-quantity-control__quantity--opening',
+      )
+    }
+    pointerAt('pointerDown', source, 200)
+    pointerAt('pointerMove', document, 115)
+    pointerAt('pointerUp', document, 115)
+    act(() => {
+      vi.advanceTimersByTime(200)
+    })
+    expect(rootNames()[0]).toBe('Редактировать Шерстяная сумка')
+    expect(screen.getAllByRole('spinbutton')).toEqual([inputs[1], inputs[0]])
+    expect(
+      screen.getByRole('spinbutton', { name: 'Количество: Лечебное зелье' }),
+    ).toHaveValue(3)
+    expect(
+      screen.getByRole('spinbutton', { name: 'Количество: Шерстяная сумка' }),
+    ).toHaveValue(4)
+    expect(list.querySelector('.plan-quantity-control__quantity--opening')).toBeNull()
+  })
+
   it.each(['escape', 'outside', 'cancel'] as const)(
     'отменяет перенос через %s, не меняя сохранённый порядок',
     (method) => {

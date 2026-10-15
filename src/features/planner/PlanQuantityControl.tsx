@@ -25,6 +25,12 @@ export function PlanQuantityControl({
   const [visibleQuantity, setVisibleQuantity] = useState(quantity)
   const quantityRef = useRef<HTMLDivElement>(null)
   const selected = quantity !== undefined
+  const [wasSelected, setWasSelected] = useState(selected)
+  const [isOpening, setIsOpening] = useState(false)
+  if (wasSelected !== selected) {
+    setWasSelected(selected)
+    setIsOpening(selected)
+  }
   if (selected && visibleQuantity !== quantity) setVisibleQuantity(quantity)
   useEffect(() => {
     if (selected && focusOnAdd) quantityRef.current?.querySelector('input')?.focus()
@@ -35,13 +41,13 @@ export function PlanQuantityControl({
       {visibleQuantity !== undefined ? (
         <div
           ref={quantityRef}
-          className={`plan-quantity-control__quantity${selected ? '' : ' plan-quantity-control__quantity--closing'}`}
+          className={`plan-quantity-control__quantity${selected ? (isOpening ? ' plan-quantity-control__quantity--opening' : '') : ' plan-quantity-control__quantity--closing'}`}
           aria-hidden={!selected}
           inert={!selected}
           onAnimationEnd={(event) => {
-            if (event.target === event.currentTarget && !selected) {
-              setVisibleQuantity(undefined)
-            }
+            if (event.target !== event.currentTarget) return
+            if (selected) setIsOpening(false)
+            else setVisibleQuantity(undefined)
           }}
         >
           <NumberInput
