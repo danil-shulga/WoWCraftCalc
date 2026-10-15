@@ -76,6 +76,16 @@ describe('RecipeEditor', () => {
       ).toBeVisible()
       await user.click(screen.getByRole('option', { name }))
       expect(field).toHaveValue(name)
+      const closingList = screen.getByRole('listbox', { hidden: true })
+      expect(closingList).toHaveAttribute('inert')
+      expect(closingList).toHaveAttribute('aria-hidden', 'true')
+      fireEvent(
+        closingList,
+        Object.assign(new Event('animationend', { bubbles: true }), {
+          animationName: 'select-close',
+        }),
+      )
+      expect(screen.queryByRole('listbox', { hidden: true })).not.toBeInTheDocument()
       expect(screen.getByTitle(`Иконка: ${name}`)).toBeVisible()
       expect(screen.queryByText(secondaryName)).not.toBeInTheDocument()
       await user.click(screen.getByRole('button', { name: 'Добавить реагент' }))
