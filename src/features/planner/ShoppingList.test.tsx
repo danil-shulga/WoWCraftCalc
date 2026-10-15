@@ -109,7 +109,7 @@ it('обновляет бюджет в свёрнутом виде и скрыв
   expect(screen.queryByRole('complementary', { name: 'Список покупок' })).toBeNull()
 })
 
-it('показывает зависимости отдельными строками с маленькими иконками и одним названием', async () => {
+it('показывает зависимости отдельными строками с очень маленькими иконками и одним названием', async () => {
   const user = userEvent.setup()
   const crafts: ItemCatalog = { ...catalog }
   for (const [id, name] of [
@@ -148,7 +148,7 @@ it('показывает зависимости отдельными строк�
   const rows = within(dependencies).getAllByRole('listitem')
   expect(rows).toHaveLength(2)
   for (const row of rows) {
-    expect(row.querySelector('.item-icon--small')).toBeVisible()
+    expect(row.querySelector('.item-icon--extra-small')).toBeVisible()
     expect(row.querySelector('.item-name__secondary')).toBeNull()
   }
   expect(
