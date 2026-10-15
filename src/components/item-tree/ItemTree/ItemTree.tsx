@@ -69,6 +69,13 @@ function ItemTreeNode({
 }: ItemTreeNodeProps) {
   const isExpanded = expandedPaths.has(path)
   const [isBranchMounted, setIsBranchMounted] = useState(isExpanded)
+  const [wasExpanded, setWasExpanded] = useState(isExpanded)
+  const [isOpening, setIsOpening] = useState(isExpanded)
+
+  if (wasExpanded !== isExpanded) {
+    setWasExpanded(isExpanded)
+    setIsOpening(isExpanded)
+  }
 
   if (isExpanded && !isBranchMounted) {
     setIsBranchMounted(true)
@@ -139,12 +146,13 @@ function ItemTreeNode({
 
       {isBranchMounted && hasRecipe && !hasCycle ? (
         <div
-          className={`item-tree__expansion${isExpanded ? '' : ' item-tree__expansion--closing'}`}
+          className={`item-tree__expansion${!isExpanded ? ' item-tree__expansion--closing' : isOpening ? ' item-tree__expansion--opening' : ''}`}
           aria-hidden={!isExpanded}
           inert={!isExpanded}
           onAnimationEnd={(event) => {
-            if (event.target === event.currentTarget && !isExpanded) {
-              setIsBranchMounted(false)
+            if (event.target === event.currentTarget) {
+              if (isExpanded) setIsOpening(false)
+              else setIsBranchMounted(false)
             }
           }}
         >

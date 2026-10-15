@@ -190,13 +190,7 @@ export function useRootItemDrag(
       drag.y = event.clientY
       if (drag.active) paint(drag)
       const bounds = listRef.current?.getBoundingClientRect()
-      settle(
-        !!bounds &&
-          drag.x >= bounds.left &&
-          drag.x <= bounds.right &&
-          drag.y >= bounds.top &&
-          drag.y <= bounds.bottom,
-      )
+      settle(!!bounds && drag.x >= bounds.left && drag.x <= bounds.right)
     }
     const cancel = () => {
       settle(false)

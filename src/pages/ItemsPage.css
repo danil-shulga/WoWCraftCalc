@@ -17,6 +17,7 @@
   display: grid;
   gap: 10px;
   padding-block: 10px;
+  overflow-anchor: none;
 }
 
 .item-list__drop-gap {

@@ -165,6 +165,10 @@ describe('ItemsPage', () => {
     render(<ItemsPage section="crafts" />)
     const source = screen.getByRole('button', { name: 'Развернуть рецепт' })
     fireEvent.click(source)
+    const branch = source.closest('.item-tree')?.querySelector('.item-tree__expansion')
+    if (!branch) throw new Error('Нет раскрытой ветки')
+    fireEvent.animationEnd(branch)
+    expect(branch).not.toHaveClass('item-tree__expansion--opening')
     const list = mockListLayout()
     const trees = list.querySelectorAll(':scope > .item-tree')
     if (!trees[0] || !trees[1]) throw new Error('Нет деревьев')
@@ -185,6 +189,10 @@ describe('ItemsPage', () => {
       vi.advanceTimersByTime(200)
     })
     expect(source).toHaveAttribute('aria-expanded', 'true')
+    expect(source.closest('.item-tree')?.querySelector('.item-tree__expansion')).toBe(
+      branch,
+    )
+    expect(branch).not.toHaveClass('item-tree__expansion--opening')
     const state = useCraftStore.getState()
     expect(state.workspaces[state.activeVersion].rootItemOrder?.crafts).toEqual([
       'bag',
@@ -204,7 +212,7 @@ describe('ItemsPage', () => {
     expect(list.querySelector('.item-list__drop-gap')).not.toBeInTheDocument()
   })
 
-  it.each([235, 305])(
+  it.each([235, 305, 400])(
     'принимает отпускание в промежутке на высоте %s, включая конец списка',
     (y) => {
       vi.useFakeTimers()
@@ -238,6 +246,24 @@ describe('ItemsPage', () => {
       )
     },
   )
+
+  it('принимает отпускание выше начала списка', () => {
+    vi.useFakeTimers()
+    render(<ItemsPage section="crafts" />)
+    const list = mockListLayout()
+    const source = screen.getByText('Шерстяная сумка').closest('article')
+    if (!source) throw new Error('Нет строки')
+    pointerAt('pointerDown', source, 200)
+    pointerAt('pointerMove', document, 60)
+    expect(list.querySelector('.item-list__drop-gap')).toHaveStyle({ top: '10px' })
+    pointerAt('pointerUp', document, 60)
+    act(() => {
+      vi.advanceTimersByTime(200)
+    })
+    expect(rootNames()[0]).toBe('Редактировать Шерстяная сумка')
+    expect(list).not.toHaveClass('item-list--dragging')
+    expect(list.querySelector('.item-list__drop-gap')).not.toBeInTheDocument()
+  })
 
   it('прокручивает у обоих краёв без движения мыши, останавливается при отпускании и размонтировании', () => {
     vi.useFakeTimers()

@@ -51,7 +51,9 @@ describe('ItemTree', () => {
     expect(screen.queryByText('Реагент')).not.toBeInTheDocument()
     rerender(<ItemTree {...props} expandedPaths={new Set(['root'])} />)
     const branch = getBranch()
+    expect(branch).toHaveClass('item-tree__expansion--opening')
     fireEvent.animationEnd(branch)
+    expect(branch).not.toHaveClass('item-tree__expansion--opening')
     expect(screen.getByText('Реагент')).toBeInTheDocument()
     rerender(<ItemTree {...props} expandedPaths={new Set()} />)
     expect(branch).toHaveAttribute('aria-hidden', 'true')
@@ -63,6 +65,7 @@ describe('ItemTree', () => {
     expect(screen.queryByText('Реагент')).not.toBeInTheDocument()
     rerender(<ItemTree {...props} expandedPaths={new Set(['root'])} />)
     expect(screen.getByText('Реагент')).toBeInTheDocument()
+    expect(getBranch()).toHaveClass('item-tree__expansion--opening')
   })
 
   it('сохраняет ветку при повторном раскрытии до завершения закрытия', () => {

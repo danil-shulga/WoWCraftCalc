@@ -7,6 +7,9 @@
 .item-tree__expansion {
   display: grid;
   grid-template-rows: 1fr;
+}
+
+.item-tree__expansion--opening {
   animation: item-tree-expand 150ms ease-out;
 }
 
@@ -14,7 +17,7 @@
   grid-template-rows: 0fr;
   opacity: 0;
   overflow: hidden;
-  animation-name: item-tree-collapse;
+  animation: item-tree-collapse 150ms ease-out;
 }
 
 @keyframes item-tree-collapse {
