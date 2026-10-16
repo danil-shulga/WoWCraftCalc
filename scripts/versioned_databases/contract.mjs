@@ -46,6 +46,7 @@ const item = z.strictObject({
       .regex(/^https:\/\/wow\.zamimg\.com\/images\/wow\/icons\/large\/[a-z0-9_-]+\.jpg$/),
   ]),
   qualityId: nonnegative,
+  requiredLevel: nonnegative,
   bondingId: nonnegative,
   recipeSpellIds: z.array(id),
   vendor: z.strictObject({

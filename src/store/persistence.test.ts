@@ -39,6 +39,26 @@ const bolt = catalog.bolt
 if (!cloth || !bolt) throw new Error('Нет фикстуры')
 
 describe('резервная копия трёх версий', () => {
+  it('сохраняет требуемый уровень и качество, включая ноль и неизвестное значение', () => {
+    const data = testCraftData({
+      items: {
+        cloth: { ...cloth, requiredLevel: 0, qualityId: 0 },
+        bolt: { ...bolt, requiredLevel: null, qualityId: null },
+      },
+    })
+    expect(parseCurrentPersistedData(data)).toEqual(data)
+    expect(parseImportedData(createExportJson(data))).toEqual({ success: true, data })
+    for (const invalid of [-1, 1.5]) {
+      const changed = structuredClone(data)
+      const item = changed.workspaces.forever.items.cloth
+      if (!item) throw new Error('Нет фикстуры')
+      item.requiredLevel = invalid
+      expect(() => parseCurrentPersistedData(changed)).toThrow()
+      item.requiredLevel = 0
+      item.qualityId = invalid
+      expect(() => createExportJson(changed)).toThrow()
+    }
+  })
   it('восстанавливает все каталоги, версии, язык и валюту', () => {
     const data = testCraftData({
       items: catalog,

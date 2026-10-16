@@ -48,7 +48,7 @@ export interface RecipeImportTarget {
   input: ItemInput
 }
 
-export interface RecipeImportItem {
+export interface RecipeImportItem extends Pick<Item, 'requiredLevel' | 'qualityId'> {
   wowheadItemId: number
   name: string
   names?: ItemNames | undefined
@@ -72,6 +72,8 @@ const recipeImportItemSchema = z.object({
   names: itemNamesSchema.optional(),
   wowheadVersion: z.enum(WOWHEAD_VERSIONS).optional(),
   iconUrl: z.union([z.literal(''), z.url()]),
+  requiredLevel: itemSchema.shape.requiredLevel,
+  qualityId: itemSchema.shape.qualityId,
   defaultPurchasePriceCopper: z.number().int().nonnegative().nullable().optional(),
   defaultSalePriceCopper: z.number().int().nonnegative().nullable().optional(),
 })
@@ -194,6 +196,16 @@ function mergeItemNames(
   return {
     ru: imported.names?.ru ?? current?.names?.ru ?? null,
     en: imported.names?.en ?? current?.names?.en ?? null,
+  }
+}
+
+function mergeItemMetadata(
+  current: Item | undefined,
+  imported: RecipeImportItem,
+): Pick<Item, 'requiredLevel' | 'qualityId'> {
+  return {
+    requiredLevel: imported.requiredLevel ?? current?.requiredLevel ?? null,
+    qualityId: imported.qualityId ?? current?.qualityId ?? null,
   }
 }
 
@@ -655,6 +667,7 @@ export const useCraftStore = create<CraftStore>()(
           const nextItems: ItemCatalog = { ...currentItems }
           const productSections = currentProduct?.sections ?? []
           const importedProduct: Item = {
+            ...mergeItemMetadata(currentProduct, data.product),
             isFavorite: currentProduct?.isFavorite,
             id: productItemId,
             name: data.product.name,
@@ -717,6 +730,7 @@ export const useCraftStore = create<CraftStore>()(
             }
 
             nextItems[reagentItemId] = {
+              ...mergeItemMetadata(reagent, importedReagent),
               isFavorite: reagent?.isFavorite,
               id: reagentItemId,
               name: importedReagent.name,
@@ -798,6 +812,7 @@ export const useCraftStore = create<CraftStore>()(
           const current = findImportedItem(items, data)
           const itemId = current?.id ?? crypto.randomUUID()
           const item: Item = {
+            ...mergeItemMetadata(current, data),
             id: itemId,
             name: data.name,
             names: mergeItemNames(current, data),

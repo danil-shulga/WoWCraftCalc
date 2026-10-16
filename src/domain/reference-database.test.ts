@@ -56,6 +56,7 @@ describe('справочник', () => {
       readFileSync(`public/${GAME_VERSION_REGISTRY[version].databasePath}`, 'utf8'),
     )
     const db = parseReferenceDatabase(value, version)
+    expect(db.items['2302']).toMatchObject({ requiredLevel: 3, qualityId: 1 })
     expect(Object.keys(db.items)).toHaveLength(
       { forever: 2348, tbc: 2376, classic: 1445 }[version],
     )

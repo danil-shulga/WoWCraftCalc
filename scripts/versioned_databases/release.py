@@ -57,7 +57,7 @@ def release():
         a, b = prepared[left][1], prepared[right][1]
         shared = sorted(a["items"].keys() & b["items"].keys(), key=int)
         differences = {}
-        for field in ["names", "vendor", "qualityId", "bondingId", "recipeSpellIds", "iconUrl"]:
+        for field in ["names", "vendor", "requiredLevel", "qualityId", "bondingId", "recipeSpellIds", "iconUrl"]:
             differences[field] = [int(key) for key in shared if a["items"][key][field] != b["items"][key][field]]
         common_spells = sorted(a["recipes"].keys() & b["recipes"].keys(), key=int)
         comparisons.append({"versions": [left, right], "sharedItemIds": len(shared),

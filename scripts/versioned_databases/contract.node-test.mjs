@@ -18,6 +18,7 @@ function fixture() {
   const items = Object.fromEntries(
     [2302, 2318, 2320].map((id) => {
       const item = structuredClone(legacy.items[id])
+      item.requiredLevel = 8
       item.recipeSpellIds = id === 2302 ? [2149] : []
       return [id, item]
     }),
@@ -69,9 +70,10 @@ function fixture() {
   return db
 }
 
-test('preserves all seven item fields, unknown output and external tool slots', () => {
+test('preserves all eight item fields, unknown output and external tool slots', () => {
   const db = databaseSchema.parse(fixture())
-  assert.equal(Object.keys(db.items['2302']).length, 7)
+  assert.equal(Object.keys(db.items['2302']).length, 8)
+  assert.equal(db.items['2302'].requiredLevel, 8)
   assert.equal(db.recipes['2149'].output.quantity, null)
   assert.deepEqual(db.recipes['2149'].tools, { itemIds: [999999], categoryIds: [14, 14] })
 })
@@ -109,6 +111,18 @@ test('rejects extra catalog items, broken reverse links and incomplete recipes',
 
 test('rejects mixed builds, locales, game mode, icon cache identity and stale statistics', () => {
   for (const mutate of [
+    (db) => {
+      db.items['2302'].requiredLevel = -1
+    },
+    (db) => {
+      db.items['2302'].requiredLevel = 1.5
+    },
+    (db) => {
+      delete db.items['2302'].requiredLevel
+    },
+    (db) => {
+      db.items['2302'].qualityId = -1
+    },
     (db) => {
       db.sources[0].build = '2.5.6.69795'
     },

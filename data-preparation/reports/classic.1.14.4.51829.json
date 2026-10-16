@@ -265,6 +265,6 @@
     "unverifiedSuspiciousNames": [],
     "limitation": "No exhaustive acquisition/availability source was applied. Absence of suspicious names does not prove availability."
   },
-  "sha256": "885c22ad8ec3ae83923726fa590f49321e0e9dec1bf0e656b0c999a0a14dd414",
+  "sha256": "92527154173a8b5506e79eed1a8bdb8bae28e8327992699ebc06554abe99c259",
   "file": "public/data/classic/craftcalc-db.1.14.4.51829.json"
 }

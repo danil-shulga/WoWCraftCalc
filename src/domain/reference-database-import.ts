@@ -20,6 +20,8 @@ export function referenceItemToImport(
     name: referenceItemName(item, language),
     names: item.names,
     iconUrl: item.iconUrl,
+    requiredLevel: item.requiredLevel,
+    qualityId: item.qualityId,
     defaultPurchasePriceCopper: null,
     defaultSalePriceCopper: null,
   }

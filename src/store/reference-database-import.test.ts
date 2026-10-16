@@ -43,6 +43,8 @@ describe('импорт базы в store', () => {
       purchasePriceCopper: null,
       salePriceCopper: null,
       source: { wowheadVersion: 'forever' },
+      requiredLevel: 70,
+      qualityId: 3,
     })
     expect(
       useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items[
@@ -51,6 +53,8 @@ describe('импорт базы в store', () => {
     ).toMatchObject({
       purchasePriceCopper: null,
       salePriceCopper: null,
+      requiredLevel: 0,
+      qualityId: 1,
     })
     store.setItemPrice(productId, 'purchasePriceCopper', 0)
     store.setItemPrice(productId, 'salePriceCopper', null)
@@ -89,6 +93,41 @@ describe('импорт базы в store', () => {
         useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items,
       ),
     ).toHaveLength(2)
+    expect(useCraftStore.getState().workspaces.forever.items[productId]).toMatchObject({
+      requiredLevel: 70,
+      qualityId: 3,
+    })
+    expect(useCraftStore.getState().workspaces.forever.items[reagentId]).toMatchObject({
+      requiredLevel: 0,
+      qualityId: 1,
+    })
+  })
+  it('дополняет метаданные из базы и сохраняет их при импорте без этих сведений', () => {
+    const store = useCraftStore.getState()
+    const added = store.addReferenceItem(reagentData)
+    if (!added.success) throw new Error(added.error)
+    expect(useCraftStore.getState().workspaces.forever.items[added.itemId]).toMatchObject(
+      { requiredLevel: 0, qualityId: 1 },
+    )
+    const withoutMetadata = { ...reagentData }
+    delete withoutMetadata.requiredLevel
+    delete withoutMetadata.qualityId
+    store.addReferenceItem(withoutMetadata)
+    store.importRecipe({ ...data, reagents: [{ ...withoutMetadata, quantity: 3 }] })
+    expect(useCraftStore.getState().workspaces.forever.items[added.itemId]).toMatchObject(
+      { requiredLevel: 0, qualityId: 1 },
+    )
+    for (const invalid of [-1, 1.5]) {
+      const before = useCraftStore.getState()
+      expect(
+        store.addReferenceItem({ ...reagentData, requiredLevel: invalid }).success,
+      ).toBe(false)
+      expect(
+        store.importRecipe({ ...data, product: { ...data.product, qualityId: invalid } })
+          .success,
+      ).toBe(false)
+      expect(useCraftStore.getState()).toBe(before)
+    }
   })
   it('добавляет отдельный реагент без дублирования и сохраняет его рецепт при повторном добавлении', () => {
     const store = useCraftStore.getState()

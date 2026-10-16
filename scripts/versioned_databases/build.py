@@ -75,7 +75,7 @@ def read_csv(path, required):
 def requirements(adapter):
     return {
         "Item": ["ID", "ClassID", "SubclassID", "IconFileDataID"],
-        "ItemSparse": ["ID", "Display_lang", "OverallQualityID", "Bonding", "BuyPrice", "SellPrice", "VendorStackCount"],
+        "ItemSparse": ["ID", "Display_lang", "RequiredLevel", "OverallQualityID", "Bonding", "BuyPrice", "SellPrice", "VendorStackCount"],
         "SkillLine": ["ID", "DisplayName_lang", "ParentSkillLineID"],
         "SkillLineAbility": ["ID", "SkillLine", "Spell", "MinSkillLineRank", "TrivialSkillLineRankLow", "TrivialSkillLineRankHigh", "NumSkillUps", "TradeSkillCategoryID", "AcquireMethod", "ClassMask", "Flags", *adapter["race"], *([adapter["skillup"]] if adapter["skillup"] else [])],
         "SpellEffect": ["ID", "SpellID", "Effect", "EffectItemType", "EffectIndex", "DifficultyID", "Variance", "EffectRealPointsPerLevel", adapter["base"], *([adapter["scaling"]] if adapter["scaling"] else [])],
@@ -342,6 +342,7 @@ def convert(manifest, tables, icons=None):
         items[str(item_id)] = {
             "itemId": item_id, "names": {"ru": ru.get(item_id, {}).get("Display_lang") or None, "en": en.get(item_id, {}).get("Display_lang") or None},
             "iconUrl": (icons or {}).get(str(item_id), ""),
+            "requiredLevel": integer(row["RequiredLevel"]),
             "qualityId": integer(row["OverallQualityID"]), "recipeSpellIds": reverse[item_id],
             "vendor": {"baseBuyPriceCopper": nullable_copper(row["BuyPrice"]), "sellPriceCopper": nullable_copper(row["SellPrice"]), "stackCount": stack, "availability": None},
             "bondingId": integer(row["Bonding"]),
@@ -433,6 +434,10 @@ def rebuild(manifest_path):
             changes = []
             for key in sorted(set(old[section]) | set(db[section]), key=int):
                 before, after = old[section].get(key), db[section].get(key)
+                if section == "items" and after is not None:
+                    # Schema 1 never stored RequiredLevel. Compare every original
+                    # field; the new field is validated against this build's CSV.
+                    after = {k: v for k, v in after.items() if k != "requiredLevel"}
                 if section == "recipes" and after is not None:
                     after = {**after, "output": {k: v for k, v in after["output"].items() if k != "rawEffectParameters"}}
                 if before != after:

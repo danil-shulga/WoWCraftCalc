@@ -11,7 +11,7 @@ def fixture():
     manifest = {"gameVersion": "forever", "build": "1.60.1.70338", "mode": "beta",
                 "product": "wow_classic_beta", "snapshotDate": "2026-10-12",
                 "locales": ["ruRU", "enUS"], "sources": []}
-    item = {"ID": "1", "Display_lang": "Product", "OverallQualityID": "1", "Bonding": "0",
+    item = {"ID": "1", "Display_lang": "Product", "RequiredLevel": "3", "ItemLevel": "8", "OverallQualityID": "1", "Bonding": "0",
             "BuyPrice": "0", "SellPrice": "", "VendorStackCount": "5"}
     ability = {"ID": "10", "SkillLine": "171", "Spell": "100", "MinSkillLineRank": "1",
                "TrivialSkillLineRankLow": "2", "TrivialSkillLineRankHigh": "3", "NumSkillUps": "1",
@@ -85,7 +85,9 @@ class ConverterTests(unittest.TestCase):
     def test_scope_tools_prices_and_unknown_output(self):
         db, _ = convert(*fixture())
         self.assertEqual(set(db["items"]), {"1", "2"})
-        self.assertEqual(len(db["items"]["1"]), 7)
+        self.assertEqual(len(db["items"]["1"]), 8)
+        self.assertEqual(db["items"]["1"]["requiredLevel"], 3)
+        self.assertEqual(db["items"]["1"]["qualityId"], 1)
         self.assertEqual(db["recipes"]["100"]["tools"], {"itemIds": [999], "categoryIds": [14, 14]})
         self.assertIsNone(db["recipes"]["100"]["output"]["quantity"])
         self.assertIsNone(db["recipes"]["100"]["output"]["baseQuantityCandidate"])

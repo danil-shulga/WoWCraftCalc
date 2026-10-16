@@ -47,6 +47,7 @@ export function referenceFixture(version: GameVersion = 'forever') {
         names: { ru: 'Венец Грёз', en: 'Dream Crown' },
         iconUrl: '',
         qualityId: 3,
+        requiredLevel: 70,
         recipeSpellIds: [10],
         vendor: {
           baseBuyPriceCopper: 20,
@@ -61,6 +62,7 @@ export function referenceFixture(version: GameVersion = 'forever') {
         names: { ru: 'Ткань', en: 'Cloth' },
         iconUrl: '',
         qualityId: 1,
+        requiredLevel: 0,
         recipeSpellIds: [],
         vendor: {
           baseBuyPriceCopper: 0,

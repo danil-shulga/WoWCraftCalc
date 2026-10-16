@@ -32,6 +32,8 @@ export interface Item {
   // Optional only for legacy callers; store writes and persistence always normalize it.
   names?: ItemNames | undefined
   iconUrl: string
+  requiredLevel?: number | null | undefined
+  qualityId?: number | null | undefined
   source?:
     | {
         wowheadItemId: number

@@ -18,6 +18,7 @@ export const referenceItemSchema = z.object({
       .regex(/^https:\/\/wow\.zamimg\.com\/images\/wow\/icons\/large\/[a-z0-9_-]+\.jpg$/),
   ]),
   qualityId: z.number().int().nonnegative(),
+  requiredLevel: z.number().int().nonnegative(),
   recipeSpellIds: z.array(id),
   vendor: z.object({
     baseBuyPriceCopper: copper,

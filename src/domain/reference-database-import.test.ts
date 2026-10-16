@@ -12,6 +12,8 @@ it('преобразует только непосредственный сос�
     wowheadVersion: 'forever',
     wowheadItemId: 1,
     defaultPurchasePriceCopper: null,
+    requiredLevel: 70,
+    qualityId: 3,
   })
   expect(data.outputQuantity).toBe(7)
   expect(data.reagents).toHaveLength(1)
@@ -20,6 +22,8 @@ it('преобразует только непосредственный сос�
     defaultPurchasePriceCopper: null,
     defaultSalePriceCopper: null,
     quantity: 3,
+    requiredLevel: 0,
+    qualityId: 1,
   })
   expect(() => referenceRecipeToImport(db, recipe, 0)).toThrow()
 })

@@ -33,6 +33,8 @@ export const itemSchema = z.object({
   name: z.string().trim().min(1, 'Введите название предмета'),
   names: itemNamesSchema.default({ ru: null, en: null }),
   iconUrl: z.union([z.literal(''), z.url('Введите корректный URL')]),
+  requiredLevel: z.number().int().nonnegative().nullable().optional(),
+  qualityId: z.number().int().nonnegative().nullable().optional(),
   source: z
     .object({
       wowheadItemId: z.number().int().positive(),
