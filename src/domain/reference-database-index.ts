@@ -56,6 +56,33 @@ export function buildReferenceDatabaseIndex(
     }
     index.reagentsByProfession.set(recipe.profession, reagents)
   }
+  for (const source of database.reagentSources ?? []) {
+    for (const reagent of source.reagents) index.reagentIds.add(reagent.itemId)
+    if (source.profession) {
+      const reagents =
+        index.reagentsByProfession.get(source.profession) ?? new Set<number>()
+      for (const reagent of source.reagents) reagents.add(reagent.itemId)
+      index.reagentsByProfession.set(source.profession, reagents)
+    }
+  }
+  // A conversion ingredient belongs to every profession consuming its product.
+  // Iterate to support chains independently of source spell order.
+  let changed = true
+  while (changed) {
+    changed = false
+    for (const source of database.reagentSources ?? []) {
+      if (source.kind !== 'item-conversion' || source.productItemId === null) continue
+      for (const reagents of index.reagentsByProfession.values()) {
+        if (!reagents.has(source.productItemId)) continue
+        for (const reagent of source.reagents) {
+          if (!reagents.has(reagent.itemId)) {
+            reagents.add(reagent.itemId)
+            changed = true
+          }
+        }
+      }
+    }
+  }
   return index
 }
 

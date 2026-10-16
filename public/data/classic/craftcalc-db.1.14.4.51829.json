@@ -102,13 +102,2971 @@
     "effect": 24,
     "rules": [
       "Profession-linked CREATE_ITEM effects with a single unambiguous product and complete positive consumed reagents.",
-      "Items are exactly the union of products and consumed reagents; tools remain external references.",
+      "Items are exactly the union of recipe products, recipe reagents and additional reagentSources; tools remain external references.",
+      "Additional reagents come from profession-linked enchantments and single-ingredient trade-goods conversions leading to catalog items; conversions are not crafting recipes.",
       "Classic uses the pre-SoD Era snapshot 1.14.4.51829.",
       "No item data, translations or icon responses are borrowed from another version."
     ],
     "availability": "Not exhaustively verified: client presence does not prove player availability; hidden/test recipes can remain."
   },
-  "itemScope": "recipe-products-and-consumed-reagents",
+  "itemScope": "recipe-products-and-profession-reagents",
+  "reagentSources": [
+    {
+      "spellId": 7418,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 10940,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 686559,
+        "reagentsRowId": 19897,
+        "abilityRowIds": [4289]
+      }
+    },
+    {
+      "spellId": 7420,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 10940,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 685836,
+        "reagentsRowId": 19836,
+        "abilityRowIds": [4290]
+      }
+    },
+    {
+      "spellId": 7426,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 10940,
+          "quantity": 2
+        },
+        {
+          "itemId": 10938,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 686542,
+        "reagentsRowId": 19896,
+        "abilityRowIds": [4292]
+      }
+    },
+    {
+      "spellId": 7428,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 10938,
+          "quantity": 1
+        },
+        {
+          "itemId": 10940,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 685956,
+        "reagentsRowId": 19846,
+        "abilityRowIds": [4293]
+      }
+    },
+    {
+      "spellId": 7443,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 10938,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 687416,
+        "reagentsRowId": 19956,
+        "abilityRowIds": [4297]
+      }
+    },
+    {
+      "spellId": 7454,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 10940,
+          "quantity": 1
+        },
+        {
+          "itemId": 10938,
+          "quantity": 2
+        }
+      ],
+      "source": {
+        "effectRowId": 686264,
+        "reagentsRowId": 19868,
+        "abilityRowIds": [4300]
+      }
+    },
+    {
+      "spellId": 7457,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 10940,
+          "quantity": 3
+        }
+      ],
+      "source": {
+        "effectRowId": 686266,
+        "reagentsRowId": 19869,
+        "abilityRowIds": [4301]
+      }
+    },
+    {
+      "spellId": 7745,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 10940,
+          "quantity": 4
+        },
+        {
+          "itemId": 10978,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 685421,
+        "reagentsRowId": 19805,
+        "abilityRowIds": [4368]
+      }
+    },
+    {
+      "spellId": 7748,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 10940,
+          "quantity": 2
+        },
+        {
+          "itemId": 10938,
+          "quantity": 2
+        }
+      ],
+      "source": {
+        "effectRowId": 685812,
+        "reagentsRowId": 19834,
+        "abilityRowIds": [4352]
+      }
+    },
+    {
+      "spellId": 7766,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 10938,
+          "quantity": 2
+        }
+      ],
+      "source": {
+        "effectRowId": 686499,
+        "reagentsRowId": 19889,
+        "abilityRowIds": [4360]
+      }
+    },
+    {
+      "spellId": 7771,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 10940,
+          "quantity": 3
+        },
+        {
+          "itemId": 10939,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 685958,
+        "reagentsRowId": 19847,
+        "abilityRowIds": [4362]
+      }
+    },
+    {
+      "spellId": 7776,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 10939,
+          "quantity": 1
+        },
+        {
+          "itemId": 10938,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 685413,
+        "reagentsRowId": 19804,
+        "abilityRowIds": [4363]
+      }
+    },
+    {
+      "spellId": 7779,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 10940,
+          "quantity": 2
+        },
+        {
+          "itemId": 10939,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 686476,
+        "reagentsRowId": 19887,
+        "abilityRowIds": [4364]
+      }
+    },
+    {
+      "spellId": 7782,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 10940,
+          "quantity": 5
+        }
+      ],
+      "source": {
+        "effectRowId": 686721,
+        "reagentsRowId": 19910,
+        "abilityRowIds": [4365]
+      }
+    },
+    {
+      "spellId": 7786,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 10940,
+          "quantity": 4
+        },
+        {
+          "itemId": 10939,
+          "quantity": 2
+        }
+      ],
+      "source": {
+        "effectRowId": 685486,
+        "reagentsRowId": 19809,
+        "abilityRowIds": [4366]
+      }
+    },
+    {
+      "spellId": 7788,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 10940,
+          "quantity": 2
+        },
+        {
+          "itemId": 10939,
+          "quantity": 1
+        },
+        {
+          "itemId": 10978,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 685509,
+        "reagentsRowId": 19811,
+        "abilityRowIds": [4367]
+      }
+    },
+    {
+      "spellId": 7793,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 10939,
+          "quantity": 3
+        }
+      ],
+      "source": {
+        "effectRowId": 685399,
+        "reagentsRowId": 19802,
+        "abilityRowIds": [4369]
+      }
+    },
+    {
+      "spellId": 7857,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 10940,
+          "quantity": 4
+        },
+        {
+          "itemId": 10998,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 686000,
+        "reagentsRowId": 19852,
+        "abilityRowIds": [4399]
+      }
+    },
+    {
+      "spellId": 7859,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 10998,
+          "quantity": 2
+        }
+      ],
+      "source": {
+        "effectRowId": 685683,
+        "reagentsRowId": 19822,
+        "abilityRowIds": [4400]
+      }
+    },
+    {
+      "spellId": 7861,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 6371,
+          "quantity": 1
+        },
+        {
+          "itemId": 10998,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 685966,
+        "reagentsRowId": 19848,
+        "abilityRowIds": [4401]
+      }
+    },
+    {
+      "spellId": 7863,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 10940,
+          "quantity": 8
+        }
+      ],
+      "source": {
+        "effectRowId": 685797,
+        "reagentsRowId": 19832,
+        "abilityRowIds": [4402]
+      }
+    },
+    {
+      "spellId": 7867,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 10940,
+          "quantity": 6
+        },
+        {
+          "itemId": 10998,
+          "quantity": 2
+        }
+      ],
+      "source": {
+        "effectRowId": 685843,
+        "reagentsRowId": 19837,
+        "abilityRowIds": [4404]
+      }
+    },
+    {
+      "spellId": 8296,
+      "kind": "item-conversion",
+      "productItemId": 2840,
+      "profession": null,
+      "reagents": [
+        {
+          "itemId": 2770,
+          "quantity": 10
+        }
+      ],
+      "source": {
+        "effectRowId": 686248,
+        "reagentsRowId": 19867,
+        "abilityRowIds": []
+      }
+    },
+    {
+      "spellId": 13361,
+      "kind": "item-conversion",
+      "productItemId": 10939,
+      "profession": null,
+      "reagents": [
+        {
+          "itemId": 10938,
+          "quantity": 2
+        }
+      ],
+      "source": {
+        "effectRowId": 690113,
+        "reagentsRowId": 20157,
+        "abilityRowIds": []
+      }
+    },
+    {
+      "spellId": 13378,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 10998,
+          "quantity": 1
+        },
+        {
+          "itemId": 10940,
+          "quantity": 2
+        }
+      ],
+      "source": {
+        "effectRowId": 690464,
+        "reagentsRowId": 20197,
+        "abilityRowIds": [7356]
+      }
+    },
+    {
+      "spellId": 13380,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 10998,
+          "quantity": 1
+        },
+        {
+          "itemId": 10940,
+          "quantity": 6
+        }
+      ],
+      "source": {
+        "effectRowId": 690384,
+        "reagentsRowId": 20183,
+        "abilityRowIds": [7357]
+      }
+    },
+    {
+      "spellId": 13419,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 10998,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 690919,
+        "reagentsRowId": 20231,
+        "abilityRowIds": [7376]
+      }
+    },
+    {
+      "spellId": 13421,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 10940,
+          "quantity": 6
+        },
+        {
+          "itemId": 10978,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 690967,
+        "reagentsRowId": 20236,
+        "abilityRowIds": [7377]
+      }
+    },
+    {
+      "spellId": 13464,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 10998,
+          "quantity": 1
+        },
+        {
+          "itemId": 10940,
+          "quantity": 1
+        },
+        {
+          "itemId": 10978,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 690962,
+        "reagentsRowId": 20235,
+        "abilityRowIds": [7416]
+      }
+    },
+    {
+      "spellId": 13485,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 10998,
+          "quantity": 2
+        },
+        {
+          "itemId": 10940,
+          "quantity": 4
+        }
+      ],
+      "source": {
+        "effectRowId": 690942,
+        "reagentsRowId": 20234,
+        "abilityRowIds": [7422]
+      }
+    },
+    {
+      "spellId": 13497,
+      "kind": "item-conversion",
+      "productItemId": 11082,
+      "profession": null,
+      "reagents": [
+        {
+          "itemId": 10998,
+          "quantity": 2
+        }
+      ],
+      "source": {
+        "effectRowId": 691067,
+        "reagentsRowId": 20245,
+        "abilityRowIds": []
+      }
+    },
+    {
+      "spellId": 13501,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11083,
+          "quantity": 2
+        }
+      ],
+      "source": {
+        "effectRowId": 690360,
+        "reagentsRowId": 20181,
+        "abilityRowIds": [7425]
+      }
+    },
+    {
+      "spellId": 13503,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11083,
+          "quantity": 2
+        },
+        {
+          "itemId": 11084,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 690389,
+        "reagentsRowId": 20184,
+        "abilityRowIds": [7426]
+      }
+    },
+    {
+      "spellId": 13522,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11082,
+          "quantity": 1
+        },
+        {
+          "itemId": 6048,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 690150,
+        "reagentsRowId": 20161,
+        "abilityRowIds": [7436]
+      }
+    },
+    {
+      "spellId": 13529,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11083,
+          "quantity": 3
+        },
+        {
+          "itemId": 11084,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 690194,
+        "reagentsRowId": 20165,
+        "abilityRowIds": [7437]
+      }
+    },
+    {
+      "spellId": 13536,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11083,
+          "quantity": 2
+        }
+      ],
+      "source": {
+        "effectRowId": 691218,
+        "reagentsRowId": 20253,
+        "abilityRowIds": [7456]
+      }
+    },
+    {
+      "spellId": 13538,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 10940,
+          "quantity": 2
+        },
+        {
+          "itemId": 11082,
+          "quantity": 1
+        },
+        {
+          "itemId": 11084,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 691256,
+        "reagentsRowId": 20258,
+        "abilityRowIds": [7457]
+      }
+    },
+    {
+      "spellId": 13607,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11082,
+          "quantity": 1
+        },
+        {
+          "itemId": 10998,
+          "quantity": 2
+        }
+      ],
+      "source": {
+        "effectRowId": 690912,
+        "reagentsRowId": 20229,
+        "abilityRowIds": [7496]
+      }
+    },
+    {
+      "spellId": 13612,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11083,
+          "quantity": 1
+        },
+        {
+          "itemId": 2772,
+          "quantity": 3
+        }
+      ],
+      "source": {
+        "effectRowId": 690710,
+        "reagentsRowId": 20212,
+        "abilityRowIds": [7497]
+      }
+    },
+    {
+      "spellId": 13617,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11083,
+          "quantity": 1
+        },
+        {
+          "itemId": 3356,
+          "quantity": 3
+        }
+      ],
+      "source": {
+        "effectRowId": 691571,
+        "reagentsRowId": 20277,
+        "abilityRowIds": [7498]
+      }
+    },
+    {
+      "spellId": 13620,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11083,
+          "quantity": 1
+        },
+        {
+          "itemId": 6370,
+          "quantity": 3
+        }
+      ],
+      "source": {
+        "effectRowId": 690220,
+        "reagentsRowId": 20169,
+        "abilityRowIds": [7499]
+      }
+    },
+    {
+      "spellId": 13622,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11082,
+          "quantity": 2
+        }
+      ],
+      "source": {
+        "effectRowId": 690226,
+        "reagentsRowId": 20171,
+        "abilityRowIds": [7500]
+      }
+    },
+    {
+      "spellId": 13626,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11082,
+          "quantity": 1
+        },
+        {
+          "itemId": 11083,
+          "quantity": 1
+        },
+        {
+          "itemId": 11084,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 690931,
+        "reagentsRowId": 20232,
+        "abilityRowIds": [7501]
+      }
+    },
+    {
+      "spellId": 13631,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11134,
+          "quantity": 1
+        },
+        {
+          "itemId": 11083,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 690124,
+        "reagentsRowId": 20159,
+        "abilityRowIds": [7503]
+      }
+    },
+    {
+      "spellId": 13632,
+      "kind": "item-conversion",
+      "productItemId": 11135,
+      "profession": null,
+      "reagents": [
+        {
+          "itemId": 11134,
+          "quantity": 2
+        }
+      ],
+      "source": {
+        "effectRowId": 691040,
+        "reagentsRowId": 20243,
+        "abilityRowIds": []
+      }
+    },
+    {
+      "spellId": 13635,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11138,
+          "quantity": 1
+        },
+        {
+          "itemId": 11083,
+          "quantity": 3
+        }
+      ],
+      "source": {
+        "effectRowId": 690736,
+        "reagentsRowId": 20214,
+        "abilityRowIds": [7504]
+      }
+    },
+    {
+      "spellId": 13637,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11083,
+          "quantity": 1
+        },
+        {
+          "itemId": 11134,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 691281,
+        "reagentsRowId": 20261,
+        "abilityRowIds": [7505]
+      }
+    },
+    {
+      "spellId": 13640,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11083,
+          "quantity": 3
+        }
+      ],
+      "source": {
+        "effectRowId": 691401,
+        "reagentsRowId": 20262,
+        "abilityRowIds": [7506]
+      }
+    },
+    {
+      "spellId": 13642,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11134,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 691486,
+        "reagentsRowId": 20269,
+        "abilityRowIds": [7507]
+      }
+    },
+    {
+      "spellId": 13644,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11083,
+          "quantity": 4
+        }
+      ],
+      "source": {
+        "effectRowId": 691595,
+        "reagentsRowId": 20279,
+        "abilityRowIds": [7508]
+      }
+    },
+    {
+      "spellId": 13646,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11134,
+          "quantity": 1
+        },
+        {
+          "itemId": 11083,
+          "quantity": 2
+        }
+      ],
+      "source": {
+        "effectRowId": 690214,
+        "reagentsRowId": 20168,
+        "abilityRowIds": [7509]
+      }
+    },
+    {
+      "spellId": 13648,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11083,
+          "quantity": 6
+        }
+      ],
+      "source": {
+        "effectRowId": 690239,
+        "reagentsRowId": 20172,
+        "abilityRowIds": [7510]
+      }
+    },
+    {
+      "spellId": 13653,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11134,
+          "quantity": 1
+        },
+        {
+          "itemId": 5637,
+          "quantity": 2
+        },
+        {
+          "itemId": 11138,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 692073,
+        "reagentsRowId": 20289,
+        "abilityRowIds": [7511]
+      }
+    },
+    {
+      "spellId": 13655,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11134,
+          "quantity": 1
+        },
+        {
+          "itemId": 7067,
+          "quantity": 1
+        },
+        {
+          "itemId": 11138,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 692075,
+        "reagentsRowId": 20290,
+        "abilityRowIds": [7512]
+      }
+    },
+    {
+      "spellId": 13657,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11134,
+          "quantity": 1
+        },
+        {
+          "itemId": 7068,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 692441,
+        "reagentsRowId": 20301,
+        "abilityRowIds": [7513]
+      }
+    },
+    {
+      "spellId": 13659,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11135,
+          "quantity": 1
+        },
+        {
+          "itemId": 11137,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 692463,
+        "reagentsRowId": 20302,
+        "abilityRowIds": [7521]
+      }
+    },
+    {
+      "spellId": 13661,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11137,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 690977,
+        "reagentsRowId": 20238,
+        "abilityRowIds": [7522]
+      }
+    },
+    {
+      "spellId": 13663,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11135,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 691117,
+        "reagentsRowId": 20248,
+        "abilityRowIds": [7523]
+      }
+    },
+    {
+      "spellId": 13687,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11135,
+          "quantity": 1
+        },
+        {
+          "itemId": 11134,
+          "quantity": 2
+        }
+      ],
+      "source": {
+        "effectRowId": 691178,
+        "reagentsRowId": 20252,
+        "abilityRowIds": [7524]
+      }
+    },
+    {
+      "spellId": 13689,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11135,
+          "quantity": 2
+        },
+        {
+          "itemId": 11137,
+          "quantity": 2
+        },
+        {
+          "itemId": 11139,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 691471,
+        "reagentsRowId": 20268,
+        "abilityRowIds": [7528]
+      }
+    },
+    {
+      "spellId": 13693,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11135,
+          "quantity": 2
+        },
+        {
+          "itemId": 11139,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 691459,
+        "reagentsRowId": 20266,
+        "abilityRowIds": [7529]
+      }
+    },
+    {
+      "spellId": 13695,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11137,
+          "quantity": 4
+        },
+        {
+          "itemId": 11139,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 690147,
+        "reagentsRowId": 20160,
+        "abilityRowIds": [7530]
+      }
+    },
+    {
+      "spellId": 13698,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11137,
+          "quantity": 1
+        },
+        {
+          "itemId": 7392,
+          "quantity": 3
+        }
+      ],
+      "source": {
+        "effectRowId": 692493,
+        "reagentsRowId": 20303,
+        "abilityRowIds": [7531]
+      }
+    },
+    {
+      "spellId": 13700,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11135,
+          "quantity": 2
+        },
+        {
+          "itemId": 11137,
+          "quantity": 2
+        },
+        {
+          "itemId": 11139,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 691159,
+        "reagentsRowId": 20251,
+        "abilityRowIds": [7532]
+      }
+    },
+    {
+      "spellId": 13739,
+      "kind": "item-conversion",
+      "productItemId": 11175,
+      "profession": null,
+      "reagents": [
+        {
+          "itemId": 11174,
+          "quantity": 2
+        }
+      ],
+      "source": {
+        "effectRowId": 691983,
+        "reagentsRowId": 20285,
+        "abilityRowIds": []
+      }
+    },
+    {
+      "spellId": 13746,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11137,
+          "quantity": 3
+        }
+      ],
+      "source": {
+        "effectRowId": 692011,
+        "reagentsRowId": 20287,
+        "abilityRowIds": [7657]
+      }
+    },
+    {
+      "spellId": 13794,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11174,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 691099,
+        "reagentsRowId": 20247,
+        "abilityRowIds": [7658]
+      }
+    },
+    {
+      "spellId": 13815,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11174,
+          "quantity": 1
+        },
+        {
+          "itemId": 11137,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 690906,
+        "reagentsRowId": 20228,
+        "abilityRowIds": [7659]
+      }
+    },
+    {
+      "spellId": 13817,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11137,
+          "quantity": 5
+        }
+      ],
+      "source": {
+        "effectRowId": 690937,
+        "reagentsRowId": 20233,
+        "abilityRowIds": [7660]
+      }
+    },
+    {
+      "spellId": 13822,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11174,
+          "quantity": 2
+        }
+      ],
+      "source": {
+        "effectRowId": 691058,
+        "reagentsRowId": 20244,
+        "abilityRowIds": [7661]
+      }
+    },
+    {
+      "spellId": 13836,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11137,
+          "quantity": 5
+        }
+      ],
+      "source": {
+        "effectRowId": 691123,
+        "reagentsRowId": 20249,
+        "abilityRowIds": [7662]
+      }
+    },
+    {
+      "spellId": 13841,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11137,
+          "quantity": 3
+        },
+        {
+          "itemId": 6037,
+          "quantity": 3
+        }
+      ],
+      "source": {
+        "effectRowId": 690905,
+        "reagentsRowId": 20227,
+        "abilityRowIds": [7663]
+      }
+    },
+    {
+      "spellId": 13846,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11174,
+          "quantity": 3
+        },
+        {
+          "itemId": 11137,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 691554,
+        "reagentsRowId": 20275,
+        "abilityRowIds": [7664]
+      }
+    },
+    {
+      "spellId": 13858,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11137,
+          "quantity": 6
+        }
+      ],
+      "source": {
+        "effectRowId": 692154,
+        "reagentsRowId": 20293,
+        "abilityRowIds": [7665]
+      }
+    },
+    {
+      "spellId": 13868,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11137,
+          "quantity": 3
+        },
+        {
+          "itemId": 8838,
+          "quantity": 3
+        }
+      ],
+      "source": {
+        "effectRowId": 692440,
+        "reagentsRowId": 20300,
+        "abilityRowIds": [7666]
+      }
+    },
+    {
+      "spellId": 13882,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11174,
+          "quantity": 2
+        }
+      ],
+      "source": {
+        "effectRowId": 691914,
+        "reagentsRowId": 20283,
+        "abilityRowIds": [7667]
+      }
+    },
+    {
+      "spellId": 13887,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11174,
+          "quantity": 2
+        },
+        {
+          "itemId": 11137,
+          "quantity": 3
+        }
+      ],
+      "source": {
+        "effectRowId": 690198,
+        "reagentsRowId": 20167,
+        "abilityRowIds": [7668]
+      }
+    },
+    {
+      "spellId": 13890,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11177,
+          "quantity": 1
+        },
+        {
+          "itemId": 7909,
+          "quantity": 1
+        },
+        {
+          "itemId": 11174,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 690319,
+        "reagentsRowId": 20178,
+        "abilityRowIds": [7669]
+      }
+    },
+    {
+      "spellId": 13898,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11177,
+          "quantity": 4
+        },
+        {
+          "itemId": 7078,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 691092,
+        "reagentsRowId": 20246,
+        "abilityRowIds": [7670]
+      }
+    },
+    {
+      "spellId": 13905,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11175,
+          "quantity": 1
+        },
+        {
+          "itemId": 11176,
+          "quantity": 2
+        }
+      ],
+      "source": {
+        "effectRowId": 690326,
+        "reagentsRowId": 20179,
+        "abilityRowIds": [7671]
+      }
+    },
+    {
+      "spellId": 13915,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11177,
+          "quantity": 1
+        },
+        {
+          "itemId": 11176,
+          "quantity": 2
+        },
+        {
+          "itemId": 9224,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 691511,
+        "reagentsRowId": 20272,
+        "abilityRowIds": [7672]
+      }
+    },
+    {
+      "spellId": 13917,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11175,
+          "quantity": 1
+        },
+        {
+          "itemId": 11174,
+          "quantity": 2
+        }
+      ],
+      "source": {
+        "effectRowId": 691226,
+        "reagentsRowId": 20254,
+        "abilityRowIds": [7673]
+      }
+    },
+    {
+      "spellId": 13931,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11175,
+          "quantity": 1
+        },
+        {
+          "itemId": 11176,
+          "quantity": 2
+        }
+      ],
+      "source": {
+        "effectRowId": 691267,
+        "reagentsRowId": 20259,
+        "abilityRowIds": [7676]
+      }
+    },
+    {
+      "spellId": 13933,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11178,
+          "quantity": 1
+        },
+        {
+          "itemId": 3829,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 691135,
+        "reagentsRowId": 20250,
+        "abilityRowIds": [7677]
+      }
+    },
+    {
+      "spellId": 13935,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11175,
+          "quantity": 2
+        }
+      ],
+      "source": {
+        "effectRowId": 690196,
+        "reagentsRowId": 20166,
+        "abilityRowIds": [7678]
+      }
+    },
+    {
+      "spellId": 13937,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11178,
+          "quantity": 2
+        },
+        {
+          "itemId": 11176,
+          "quantity": 2
+        }
+      ],
+      "source": {
+        "effectRowId": 691583,
+        "reagentsRowId": 20278,
+        "abilityRowIds": [7679]
+      }
+    },
+    {
+      "spellId": 13939,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11176,
+          "quantity": 2
+        },
+        {
+          "itemId": 11175,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 690417,
+        "reagentsRowId": 20191,
+        "abilityRowIds": [7680]
+      }
+    },
+    {
+      "spellId": 13941,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11178,
+          "quantity": 1
+        },
+        {
+          "itemId": 11176,
+          "quantity": 3
+        },
+        {
+          "itemId": 11175,
+          "quantity": 2
+        }
+      ],
+      "source": {
+        "effectRowId": 690913,
+        "reagentsRowId": 20230,
+        "abilityRowIds": [7681]
+      }
+    },
+    {
+      "spellId": 13943,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11178,
+          "quantity": 2
+        },
+        {
+          "itemId": 11175,
+          "quantity": 2
+        }
+      ],
+      "source": {
+        "effectRowId": 691247,
+        "reagentsRowId": 20256,
+        "abilityRowIds": [7682]
+      }
+    },
+    {
+      "spellId": 13945,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11176,
+          "quantity": 5
+        }
+      ],
+      "source": {
+        "effectRowId": 691271,
+        "reagentsRowId": 20260,
+        "abilityRowIds": [7683]
+      }
+    },
+    {
+      "spellId": 13947,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11178,
+          "quantity": 2
+        },
+        {
+          "itemId": 11176,
+          "quantity": 3
+        }
+      ],
+      "source": {
+        "effectRowId": 690971,
+        "reagentsRowId": 20237,
+        "abilityRowIds": [7684]
+      }
+    },
+    {
+      "spellId": 13948,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11178,
+          "quantity": 2
+        },
+        {
+          "itemId": 8153,
+          "quantity": 2
+        }
+      ],
+      "source": {
+        "effectRowId": 692344,
+        "reagentsRowId": 20297,
+        "abilityRowIds": [7685]
+      }
+    },
+    {
+      "spellId": 19566,
+      "kind": "item-conversion",
+      "productItemId": 15409,
+      "profession": null,
+      "reagents": [
+        {
+          "itemId": 8150,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 696634,
+        "reagentsRowId": 20541,
+        "abilityRowIds": []
+      }
+    },
+    {
+      "spellId": 20008,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 16202,
+          "quantity": 3
+        }
+      ],
+      "source": {
+        "effectRowId": 697333,
+        "reagentsRowId": 20600,
+        "abilityRowIds": [11373]
+      }
+    },
+    {
+      "spellId": 20009,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 16202,
+          "quantity": 3
+        },
+        {
+          "itemId": 11176,
+          "quantity": 10
+        }
+      ],
+      "source": {
+        "effectRowId": 697334,
+        "reagentsRowId": 20601,
+        "abilityRowIds": [11377]
+      }
+    },
+    {
+      "spellId": 20010,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 16204,
+          "quantity": 6
+        },
+        {
+          "itemId": 16203,
+          "quantity": 6
+        }
+      ],
+      "source": {
+        "effectRowId": 696438,
+        "reagentsRowId": 20521,
+        "abilityRowIds": [11388]
+      }
+    },
+    {
+      "spellId": 20011,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 16204,
+          "quantity": 15
+        }
+      ],
+      "source": {
+        "effectRowId": 697630,
+        "reagentsRowId": 20617,
+        "abilityRowIds": [11393]
+      }
+    },
+    {
+      "spellId": 20012,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 16202,
+          "quantity": 3
+        },
+        {
+          "itemId": 16204,
+          "quantity": 3
+        }
+      ],
+      "source": {
+        "effectRowId": 697346,
+        "reagentsRowId": 20603,
+        "abilityRowIds": [11378]
+      }
+    },
+    {
+      "spellId": 20013,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 16203,
+          "quantity": 4
+        },
+        {
+          "itemId": 16204,
+          "quantity": 4
+        }
+      ],
+      "source": {
+        "effectRowId": 697035,
+        "reagentsRowId": 20586,
+        "abilityRowIds": [11386]
+      }
+    },
+    {
+      "spellId": 20014,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 16202,
+          "quantity": 2
+        },
+        {
+          "itemId": 7077,
+          "quantity": 1
+        },
+        {
+          "itemId": 7075,
+          "quantity": 1
+        },
+        {
+          "itemId": 7079,
+          "quantity": 1
+        },
+        {
+          "itemId": 7081,
+          "quantity": 1
+        },
+        {
+          "itemId": 7972,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 697403,
+        "reagentsRowId": 20608,
+        "abilityRowIds": [11375]
+      }
+    },
+    {
+      "spellId": 20015,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 16204,
+          "quantity": 8
+        }
+      ],
+      "source": {
+        "effectRowId": 696469,
+        "reagentsRowId": 20526,
+        "abilityRowIds": [11383]
+      }
+    },
+    {
+      "spellId": 20016,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 16203,
+          "quantity": 2
+        },
+        {
+          "itemId": 16204,
+          "quantity": 4
+        }
+      ],
+      "source": {
+        "effectRowId": 696241,
+        "reagentsRowId": 20507,
+        "abilityRowIds": [11381]
+      }
+    },
+    {
+      "spellId": 20017,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11176,
+          "quantity": 10
+        }
+      ],
+      "source": {
+        "effectRowId": 696854,
+        "reagentsRowId": 20563,
+        "abilityRowIds": [11376]
+      }
+    },
+    {
+      "spellId": 20020,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11176,
+          "quantity": 10
+        }
+      ],
+      "source": {
+        "effectRowId": 697628,
+        "reagentsRowId": 20616,
+        "abilityRowIds": [11374]
+      }
+    },
+    {
+      "spellId": 20023,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 16203,
+          "quantity": 8
+        }
+      ],
+      "source": {
+        "effectRowId": 697377,
+        "reagentsRowId": 20606,
+        "abilityRowIds": [11387]
+      }
+    },
+    {
+      "spellId": 20024,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 16203,
+          "quantity": 2
+        },
+        {
+          "itemId": 16202,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 697571,
+        "reagentsRowId": 20611,
+        "abilityRowIds": [11379]
+      }
+    },
+    {
+      "spellId": 20025,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 14344,
+          "quantity": 4
+        },
+        {
+          "itemId": 16204,
+          "quantity": 15
+        },
+        {
+          "itemId": 16203,
+          "quantity": 10
+        }
+      ],
+      "source": {
+        "effectRowId": 697244,
+        "reagentsRowId": 20595,
+        "abilityRowIds": [11395]
+      }
+    },
+    {
+      "spellId": 20026,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 16204,
+          "quantity": 6
+        },
+        {
+          "itemId": 14343,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 696986,
+        "reagentsRowId": 20582,
+        "abilityRowIds": [11380]
+      }
+    },
+    {
+      "spellId": 20028,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 16203,
+          "quantity": 3
+        },
+        {
+          "itemId": 14343,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 696988,
+        "reagentsRowId": 20583,
+        "abilityRowIds": [11384]
+      }
+    },
+    {
+      "spellId": 20029,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 14343,
+          "quantity": 4
+        },
+        {
+          "itemId": 7080,
+          "quantity": 1
+        },
+        {
+          "itemId": 7082,
+          "quantity": 1
+        },
+        {
+          "itemId": 13467,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 697127,
+        "reagentsRowId": 20594,
+        "abilityRowIds": [11382]
+      }
+    },
+    {
+      "spellId": 20030,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 14344,
+          "quantity": 4
+        },
+        {
+          "itemId": 16204,
+          "quantity": 10
+        }
+      ],
+      "source": {
+        "effectRowId": 697989,
+        "reagentsRowId": 20633,
+        "abilityRowIds": [11389]
+      }
+    },
+    {
+      "spellId": 20031,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 14344,
+          "quantity": 2
+        },
+        {
+          "itemId": 16203,
+          "quantity": 10
+        }
+      ],
+      "source": {
+        "effectRowId": 698066,
+        "reagentsRowId": 20634,
+        "abilityRowIds": [11392]
+      }
+    },
+    {
+      "spellId": 20032,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 14344,
+          "quantity": 6
+        },
+        {
+          "itemId": 12808,
+          "quantity": 6
+        },
+        {
+          "itemId": 12803,
+          "quantity": 6
+        }
+      ],
+      "source": {
+        "effectRowId": 698208,
+        "reagentsRowId": 20640,
+        "abilityRowIds": [11396]
+      }
+    },
+    {
+      "spellId": 20033,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 14344,
+          "quantity": 4
+        },
+        {
+          "itemId": 12808,
+          "quantity": 4
+        }
+      ],
+      "source": {
+        "effectRowId": 697956,
+        "reagentsRowId": 20632,
+        "abilityRowIds": [11390]
+      }
+    },
+    {
+      "spellId": 20034,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 14344,
+          "quantity": 4
+        },
+        {
+          "itemId": 12811,
+          "quantity": 2
+        }
+      ],
+      "source": {
+        "effectRowId": 698363,
+        "reagentsRowId": 20645,
+        "abilityRowIds": [11394]
+      }
+    },
+    {
+      "spellId": 20035,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 16203,
+          "quantity": 12
+        },
+        {
+          "itemId": 14344,
+          "quantity": 2
+        }
+      ],
+      "source": {
+        "effectRowId": 697028,
+        "reagentsRowId": 20585,
+        "abilityRowIds": [11397]
+      }
+    },
+    {
+      "spellId": 20036,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 16203,
+          "quantity": 12
+        },
+        {
+          "itemId": 14344,
+          "quantity": 2
+        }
+      ],
+      "source": {
+        "effectRowId": 697045,
+        "reagentsRowId": 20588,
+        "abilityRowIds": [11391]
+      }
+    },
+    {
+      "spellId": 20039,
+      "kind": "item-conversion",
+      "productItemId": 16203,
+      "profession": null,
+      "reagents": [
+        {
+          "itemId": 16202,
+          "quantity": 2
+        }
+      ],
+      "source": {
+        "effectRowId": 697036,
+        "reagentsRowId": 20587,
+        "abilityRowIds": []
+      }
+    },
+    {
+      "spellId": 21931,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 11135,
+          "quantity": 3
+        },
+        {
+          "itemId": 11137,
+          "quantity": 3
+        },
+        {
+          "itemId": 11139,
+          "quantity": 1
+        },
+        {
+          "itemId": 3819,
+          "quantity": 2
+        }
+      ],
+      "source": {
+        "effectRowId": 699727,
+        "reagentsRowId": 20694,
+        "abilityRowIds": [12138]
+      }
+    },
+    {
+      "spellId": 22749,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 14344,
+          "quantity": 4
+        },
+        {
+          "itemId": 16203,
+          "quantity": 12
+        },
+        {
+          "itemId": 7078,
+          "quantity": 4
+        },
+        {
+          "itemId": 7080,
+          "quantity": 4
+        },
+        {
+          "itemId": 7082,
+          "quantity": 4
+        },
+        {
+          "itemId": 13926,
+          "quantity": 2
+        }
+      ],
+      "source": {
+        "effectRowId": 699696,
+        "reagentsRowId": 20691,
+        "abilityRowIds": [12300]
+      }
+    },
+    {
+      "spellId": 22750,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 14344,
+          "quantity": 4
+        },
+        {
+          "itemId": 16203,
+          "quantity": 8
+        },
+        {
+          "itemId": 12803,
+          "quantity": 6
+        },
+        {
+          "itemId": 7080,
+          "quantity": 6
+        },
+        {
+          "itemId": 12811,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 699278,
+        "reagentsRowId": 20677,
+        "abilityRowIds": [12301]
+      }
+    },
+    {
+      "spellId": 23799,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 14344,
+          "quantity": 6
+        },
+        {
+          "itemId": 16203,
+          "quantity": 6
+        },
+        {
+          "itemId": 16204,
+          "quantity": 4
+        },
+        {
+          "itemId": 7076,
+          "quantity": 2
+        }
+      ],
+      "source": {
+        "effectRowId": 700007,
+        "reagentsRowId": 20704,
+        "abilityRowIds": [12717]
+      }
+    },
+    {
+      "spellId": 23800,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 14344,
+          "quantity": 6
+        },
+        {
+          "itemId": 16203,
+          "quantity": 6
+        },
+        {
+          "itemId": 16204,
+          "quantity": 4
+        },
+        {
+          "itemId": 7082,
+          "quantity": 2
+        }
+      ],
+      "source": {
+        "effectRowId": 700008,
+        "reagentsRowId": 20705,
+        "abilityRowIds": [12718]
+      }
+    },
+    {
+      "spellId": 23801,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 16204,
+          "quantity": 16
+        },
+        {
+          "itemId": 16203,
+          "quantity": 4
+        },
+        {
+          "itemId": 7080,
+          "quantity": 2
+        }
+      ],
+      "source": {
+        "effectRowId": 700106,
+        "reagentsRowId": 20712,
+        "abilityRowIds": [12719]
+      }
+    },
+    {
+      "spellId": 23802,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 14344,
+          "quantity": 2
+        },
+        {
+          "itemId": 16204,
+          "quantity": 20
+        },
+        {
+          "itemId": 16203,
+          "quantity": 4
+        },
+        {
+          "itemId": 12803,
+          "quantity": 6
+        }
+      ],
+      "source": {
+        "effectRowId": 700971,
+        "reagentsRowId": 20775,
+        "abilityRowIds": [12720]
+      }
+    },
+    {
+      "spellId": 23803,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 14344,
+          "quantity": 10
+        },
+        {
+          "itemId": 16203,
+          "quantity": 8
+        },
+        {
+          "itemId": 16204,
+          "quantity": 15
+        }
+      ],
+      "source": {
+        "effectRowId": 700421,
+        "reagentsRowId": 20729,
+        "abilityRowIds": [12721]
+      }
+    },
+    {
+      "spellId": 23804,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 14344,
+          "quantity": 15
+        },
+        {
+          "itemId": 16203,
+          "quantity": 12
+        },
+        {
+          "itemId": 16204,
+          "quantity": 20
+        }
+      ],
+      "source": {
+        "effectRowId": 700286,
+        "reagentsRowId": 20721,
+        "abilityRowIds": [12722]
+      }
+    },
+    {
+      "spellId": 25072,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 20725,
+          "quantity": 4
+        },
+        {
+          "itemId": 14344,
+          "quantity": 6
+        },
+        {
+          "itemId": 18512,
+          "quantity": 8
+        }
+      ],
+      "source": {
+        "effectRowId": 702765,
+        "reagentsRowId": 20896,
+        "abilityRowIds": [13121]
+      }
+    },
+    {
+      "spellId": 25073,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 20725,
+          "quantity": 3
+        },
+        {
+          "itemId": 14344,
+          "quantity": 10
+        },
+        {
+          "itemId": 12808,
+          "quantity": 6
+        }
+      ],
+      "source": {
+        "effectRowId": 702766,
+        "reagentsRowId": 20897,
+        "abilityRowIds": [13122]
+      }
+    },
+    {
+      "spellId": 25074,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 20725,
+          "quantity": 3
+        },
+        {
+          "itemId": 14344,
+          "quantity": 10
+        },
+        {
+          "itemId": 7080,
+          "quantity": 4
+        }
+      ],
+      "source": {
+        "effectRowId": 702767,
+        "reagentsRowId": 20898,
+        "abilityRowIds": [13123]
+      }
+    },
+    {
+      "spellId": 25078,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 20725,
+          "quantity": 2
+        },
+        {
+          "itemId": 14344,
+          "quantity": 10
+        },
+        {
+          "itemId": 7078,
+          "quantity": 4
+        }
+      ],
+      "source": {
+        "effectRowId": 702949,
+        "reagentsRowId": 20909,
+        "abilityRowIds": [13124]
+      }
+    },
+    {
+      "spellId": 25079,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 20725,
+          "quantity": 3
+        },
+        {
+          "itemId": 14344,
+          "quantity": 8
+        },
+        {
+          "itemId": 12811,
+          "quantity": 1
+        }
+      ],
+      "source": {
+        "effectRowId": 702739,
+        "reagentsRowId": 20891,
+        "abilityRowIds": [13125]
+      }
+    },
+    {
+      "spellId": 25080,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 20725,
+          "quantity": 3
+        },
+        {
+          "itemId": 14344,
+          "quantity": 8
+        },
+        {
+          "itemId": 7082,
+          "quantity": 4
+        }
+      ],
+      "source": {
+        "effectRowId": 702740,
+        "reagentsRowId": 20892,
+        "abilityRowIds": [13126]
+      }
+    },
+    {
+      "spellId": 25081,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 20725,
+          "quantity": 3
+        },
+        {
+          "itemId": 14344,
+          "quantity": 8
+        },
+        {
+          "itemId": 7078,
+          "quantity": 4
+        }
+      ],
+      "source": {
+        "effectRowId": 702633,
+        "reagentsRowId": 20885,
+        "abilityRowIds": [13127]
+      }
+    },
+    {
+      "spellId": 25082,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 20725,
+          "quantity": 2
+        },
+        {
+          "itemId": 14344,
+          "quantity": 8
+        },
+        {
+          "itemId": 12803,
+          "quantity": 4
+        }
+      ],
+      "source": {
+        "effectRowId": 702747,
+        "reagentsRowId": 20893,
+        "abilityRowIds": [13128]
+      }
+    },
+    {
+      "spellId": 25083,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 20725,
+          "quantity": 3
+        },
+        {
+          "itemId": 14344,
+          "quantity": 8
+        },
+        {
+          "itemId": 13468,
+          "quantity": 2
+        }
+      ],
+      "source": {
+        "effectRowId": 702371,
+        "reagentsRowId": 20868,
+        "abilityRowIds": [13129]
+      }
+    },
+    {
+      "spellId": 25084,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 20725,
+          "quantity": 4
+        },
+        {
+          "itemId": 14344,
+          "quantity": 6
+        },
+        {
+          "itemId": 11754,
+          "quantity": 2
+        }
+      ],
+      "source": {
+        "effectRowId": 702728,
+        "reagentsRowId": 20890,
+        "abilityRowIds": [13130]
+      }
+    },
+    {
+      "spellId": 25086,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 20725,
+          "quantity": 3
+        },
+        {
+          "itemId": 14344,
+          "quantity": 8
+        },
+        {
+          "itemId": 12809,
+          "quantity": 8
+        }
+      ],
+      "source": {
+        "effectRowId": 702614,
+        "reagentsRowId": 20883,
+        "abilityRowIds": [13131]
+      }
+    },
+    {
+      "spellId": 27837,
+      "kind": "enchantment",
+      "productItemId": null,
+      "profession": "enchanting",
+      "reagents": [
+        {
+          "itemId": 14344,
+          "quantity": 10
+        },
+        {
+          "itemId": 16203,
+          "quantity": 6
+        },
+        {
+          "itemId": 16204,
+          "quantity": 14
+        },
+        {
+          "itemId": 7082,
+          "quantity": 4
+        }
+      ],
+      "source": {
+        "effectRowId": 704357,
+        "reagentsRowId": 20984,
+        "abilityRowIds": [13845]
+      }
+    }
+  ],
   "iconSource": {
     "provider": "Wowhead",
     "version": "classic",
@@ -119,11 +3077,11 @@
     "Standalone reference data; schema 2 is not connected to the application's schema 1 loader.",
     "Output quantity remains unknown; raw effect parameters and an unverified base candidate are preserved without adding one.",
     "BuyPrice and VendorStackCount are retained verbatim: stack price semantics are unconfirmed; no multiplication/division applied. Prices are copper source values, not vendor availability.",
-    "Alternative spell recipes and cycles are allowed; ordinary enchantments without CREATE_ITEM are outside scope.",
+    "Alternative spell recipes and cycles are allowed; ordinary enchantments contribute consumed reagents, not crafting recipes.",
     "Skill minimum rank is raw client data, not a verified learning requirement. Tool categories require a separate TotemCategory lookup."
   ],
   "statistics": {
-    "items": 1436,
+    "items": 1445,
     "recipes": 1133,
     "craftedItems": 1127,
     "recipesWithTools": 380,
@@ -140,8 +3098,8 @@
       "mining": 12,
       "tailoring": 234
     },
-    "reagentItems": 424,
-    "itemsBothCraftAndReagent": 115
+    "reagentItems": 434,
+    "itemsBothCraftAndReagent": 116
   },
   "professions": {
     "129": {
@@ -14809,6 +17767,40 @@
       },
       "bondingId": 0
     },
+    "10978": {
+      "itemId": 10978,
+      "names": {
+        "ru": "Малый мерцающий осколок",
+        "en": "Small Glimmering Shard"
+      },
+      "iconUrl": "https://wow.zamimg.com/images/wow/icons/large/inv_enchant_shardglimmeringsmall.jpg",
+      "qualityId": 3,
+      "recipeSpellIds": [],
+      "vendor": {
+        "baseBuyPriceCopper": 4000,
+        "sellPriceCopper": 0,
+        "stackCount": 1,
+        "availability": null
+      },
+      "bondingId": 0
+    },
+    "10998": {
+      "itemId": 10998,
+      "names": {
+        "ru": "Простая Астральная субстанция",
+        "en": "Lesser Astral Essence"
+      },
+      "iconUrl": "https://wow.zamimg.com/images/wow/icons/large/inv_enchant_essenceastralsmall.jpg",
+      "qualityId": 2,
+      "recipeSpellIds": [],
+      "vendor": {
+        "baseBuyPriceCopper": 3000,
+        "sellPriceCopper": 0,
+        "stackCount": 1,
+        "availability": null
+      },
+      "bondingId": 0
+    },
     "11040": {
       "itemId": 11040,
       "names": {
@@ -14854,6 +17846,23 @@
       "recipeSpellIds": [],
       "vendor": {
         "baseBuyPriceCopper": 2400,
+        "sellPriceCopper": 0,
+        "stackCount": 1,
+        "availability": null
+      },
+      "bondingId": 0
+    },
+    "11084": {
+      "itemId": 11084,
+      "names": {
+        "ru": "Большой мерцающий осколок",
+        "en": "Large Glimmering Shard"
+      },
+      "iconUrl": "https://wow.zamimg.com/images/wow/icons/large/inv_enchant_shardglimmeringlarge.jpg",
+      "qualityId": 3,
+      "recipeSpellIds": [],
+      "vendor": {
+        "baseBuyPriceCopper": 6000,
         "sellPriceCopper": 0,
         "stackCount": 1,
         "availability": null
@@ -14945,6 +17954,40 @@
       },
       "bondingId": 0
     },
+    "11138": {
+      "itemId": 11138,
+      "names": {
+        "ru": "Малый светящийся осколок",
+        "en": "Small Glowing Shard"
+      },
+      "iconUrl": "https://wow.zamimg.com/images/wow/icons/large/inv_enchant_shardglowingsmall.jpg",
+      "qualityId": 3,
+      "recipeSpellIds": [],
+      "vendor": {
+        "baseBuyPriceCopper": 8000,
+        "sellPriceCopper": 0,
+        "stackCount": 1,
+        "availability": null
+      },
+      "bondingId": 0
+    },
+    "11139": {
+      "itemId": 11139,
+      "names": {
+        "ru": "Большой светящийся осколок",
+        "en": "Large Glowing Shard"
+      },
+      "iconUrl": "https://wow.zamimg.com/images/wow/icons/large/inv_enchant_shardglowinglarge.jpg",
+      "qualityId": 3,
+      "recipeSpellIds": [],
+      "vendor": {
+        "baseBuyPriceCopper": 12000,
+        "sellPriceCopper": 0,
+        "stackCount": 1,
+        "availability": null
+      },
+      "bondingId": 0
+    },
     "11144": {
       "itemId": 11144,
       "names": {
@@ -14979,6 +18022,40 @@
       },
       "bondingId": 1
     },
+    "11174": {
+      "itemId": 11174,
+      "names": {
+        "ru": "Простая субстанция Пустоты",
+        "en": "Lesser Nether Essence"
+      },
+      "iconUrl": "https://wow.zamimg.com/images/wow/icons/large/inv_enchant_essencenethersmall.jpg",
+      "qualityId": 2,
+      "recipeSpellIds": [],
+      "vendor": {
+        "baseBuyPriceCopper": 20000,
+        "sellPriceCopper": 0,
+        "stackCount": 1,
+        "availability": null
+      },
+      "bondingId": 0
+    },
+    "11175": {
+      "itemId": 11175,
+      "names": {
+        "ru": "Великая субстанция Пустоты",
+        "en": "Greater Nether Essence"
+      },
+      "iconUrl": "https://wow.zamimg.com/images/wow/icons/large/inv_enchant_essencenetherlarge.jpg",
+      "qualityId": 2,
+      "recipeSpellIds": [],
+      "vendor": {
+        "baseBuyPriceCopper": 60000,
+        "sellPriceCopper": 0,
+        "stackCount": 1,
+        "availability": null
+      },
+      "bondingId": 0
+    },
     "11176": {
       "itemId": 11176,
       "names": {
@@ -14990,6 +18067,40 @@
       "recipeSpellIds": [],
       "vendor": {
         "baseBuyPriceCopper": 8000,
+        "sellPriceCopper": 0,
+        "stackCount": 1,
+        "availability": null
+      },
+      "bondingId": 0
+    },
+    "11177": {
+      "itemId": 11177,
+      "names": {
+        "ru": "Малый светозарный осколок",
+        "en": "Small Radiant Shard"
+      },
+      "iconUrl": "https://wow.zamimg.com/images/wow/icons/large/inv_enchant_shardradientsmall.jpg",
+      "qualityId": 3,
+      "recipeSpellIds": [],
+      "vendor": {
+        "baseBuyPriceCopper": 24000,
+        "sellPriceCopper": 0,
+        "stackCount": 1,
+        "availability": null
+      },
+      "bondingId": 0
+    },
+    "11178": {
+      "itemId": 11178,
+      "names": {
+        "ru": "Большой светозарный осколок",
+        "en": "Large Radiant Shard"
+      },
+      "iconUrl": "https://wow.zamimg.com/images/wow/icons/large/inv_enchant_shardradientlarge.jpg",
+      "qualityId": 3,
+      "recipeSpellIds": [],
+      "vendor": {
+        "baseBuyPriceCopper": 36000,
         "sellPriceCopper": 0,
         "stackCount": 1,
         "availability": null

@@ -111,7 +111,8 @@
     "effect": 24,
     "rules": [
       "Profession-linked CREATE_ITEM effects with a single unambiguous product and complete positive consumed reagents.",
-      "Items are exactly the union of products and consumed reagents; tools remain external references.",
+      "Items are exactly the union of recipe products, recipe reagents and additional reagentSources; tools remain external references.",
+      "Additional reagents come from profession-linked enchantments and single-ingredient trade-goods conversions leading to catalog items; conversions are not crafting recipes.",
       "Independent tables from this dataset's product and build.",
       "No item data, translations or icon responses are borrowed from another version."
     ],
@@ -124,7 +125,7 @@
     "imagesDownloaded": false
   },
   "statistics": {
-    "items": 2344,
+    "items": 2348,
     "recipes": 1984,
     "craftedItems": 1977,
     "recipesWithTools": 630,
@@ -144,8 +145,8 @@
       "skinning": 3,
       "tailoring": 405
     },
-    "reagentItems": 530,
-    "itemsBothCraftAndReagent": 163
+    "reagentItems": 535,
+    "itemsBothCraftAndReagent": 164
   },
   "localization": {
     "missingRuRows": [],
@@ -3144,6 +3145,7 @@
     "recipes": [],
     "professions": []
   },
-  "sha256": "6ae4035d642adc84ea8e57ac0ecfba9f414ad479a12ba35f4f8401e081be40c6",
+  "additionalItemIds": [10998, 11138, 12735, 13180],
+  "sha256": "14d4fd575fa59937f97f16be72aa26b3f37625bfc77c95b4ffb781a96ccfc442",
   "file": "public/data/forever/craftcalc-db.1.60.1.70338.json"
 }

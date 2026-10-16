@@ -1,30 +1,45 @@
 {
   "gameVersion": "forever",
   "build": "1.60.1.70338",
-  "reuse": "URLs reused only from the same Forever build and item IDs",
-  "items": 2344,
-  "missingIcons": 0,
-  "hyphenIconTooltipChecks": [
-    {
-      "itemId": 277010,
-      "nameEn": "Cloudy Stormsewn Vest",
-      "endpoint": "https://nether.wowhead.com/forever/tooltip/item/277010",
-      "iconUrl": "https://wow.zamimg.com/images/wow/icons/large/inv_chest-_cloth_skybornec60_b_01.jpg",
-      "itemIdEchoed": false,
-      "httpStatus": 200
-    },
-    {
-      "itemId": 277034,
-      "nameEn": "Azure Stormsewn Vest",
-      "endpoint": "https://nether.wowhead.com/forever/tooltip/item/277034",
-      "iconUrl": "https://wow.zamimg.com/images/wow/icons/large/inv_chest-_cloth_skybornec60_b_01.jpg",
-      "itemIdEchoed": false,
-      "httpStatus": 200
+  "endpoint": "https://nether.wowhead.com/forever/tooltip/item/{itemId}",
+  "workers": 2,
+  "pauseSecondsPerWorker": 0.2,
+  "timeoutSeconds": 20,
+  "maximumAttempts": 3,
+  "statistics": {
+    "ok": 4
+  },
+  "failures": [],
+  "responseIdentityLimitation": "Many tooltip responses do not echo an item ID. Those are checked by unchanged endpoint URL and exact English name, not by an independent echoed ID.",
+  "reusedIcons": {
+    "gameVersion": "forever",
+    "build": "1.60.1.70338",
+    "reuse": "URLs reused only from the same Forever build and item IDs",
+    "items": 2344,
+    "missingIcons": 0,
+    "hyphenIconTooltipChecks": [
+      {
+        "itemId": 277010,
+        "nameEn": "Cloudy Stormsewn Vest",
+        "endpoint": "https://nether.wowhead.com/forever/tooltip/item/277010",
+        "iconUrl": "https://wow.zamimg.com/images/wow/icons/large/inv_chest-_cloth_skybornec60_b_01.jpg",
+        "itemIdEchoed": false,
+        "httpStatus": 200
+      },
+      {
+        "itemId": 277034,
+        "nameEn": "Azure Stormsewn Vest",
+        "endpoint": "https://nether.wowhead.com/forever/tooltip/item/277034",
+        "iconUrl": "https://wow.zamimg.com/images/wow/icons/large/inv_chest-_cloth_skybornec60_b_01.jpg",
+        "itemIdEchoed": false,
+        "httpStatus": 200
+      }
+    ],
+    "hyphenIconHttpCheck": {
+      "url": "https://wow.zamimg.com/images/wow/icons/large/inv_chest-_cloth_skybornec60_b_01.jpg",
+      "httpStatus": 200,
+      "contentType": "image/jpeg"
     }
-  ],
-  "hyphenIconHttpCheck": {
-    "url": "https://wow.zamimg.com/images/wow/icons/large/inv_chest-_cloth_skybornec60_b_01.jpg",
-    "httpStatus": 200,
-    "contentType": "image/jpeg"
-  }
+  },
+  "cacheScope": "Statistics and failures describe newly added items only; existing icon verification is preserved in reusedIcons."
 }

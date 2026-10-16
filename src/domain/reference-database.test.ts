@@ -57,7 +57,7 @@ describe('справочник', () => {
     )
     const db = parseReferenceDatabase(value, version)
     expect(Object.keys(db.items)).toHaveLength(
-      { forever: 2344, tbc: 2363, classic: 1436 }[version],
+      { forever: 2348, tbc: 2376, classic: 1445 }[version],
     )
     expect(
       Object.values(db.recipes).every((recipe) => recipe.output.quantity === null),

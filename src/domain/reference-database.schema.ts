@@ -43,6 +43,19 @@ export const referenceRecipeSchema = z.object({
   tools: z.object({ itemIds: z.array(id), categoryIds: z.array(id) }),
 })
 
+const referenceReagentSourceSchema = z.object({
+  spellId: id,
+  kind: z.enum(['enchantment', 'item-conversion']),
+  productItemId: id.nullable(),
+  profession: z.literal('enchanting').nullable(),
+  reagents: z.array(z.object({ itemId: id, quantity: id })).min(1),
+  source: z.object({
+    effectRowId: id,
+    reagentsRowId: id,
+    abilityRowIds: z.array(id),
+  }),
+})
+
 export const referenceDatabaseSchema = z
   .object({
     format: z.literal('craftcalc-reference-database'),
@@ -80,6 +93,7 @@ export const referenceDatabaseSchema = z
     ),
     items: z.record(z.string(), referenceItemSchema),
     recipes: z.record(z.string(), referenceRecipeSchema),
+    reagentSources: z.array(referenceReagentSourceSchema).optional(),
   })
   .superRefine((db, ctx) => {
     const issue = (path: (string | number)[], message: string) => {
@@ -135,6 +149,36 @@ export const referenceDatabaseSchema = z
       for (const spellId of item.recipeSpellIds) {
         if (db.recipes[String(spellId)]?.productItemId !== item.itemId)
           issue(['items', key, 'recipeSpellIds'], 'Неверная ссылка на рецепт результата')
+      }
+    }
+    const sourceSpells = new Set<number>()
+    for (const source of db.reagentSources ?? []) {
+      const path = ['reagentSources', source.spellId]
+      if (sourceSpells.has(source.spellId) || db.recipes[String(source.spellId)])
+        issue(path, 'Повтор источника реагентов')
+      sourceSpells.add(source.spellId)
+      if (source.kind === 'enchantment') {
+        if (
+          source.profession !== 'enchanting' ||
+          source.productItemId !== null ||
+          !source.source.abilityRowIds.length ||
+          db.professions['333']?.id !== 'enchanting'
+        )
+          issue(path, 'Неверный источник реагентов зачарования')
+      } else if (
+        source.profession !== null ||
+        source.productItemId === null ||
+        !db.items[String(source.productItemId)] ||
+        source.source.abilityRowIds.length ||
+        source.reagents.length !== 1
+      ) {
+        issue(path, 'Неверный источник реагентов превращения')
+      }
+      const seen = new Set<number>()
+      for (const reagent of source.reagents) {
+        if (!db.items[String(reagent.itemId)] || seen.has(reagent.itemId))
+          issue(path, 'Отсутствующий или повторный реагент источника')
+        seen.add(reagent.itemId)
       }
     }
     for (const [key, recipe] of Object.entries(db.recipes)) {

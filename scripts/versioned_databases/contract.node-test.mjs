@@ -150,3 +150,46 @@ test('allows cycles between alternative recipes without selecting a crafting gra
   db.statistics = statistics(db)
   assert.equal(Object.keys(databaseSchema.parse(db).recipes).length, 2)
 })
+
+test('validates additional reagent provenance and rejects disconnected conversions', () => {
+  const db = fixture()
+  db.itemScope = 'recipe-products-and-profession-reagents'
+  db.items['999'] = { ...structuredClone(db.items['2318']), itemId: 999 }
+  db.reagentSources = [
+    {
+      spellId: 100,
+      kind: 'item-conversion',
+      productItemId: 2318,
+      profession: null,
+      reagents: [{ itemId: 999, quantity: 2 }],
+      source: { effectRowId: 200, reagentsRowId: 300, abilityRowIds: [] },
+    },
+  ]
+  db.statistics = statistics(db)
+  assert.equal(databaseSchema.parse(db).statistics.reagentItems, 3)
+  for (const mutate of [
+    (value) => {
+      value.reagentSources[0].productItemId = 999
+    },
+    (value) => {
+      value.reagentSources[0].reagents[0].itemId = 888
+    },
+    (value) => {
+      value.reagentSources[0].source.abilityRowIds = [1]
+    },
+    (value) => {
+      value.reagentSources.push(structuredClone(value.reagentSources[0]))
+    },
+    (value) => {
+      value.reagentSources[0].kind = 'enchantment'
+    },
+    (value) => {
+      value.itemScope = 'recipe-products-and-consumed-reagents'
+    },
+  ]) {
+    const changed = structuredClone(db)
+    mutate(changed)
+    changed.statistics = statistics(changed)
+    assert.throws(() => databaseSchema.parse(changed))
+  }
+})

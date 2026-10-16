@@ -97,6 +97,8 @@ export function statistics(db) {
   const recipes = Object.values(db.recipes)
   const products = new Set(recipes.map((r) => r.productItemId))
   const reagents = new Set(recipes.flatMap((r) => r.reagents.map((v) => v.itemId)))
+  for (const source of db.reagentSources ?? [])
+    for (const reagent of source.reagents) reagents.add(reagent.itemId)
   const counts = {}
   for (const r of recipes) counts[r.profession] = (counts[r.profession] ?? 0) + 1
   return {
@@ -133,7 +135,26 @@ export const databaseSchema = z
       rules: z.array(string).min(1),
       availability: string,
     }),
-    itemScope: z.literal('recipe-products-and-consumed-reagents'),
+    itemScope: z.enum([
+      'recipe-products-and-consumed-reagents',
+      'recipe-products-and-profession-reagents',
+    ]),
+    reagentSources: z
+      .array(
+        z.strictObject({
+          spellId: id,
+          kind: z.enum(['enchantment', 'item-conversion']),
+          productItemId: id.nullable(),
+          profession: z.literal('enchanting').nullable(),
+          reagents: z.array(z.strictObject({ itemId: id, quantity: id })).min(1),
+          source: z.strictObject({
+            effectRowId: id,
+            reagentsRowId: id,
+            abilityRowIds: z.array(id),
+          }),
+        }),
+      )
+      .default([]),
     iconSource: z.strictObject({
       provider: z.literal('Wowhead'),
       version: gameVersion,
@@ -229,6 +250,61 @@ export const databaseSchema = z
       for (const values of [r.source.abilityRowIds])
         if (new Set(values).size !== values.length) issue('Duplicate tool/source ID')
     }
+    const sourceSpells = new Set()
+    const conversions = []
+    for (const source of db.reagentSources) {
+      if (sourceSpells.has(source.spellId) || db.recipes[source.spellId])
+        issue('Duplicate reagent source spell')
+      sourceSpells.add(source.spellId)
+      if (
+        new Set(source.source.abilityRowIds).size !== source.source.abilityRowIds.length
+      )
+        issue('Duplicate reagent source ability')
+      const seen = new Set()
+      for (const reagent of source.reagents) {
+        if (!db.items[reagent.itemId] || seen.has(reagent.itemId))
+          issue('Missing/duplicate source reagent')
+        seen.add(reagent.itemId)
+      }
+      if (source.kind === 'enchantment') {
+        if (
+          source.profession !== 'enchanting' ||
+          source.productItemId !== null ||
+          !source.source.abilityRowIds.length ||
+          db.professions['333']?.id !== 'enchanting'
+        )
+          issue('Invalid enchantment reagent source')
+        for (const reagent of source.reagents) referenced.add(reagent.itemId)
+      } else {
+        if (
+          source.profession !== null ||
+          !source.productItemId ||
+          source.source.abilityRowIds.length ||
+          source.reagents.length !== 1
+        )
+          issue('Invalid item conversion reagent source')
+        conversions.push(source)
+      }
+    }
+    let pending = conversions
+    while (pending.length) {
+      const next = []
+      for (const source of pending) {
+        if (referenced.has(source.productItemId)) {
+          for (const reagent of source.reagents) referenced.add(reagent.itemId)
+        } else next.push(source)
+      }
+      if (next.length === pending.length) {
+        issue('Disconnected item conversion reagent source')
+        break
+      }
+      pending = next
+    }
+    if (
+      db.itemScope === 'recipe-products-and-consumed-reagents' &&
+      db.reagentSources.length
+    )
+      issue('Legacy scope cannot contain additional reagent sources')
     for (const [key, i] of Object.entries(db.items)) {
       if (key !== String(i.itemId) || !referenced.has(i.itemId))
         issue('Wrong item key/scope')

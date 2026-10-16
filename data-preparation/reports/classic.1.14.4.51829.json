@@ -103,7 +103,8 @@
     "effect": 24,
     "rules": [
       "Profession-linked CREATE_ITEM effects with a single unambiguous product and complete positive consumed reagents.",
-      "Items are exactly the union of products and consumed reagents; tools remain external references.",
+      "Items are exactly the union of recipe products, recipe reagents and additional reagentSources; tools remain external references.",
+      "Additional reagents come from profession-linked enchantments and single-ingredient trade-goods conversions leading to catalog items; conversions are not crafting recipes.",
       "Classic uses the pre-SoD Era snapshot 1.14.4.51829.",
       "No item data, translations or icon responses are borrowed from another version."
     ],
@@ -116,7 +117,7 @@
     "imagesDownloaded": false
   },
   "statistics": {
-    "items": 1436,
+    "items": 1445,
     "recipes": 1133,
     "craftedItems": 1127,
     "recipesWithTools": 380,
@@ -133,8 +134,8 @@
       "mining": 12,
       "tailoring": 234
     },
-    "reagentItems": 424,
-    "itemsBothCraftAndReagent": 115
+    "reagentItems": 434,
+    "itemsBothCraftAndReagent": 116
   },
   "localization": {
     "missingRuRows": [],
@@ -264,6 +265,6 @@
     "unverifiedSuspiciousNames": [],
     "limitation": "No exhaustive acquisition/availability source was applied. Absence of suspicious names does not prove availability."
   },
-  "sha256": "514e60bb7075d799cb1a934bbdafb8b9c90b879a5df95f136935a2a328003c11",
+  "sha256": "885c22ad8ec3ae83923726fa590f49321e0e9dec1bf0e656b0c999a0a14dd414",
   "file": "public/data/classic/craftcalc-db.1.14.4.51829.json"
 }

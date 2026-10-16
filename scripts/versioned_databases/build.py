@@ -166,9 +166,10 @@ def compare_locales(ru, en, items):
     }
 
 
-def statistics(items, recipes, excluded):
+def statistics(items, recipes, excluded, reagent_sources=()):
     products = {r["productItemId"] for r in recipes.values()}
     reagents = {v["itemId"] for r in recipes.values() for v in r["reagents"]}
+    reagents.update(v["itemId"] for source in reagent_sources for v in source["reagents"])
     return {
         "items": len(items), "recipes": len(recipes), "craftedItems": len(products),
         "recipesWithTools": sum(bool(r["tools"]["itemIds"] or r["tools"]["categoryIds"]) for r in recipes.values()),
@@ -275,6 +276,60 @@ def convert(manifest, tables, icons=None):
         }
         recipes[str(spell_id)] = recipe
     referenced = {r["productItemId"] for r in recipes.values()} | {v["itemId"] for r in recipes.values() for v in r["reagents"]}
+    # Enchantments consume materials without producing an item. Keep their
+    # provenance separately rather than inventing a craftable product.
+    reagent_sources = []
+    all_effects = by_spell(tables[("SpellEffect", "enUS")])
+    conversions = []
+    for spell_id, rows in sorted(all_effects.items()):
+        linked = abilities.get(spell_id, [])
+        enchantments = [e for e in rows if integer(e["Effect"]) == 53]
+        roots = {root_skill(integer(a["SkillLine"]), skills) for a in linked}
+        kind, product, effect = None, None, None
+        if enchantments and roots == {333} and spell_id not in effects:
+            kind, effect = "enchantment", enchantments[0]
+        elif not linked and len(effects.get(spell_id, [])) == 1:
+            effect = effects[spell_id][0]
+            product = integer(effect["EffectItemType"])
+            kind = "item-conversion"
+        if kind is None or len(reagents.get(spell_id, [])) != 1:
+            continue
+        try:
+            ingredients = parse_reagents(reagents[spell_id][0])
+        except ValueError:
+            continue
+        needed = {r["itemId"] for r in ingredients} | ({product} if product else set())
+        if needed - available or needed & mismatch_ids:
+            continue
+        if any(not (ru.get(i, {}).get("Display_lang") or en.get(i, {}).get("Display_lang")) for i in needed):
+            continue
+        source = {
+            "spellId": spell_id, "kind": kind, "productItemId": product,
+            "profession": "enchanting" if kind == "enchantment" else None,
+            "reagents": ingredients,
+            "source": {"effectRowId": integer(effect["ID"]),
+                       "reagentsRowId": integer(reagents[spell_id][0]["ID"]),
+                       "abilityRowIds": sorted(integer(a["ID"]) for a in linked)},
+        }
+        if kind == "enchantment":
+            reagent_sources.append(source)
+            referenced.update(needed)
+        # Restrict unlinked conversions to a single trade-goods ingredient and
+        # a trade-goods product already connected to this profession catalog.
+        elif len(ingredients) == 1 and all(integer(item_rows[i]["ClassID"]) == 7 for i in needed):
+            conversions.append(source)
+    while conversions:
+        pending = []
+        for source in conversions:
+            if source["productItemId"] in referenced:
+                reagent_sources.append(source)
+                referenced.update(r["itemId"] for r in source["reagents"])
+            else:
+                pending.append(source)
+        if len(pending) == len(conversions):
+            break
+        conversions = pending
+    reagent_sources.sort(key=lambda source: source["spellId"])
     reverse = collections.defaultdict(list)
     for r in recipes.values():
         reverse[r["productItemId"]].append(r["spellId"])
@@ -300,19 +355,21 @@ def convert(manifest, tables, icons=None):
         "locales": manifest["locales"], "sources": manifest["sources"],
         "selection": {"status": "client-table-candidates", "effect": 24,
                       "rules": ["Profession-linked CREATE_ITEM effects with a single unambiguous product and complete positive consumed reagents.",
-                                "Items are exactly the union of products and consumed reagents; tools remain external references.",
+                                "Items are exactly the union of recipe products, recipe reagents and additional reagentSources; tools remain external references.",
+                                "Additional reagents come from profession-linked enchantments and single-ingredient trade-goods conversions leading to catalog items; conversions are not crafting recipes.",
                                 ("Classic uses the pre-SoD Era snapshot 1.14.4.51829." if manifest["gameVersion"] == "classic" else "Independent tables from this dataset's product and build."),
                                 "No item data, translations or icon responses are borrowed from another version."],
                       "availability": "Not exhaustively verified: client presence does not prove player availability; hidden/test recipes can remain."},
-        "itemScope": "recipe-products-and-consumed-reagents",
+        "itemScope": "recipe-products-and-profession-reagents",
+        "reagentSources": reagent_sources,
         "iconSource": {"provider": "Wowhead", "version": manifest["gameVersion"],
                        "endpoint": f"https://nether.wowhead.com/{manifest['gameVersion']}/tooltip/item/{{itemId}}", "imagesDownloaded": False},
         "notes": ["Standalone reference data; schema 2 is not connected to the application's schema 1 loader.",
                   "Output quantity remains unknown; raw effect parameters and an unverified base candidate are preserved without adding one.",
                   "BuyPrice and VendorStackCount are retained verbatim: stack price semantics are unconfirmed; no multiplication/division applied. Prices are copper source values, not vendor availability.",
-                  "Alternative spell recipes and cycles are allowed; ordinary enchantments without CREATE_ITEM are outside scope.",
+                  "Alternative spell recipes and cycles are allowed; ordinary enchantments contribute consumed reagents, not crafting recipes.",
                   "Skill minimum rank is raw client data, not a verified learning requirement. Tool categories require a separate TotemCategory lookup."],
-        "statistics": statistics(items, recipes, excluded),
+        "statistics": statistics(items, recipes, excluded, reagent_sources),
         "professions": professions, "items": items, "recipes": recipes, "excludedRecipeEffects": excluded,
     }
     report = {"identity": {k: db[k] for k in ["gameVersion", "mode", "build", "product", "snapshotDate"]},
@@ -382,7 +439,11 @@ def rebuild(manifest_path):
                     changes.append({"id": int(key), "before": before, "after": after})
             comparison[section] = changes
         report["foreverReproduction"] = comparison
-        if any(comparison.values()) or len(db["items"]) != 2344 or len(db["recipes"]) != 1984:
+        # The legacy catalog remains a verified subset after broadening reagent
+        # selection. Existing items and every crafting recipe must be unchanged.
+        comparison["items"] = [change for change in comparison["items"] if change["before"] is not None]
+        report["additionalItemIds"] = sorted(int(k) for k in db["items"].keys() - old["items"].keys())
+        if any(comparison.values()) or len(db["recipes"]) != 1984:
             raise ValueError("Forever reproduction differs; inspect converter before release")
     report["sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
     report["file"] = path.relative_to(ROOT).as_posix()

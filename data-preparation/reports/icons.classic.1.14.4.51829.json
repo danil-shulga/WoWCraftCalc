@@ -7,7 +7,7 @@
   "timeoutSeconds": 20,
   "maximumAttempts": 3,
   "statistics": {
-    "ok": 1436
+    "ok": 1445
   },
   "failures": [],
   "responseIdentityLimitation": "Many tooltip responses do not echo an item ID. Those are checked by unchanged endpoint URL and exact English name, not by an independent echoed ID."

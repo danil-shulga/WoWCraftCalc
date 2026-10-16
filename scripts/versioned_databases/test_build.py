@@ -35,6 +35,53 @@ def fixture():
 
 
 class ConverterTests(unittest.TestCase):
+    def test_enchantments_and_connected_conversions_add_reagents_not_recipes(self):
+        manifest, tables = fixture()
+        tables[("SkillLine", "ruRU")][333] = {"ID": "333", "DisplayName_lang": "Enchanting", "ParentSkillLineID": "0"}
+        for i in [1, 2, 999]:
+            tables[("Item", "enUS")][i]["ClassID"] = "7"
+        # The enchantment is the only consumer of item 999.
+        tables[("SkillLineAbility", "enUS")][11] = {**tables[("SkillLineAbility", "enUS")][10], "ID": "11", "Spell": "101", "SkillLine": "333"}
+        tables[("SpellEffect", "enUS")][31] = {**tables[("SpellEffect", "enUS")][30], "ID": "31", "SpellID": "101", "Effect": "53", "EffectItemType": "0"}
+        tables[("SpellReagents", "enUS")][21] = {**tables[("SpellReagents", "enUS")][20], "ID": "21", "SpellID": "101", "Reagent_0": "999"}
+        # A conversion has no profession, but produces an existing catalog item.
+        tables[("SpellEffect", "enUS")][32] = {**tables[("SpellEffect", "enUS")][30], "ID": "32", "SpellID": "102", "EffectItemType": "2"}
+        tables[("SpellReagents", "enUS")][22] = {**tables[("SpellReagents", "enUS")][21], "ID": "22", "SpellID": "102"}
+        db, _ = convert(manifest, tables)
+        self.assertEqual(set(db["items"]), {"1", "2", "999"})
+        self.assertEqual(set(db["recipes"]), {"100"})
+        self.assertEqual(db["items"]["999"]["recipeSpellIds"], [])
+        self.assertEqual([s["kind"] for s in db["reagentSources"]], ["enchantment", "item-conversion"])
+        self.assertEqual(db["statistics"]["reagentItems"], 2)
+        conversion_only = copy.deepcopy(tables)
+        del conversion_only[("SkillLineAbility", "enUS")][11]
+        result, _ = convert(manifest, conversion_only)
+        self.assertIn("999", result["items"])
+        self.assertEqual([s["kind"] for s in result["reagentSources"]], ["item-conversion"])
+        # Invalid, missing and locale-conflicting materials never enter scope.
+        for mutation in ["quantity", "missing", "conflict", "unlinked", "other-effect", "non-trade-goods"]:
+            changed = copy.deepcopy(tables)
+            if mutation == "quantity":
+                for i in [21, 22]:
+                    changed[("SpellReagents", "enUS")][i]["ReagentCount_0"] = "0"
+            elif mutation == "missing":
+                del changed[("Item", "enUS")][999]
+            elif mutation == "conflict":
+                changed[("ItemSparse", "ruRU")][999]["BuyPrice"] = "1"
+            else:
+                del changed[("SkillLineAbility", "enUS")][11]
+                if mutation == "unlinked":
+                    changed[("SpellEffect", "enUS")][32]["EffectItemType"] = "999"
+                    changed[("SpellReagents", "enUS")][22]["Reagent_0"] = "999"
+                elif mutation == "other-effect":
+                    changed[("SpellEffect", "enUS")][32]["Effect"] = "53"
+                else:
+                    changed[("Item", "enUS")][999]["ClassID"] = "0"
+            with self.subTest(mutation=mutation):
+                result, _ = convert(manifest, changed)
+                self.assertNotIn("999", result["items"])
+                self.assertEqual(result["reagentSources"], [])
+
     def test_scope_tools_prices_and_unknown_output(self):
         db, _ = convert(*fixture())
         self.assertEqual(set(db["items"]), {"1", "2"})
