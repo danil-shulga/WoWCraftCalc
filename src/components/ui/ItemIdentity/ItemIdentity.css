@@ -10,6 +10,21 @@
   gap: 12px;
 }
 
+.item-identity--small {
+  font-size: 0.875rem;
+  line-height: 16px;
+}
+
+.item-identity--small .item-name > :first-child {
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.item-identity--small .item-name__secondary {
+  font-size: 0.6875rem;
+  line-height: 12px;
+}
+
 .item-identity__text {
   display: flex;
   min-width: 0;

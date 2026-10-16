@@ -38,6 +38,7 @@ export function ItemIdentity({
     : 'Добавить в избранное'
   const classes = [
     'item-identity',
+    showIcon && iconSize === 'small' ? 'item-identity--small' : '',
     nameAs === 'h3' ? 'item-identity--heading' : '',
     truncate ? 'item-identity--truncate' : '',
     className,
