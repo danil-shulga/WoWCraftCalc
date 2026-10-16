@@ -28,8 +28,12 @@ alwaysApply: false
   и трактуется в его контексте. Не используй игровой ID как глобальный ключ трёх каталогов.
 - `names` хранит RU/EN; выбор перевода, второго названия, поиск и нормализация —
   в `item-names.ts`. `name` остаётся запасным названием, не подменяй им переводы.
-- `requiredLevel` — требуемый уровень из `RequiredLevel`, `qualityId` — качество
-  из `OverallQualityID`. Это необязательные неотрицательные целые или `null`;
+- `requiredLevel` — требуемый уровень из `ItemSparse.RequiredLevel`, `qualityId` —
+  качество из `ItemSparse.OverallQualityID`, `itemLevel` — уровень предмета из
+  `ItemSparse.ItemLevel`, `classId` и `subclassId` — исходные `Item.ClassID` и
+  `Item.SubclassID`, `inventoryType` — слот из `ItemSparse.InventoryType`.
+  `requiredLevel` и `itemLevel` независимы, значения сохраняются из своей версии.
+  В пользовательском каталоге это необязательные неотрицательные целые или `null`;
   отсутствие и `null` означают неизвестное, ноль сохраняется. Импорт из справочника
   заполняет поля; они сохраняются в localStorage и JSON backup без смены версии.
 

@@ -34,6 +34,10 @@ export interface Item {
   iconUrl: string
   requiredLevel?: number | null | undefined
   qualityId?: number | null | undefined
+  itemLevel?: number | null | undefined
+  classId?: number | null | undefined
+  subclassId?: number | null | undefined
+  inventoryType?: number | null | undefined
   source?:
     | {
         wowheadItemId: number

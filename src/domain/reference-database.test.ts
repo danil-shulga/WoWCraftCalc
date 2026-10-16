@@ -3,10 +3,23 @@ import { readFileSync } from 'node:fs'
 
 import { referenceFixture } from '../test/reference-fixture'
 
-import { parseReferenceDatabase } from './reference-database.schema'
+import { parseReferenceDatabase, referenceItemSchema } from './reference-database.schema'
 import { GAME_VERSIONS, GAME_VERSION_REGISTRY } from './game-version'
 
 describe('справочник', () => {
+  it.each(['itemLevel', 'classId', 'subclassId', 'inventoryType'] as const)(
+    'требует неотрицательное целое %s и сохраняет ноль',
+    (field) => {
+      const item = referenceFixture().items['1']
+      expect(referenceItemSchema.parse({ ...item, [field]: 0 })[field]).toBe(0)
+      for (const invalid of [-1, 1.5, null, undefined, '8']) {
+        expect(() => referenceItemSchema.parse({ ...item, [field]: invalid })).toThrow()
+      }
+      const { [field]: omitted, ...withoutField } = item
+      expect(omitted).toBeDefined()
+      expect(() => referenceItemSchema.parse(withoutField)).toThrow()
+    },
+  )
   it('сохраняет неизвестный выход и допускает внешний инструмент', () => {
     const db = parseReferenceDatabase(referenceFixture())
     expect(db.recipes['10']?.output.quantity).toBeNull()

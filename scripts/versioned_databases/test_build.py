@@ -3,7 +3,7 @@ import pathlib
 import tempfile
 import unittest
 
-from build import ADAPTERS, convert, integer, nullable_copper, parse_reagents, read_csv
+from build import ADAPTERS, IDENTITIES, convert, integer, nullable_copper, parse_reagents, read_csv, requirements
 from sources import ROOT, WORK
 
 
@@ -11,7 +11,7 @@ def fixture():
     manifest = {"gameVersion": "forever", "build": "1.60.1.70338", "mode": "beta",
                 "product": "wow_classic_beta", "snapshotDate": "2026-10-12",
                 "locales": ["ruRU", "enUS"], "sources": []}
-    item = {"ID": "1", "Display_lang": "Product", "RequiredLevel": "3", "ItemLevel": "8", "OverallQualityID": "1", "Bonding": "0",
+    item = {"ID": "1", "Display_lang": "Product", "RequiredLevel": "3", "ItemLevel": "8", "InventoryType": "5", "OverallQualityID": "1", "Bonding": "0",
             "BuyPrice": "0", "SellPrice": "", "VendorStackCount": "5"}
     ability = {"ID": "10", "SkillLine": "171", "Spell": "100", "MinSkillLineRank": "1",
                "TrivialSkillLineRankLow": "2", "TrivialSkillLineRankHigh": "3", "NumSkillUps": "1",
@@ -22,7 +22,7 @@ def fixture():
     effect = {"ID": "30", "SpellID": "100", "Effect": "24", "EffectItemType": "1", "EffectIndex": "0",
               "DifficultyID": "0", "EffectBasePointsF": "0", "Variance": "0", "EffectRealPointsPerLevel": "0", "ScalingClass": "0"}
     tables = {
-        ("Item", "enUS"): {i: {"ID": str(i)} for i in [1, 2, 999]},
+        ("Item", "enUS"): {i: {"ID": str(i), "ClassID": "4", "SubclassID": "0"} for i in [1, 2, 999]},
         ("ItemSparse", "enUS"): {i: {**item, "ID": str(i)} for i in [1, 2, 999]},
         ("ItemSparse", "ruRU"): {i: {**item, "ID": str(i), "Display_lang": "Предмет"} for i in [1, 2, 999]},
         ("SkillLine", "ruRU"): {171: {"ID": "171", "DisplayName_lang": "Алхимия", "ParentSkillLineID": "0"}},
@@ -85,15 +85,54 @@ class ConverterTests(unittest.TestCase):
     def test_scope_tools_prices_and_unknown_output(self):
         db, _ = convert(*fixture())
         self.assertEqual(set(db["items"]), {"1", "2"})
-        self.assertEqual(len(db["items"]["1"]), 8)
+        self.assertEqual(len(db["items"]["1"]), 12)
         self.assertEqual(db["items"]["1"]["requiredLevel"], 3)
         self.assertEqual(db["items"]["1"]["qualityId"], 1)
+        self.assertEqual(db["items"]["1"]["itemLevel"], 8)
+        self.assertEqual(db["items"]["1"]["classId"], 4)
+        self.assertEqual(db["items"]["1"]["subclassId"], 0)
+        self.assertEqual(db["items"]["1"]["inventoryType"], 5)
         self.assertEqual(db["recipes"]["100"]["tools"], {"itemIds": [999], "categoryIds": [14, 14]})
         self.assertIsNone(db["recipes"]["100"]["output"]["quantity"])
         self.assertIsNone(db["recipes"]["100"]["output"]["baseQuantityCandidate"])
         self.assertEqual(db["items"]["1"]["vendor"]["baseBuyPriceCopper"], 0)
         self.assertIsNone(db["items"]["1"]["vendor"]["sellPriceCopper"])
         self.assertEqual(db["items"]["1"]["vendor"]["stackCount"], 5)
+
+    def test_metadata_comes_from_each_build_without_normalization(self):
+        for index, (build, adapter) in enumerate(ADAPTERS.items()):
+            with self.subTest(build=build):
+                manifest, tables = fixture()
+                version, mode, product = IDENTITIES[build]
+                manifest.update(build=build, gameVersion=version, mode=mode, product=product)
+                effect = tables[("SpellEffect", "enUS")][30]
+                effect[adapter["base"]] = "0"
+                ability = tables[("SkillLineAbility", "enUS")][10]
+                for race in adapter["race"]:
+                    ability[race] = "0"
+                expected = {"itemLevel": index * 20, "classId": index * 2,
+                            "subclassId": index, "inventoryType": index * 5}
+                for table, source, field in [("ItemSparse", "ItemLevel", "itemLevel"),
+                                             ("Item", "ClassID", "classId"),
+                                             ("Item", "SubclassID", "subclassId"),
+                                             ("ItemSparse", "InventoryType", "inventoryType")]:
+                    self.assertIn(source, requirements(adapter)[table])
+                    for locale in (["enUS", "ruRU"] if table == "ItemSparse" else ["enUS"]):
+                        tables[(table, locale)][1][source] = str(expected[field])
+                db, _ = convert(manifest, tables)
+                self.assertEqual({field: db["items"]["1"][field] for field in expected}, expected)
+                self.assertEqual(db["items"]["1"]["requiredLevel"], 3)
+
+    def test_invalid_item_metadata_fails(self):
+        for table, source in [("ItemSparse", "ItemLevel"), ("Item", "ClassID"),
+                              ("Item", "SubclassID"), ("ItemSparse", "InventoryType")]:
+            for value in ["-1", "1.5", ""]:
+                with self.subTest(source=source, value=value):
+                    manifest, tables = fixture()
+                    for locale in (["enUS", "ruRU"] if table == "ItemSparse" else ["enUS"]):
+                        tables[(table, locale)][1][source] = value
+                    with self.assertRaises(ValueError):
+                        convert(manifest, tables)
 
     def test_alternative_recipes_and_child_skill(self):
         manifest, tables = fixture()

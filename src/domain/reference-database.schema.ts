@@ -19,6 +19,10 @@ export const referenceItemSchema = z.object({
   ]),
   qualityId: z.number().int().nonnegative(),
   requiredLevel: z.number().int().nonnegative(),
+  itemLevel: z.number().int().nonnegative(),
+  classId: z.number().int().nonnegative(),
+  subclassId: z.number().int().nonnegative(),
+  inventoryType: z.number().int().nonnegative(),
   recipeSpellIds: z.array(id),
   vendor: z.object({
     baseBuyPriceCopper: copper,

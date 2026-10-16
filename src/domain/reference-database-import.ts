@@ -22,6 +22,10 @@ export function referenceItemToImport(
     iconUrl: item.iconUrl,
     requiredLevel: item.requiredLevel,
     qualityId: item.qualityId,
+    itemLevel: item.itemLevel,
+    classId: item.classId,
+    subclassId: item.subclassId,
+    inventoryType: item.inventoryType,
     defaultPurchasePriceCopper: null,
     defaultSalePriceCopper: null,
   }

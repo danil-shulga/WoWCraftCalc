@@ -48,6 +48,10 @@ export function referenceFixture(version: GameVersion = 'forever') {
         iconUrl: '',
         qualityId: 3,
         requiredLevel: 70,
+        itemLevel: 85,
+        classId: 4,
+        subclassId: 1,
+        inventoryType: 1,
         recipeSpellIds: [10],
         vendor: {
           baseBuyPriceCopper: 20,
@@ -63,6 +67,10 @@ export function referenceFixture(version: GameVersion = 'forever') {
         iconUrl: '',
         qualityId: 1,
         requiredLevel: 0,
+        itemLevel: 5,
+        classId: 7,
+        subclassId: 0,
+        inventoryType: 0,
         recipeSpellIds: [],
         vendor: {
           baseBuyPriceCopper: 0,

@@ -13,6 +13,14 @@ const reagent = db.items['2']
 if (!recipe || !reagent) throw new Error('Нет фикстуры')
 const data = referenceRecipeToImport(db, recipe, 3)
 const reagentData = referenceItemToImport(reagent, db.gameVersion)
+const metadataFields = [
+  'requiredLevel',
+  'qualityId',
+  'itemLevel',
+  'classId',
+  'subclassId',
+  'inventoryType',
+] as const
 
 describe('импорт базы в store', () => {
   beforeEach(() => {
@@ -45,6 +53,10 @@ describe('импорт базы в store', () => {
       source: { wowheadVersion: 'forever' },
       requiredLevel: 70,
       qualityId: 3,
+      itemLevel: 85,
+      classId: 4,
+      subclassId: 1,
+      inventoryType: 1,
     })
     expect(
       useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items[
@@ -55,6 +67,10 @@ describe('импорт базы в store', () => {
       salePriceCopper: null,
       requiredLevel: 0,
       qualityId: 1,
+      itemLevel: 5,
+      classId: 7,
+      subclassId: 0,
+      inventoryType: 0,
     })
     store.setItemPrice(productId, 'purchasePriceCopper', 0)
     store.setItemPrice(productId, 'salePriceCopper', null)
@@ -96,12 +112,107 @@ describe('импорт базы в store', () => {
     expect(useCraftStore.getState().workspaces.forever.items[productId]).toMatchObject({
       requiredLevel: 70,
       qualityId: 3,
+      itemLevel: 85,
+      classId: 4,
+      subclassId: 1,
+      inventoryType: 1,
     })
     expect(useCraftStore.getState().workspaces.forever.items[reagentId]).toMatchObject({
       requiredLevel: 0,
       qualityId: 1,
+      itemLevel: 5,
+      classId: 7,
+      subclassId: 0,
+      inventoryType: 0,
     })
   })
+  it.each(metadataFields)(
+    'дополняет %s у старых предметов, обновляет нулём и сохраняет при неизвестном значении',
+    (field) => {
+      const store = useCraftStore.getState()
+      const legacyProduct = { ...data.product }
+      const legacyReagent = { ...reagentData }
+      for (const key of metadataFields) {
+        Reflect.deleteProperty(legacyProduct, key)
+        Reflect.deleteProperty(legacyReagent, key)
+      }
+      const added = store.addReferenceItem(legacyReagent)
+      const imported = store.importRecipe({
+        ...data,
+        product: legacyProduct,
+        reagents: [{ ...legacyReagent, quantity: 3 }],
+      })
+      if (!added.success || !imported.success) throw new Error('Импорт не выполнен')
+      expect(store.importRecipe(data).success).toBe(true)
+      expect(
+        useCraftStore.getState().workspaces.forever.items[added.itemId]?.[field],
+      ).toBe(reagentData[field])
+      expect(
+        useCraftStore.getState().workspaces.forever.items[imported.productItemId]?.[
+          field
+        ],
+      ).toBe(data.product[field])
+      const zeroData = {
+        ...data,
+        product: { ...data.product, [field]: 0 },
+        reagents: [{ ...reagentData, [field]: 0, quantity: 3 }],
+      }
+      expect(store.importRecipe(zeroData).success).toBe(true)
+      for (const unknown of [undefined, null]) {
+        const product = { ...data.product }
+        const reagent = { ...reagentData }
+        if (unknown === undefined) {
+          Reflect.deleteProperty(product, field)
+          Reflect.deleteProperty(reagent, field)
+        } else {
+          product[field] = unknown
+          reagent[field] = unknown
+        }
+        expect(
+          store.importRecipe({
+            ...data,
+            product,
+            reagents: [{ ...reagent, quantity: 3 }],
+          }).success,
+        ).toBe(true)
+        expect(store.addReferenceItem(reagent).success).toBe(true)
+        expect(store.addReferenceItem(product).success).toBe(true)
+        for (const id of [added.itemId, imported.productItemId]) {
+          expect(useCraftStore.getState().workspaces.forever.items[id]?.[field]).toBe(0)
+        }
+      }
+      expect(store.addReferenceItem({ ...reagentData, [field]: 12 }).success).toBe(true)
+      expect(
+        useCraftStore.getState().workspaces.forever.items[added.itemId]?.[field],
+      ).toBe(12)
+    },
+  )
+  it.each(metadataFields)(
+    'атомарно отклоняет неверное поле %s при любом импорте',
+    (field) => {
+      const store = useCraftStore.getState()
+      expect(store.importRecipe(data).success).toBe(true)
+      for (const invalid of [-1, 1.5]) {
+        const before = useCraftStore.getState()
+        const saved = localStorage.getItem('craft-calc-versioned-data')
+        expect(store.addReferenceItem({ ...reagentData, [field]: invalid }).success).toBe(
+          false,
+        )
+        expect(
+          store.importRecipe({ ...data, product: { ...data.product, [field]: invalid } })
+            .success,
+        ).toBe(false)
+        expect(
+          store.importRecipe({
+            ...data,
+            reagents: [{ ...reagentData, [field]: invalid, quantity: 3 }],
+          }).success,
+        ).toBe(false)
+        expect(useCraftStore.getState()).toBe(before)
+        expect(localStorage.getItem('craft-calc-versioned-data')).toBe(saved)
+      }
+    },
+  )
   it('дополняет метаданные из базы и сохраняет их при импорте без этих сведений', () => {
     const store = useCraftStore.getState()
     const added = store.addReferenceItem(reagentData)

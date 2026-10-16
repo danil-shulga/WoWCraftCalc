@@ -48,7 +48,12 @@ export interface RecipeImportTarget {
   input: ItemInput
 }
 
-export interface RecipeImportItem extends Pick<Item, 'requiredLevel' | 'qualityId'> {
+type ItemMetadata = Pick<
+  Item,
+  'requiredLevel' | 'qualityId' | 'itemLevel' | 'classId' | 'subclassId' | 'inventoryType'
+>
+
+export interface RecipeImportItem extends ItemMetadata {
   wowheadItemId: number
   name: string
   names?: ItemNames | undefined
@@ -74,6 +79,10 @@ const recipeImportItemSchema = z.object({
   iconUrl: z.union([z.literal(''), z.url()]),
   requiredLevel: itemSchema.shape.requiredLevel,
   qualityId: itemSchema.shape.qualityId,
+  itemLevel: itemSchema.shape.itemLevel,
+  classId: itemSchema.shape.classId,
+  subclassId: itemSchema.shape.subclassId,
+  inventoryType: itemSchema.shape.inventoryType,
   defaultPurchasePriceCopper: z.number().int().nonnegative().nullable().optional(),
   defaultSalePriceCopper: z.number().int().nonnegative().nullable().optional(),
 })
@@ -202,10 +211,14 @@ function mergeItemNames(
 function mergeItemMetadata(
   current: Item | undefined,
   imported: RecipeImportItem,
-): Pick<Item, 'requiredLevel' | 'qualityId'> {
+): ItemMetadata {
   return {
     requiredLevel: imported.requiredLevel ?? current?.requiredLevel ?? null,
     qualityId: imported.qualityId ?? current?.qualityId ?? null,
+    itemLevel: imported.itemLevel ?? current?.itemLevel ?? null,
+    classId: imported.classId ?? current?.classId ?? null,
+    subclassId: imported.subclassId ?? current?.subclassId ?? null,
+    inventoryType: imported.inventoryType ?? current?.inventoryType ?? null,
   }
 }
 

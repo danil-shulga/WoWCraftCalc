@@ -47,6 +47,10 @@ const item = z.strictObject({
   ]),
   qualityId: nonnegative,
   requiredLevel: nonnegative,
+  itemLevel: nonnegative,
+  classId: nonnegative,
+  subclassId: nonnegative,
+  inventoryType: nonnegative,
   bondingId: nonnegative,
   recipeSpellIds: z.array(id),
   vendor: z.strictObject({

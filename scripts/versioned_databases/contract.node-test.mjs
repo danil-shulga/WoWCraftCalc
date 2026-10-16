@@ -19,6 +19,10 @@ function fixture() {
     [2302, 2318, 2320].map((id) => {
       const item = structuredClone(legacy.items[id])
       item.requiredLevel = 8
+      item.itemLevel = 12
+      item.classId = 4
+      item.subclassId = 0
+      item.inventoryType = 8
       item.recipeSpellIds = id === 2302 ? [2149] : []
       return [id, item]
     }),
@@ -70,12 +74,30 @@ function fixture() {
   return db
 }
 
-test('preserves all eight item fields, unknown output and external tool slots', () => {
+test('preserves all twelve item fields, unknown output and external tool slots', () => {
   const db = databaseSchema.parse(fixture())
-  assert.equal(Object.keys(db.items['2302']).length, 8)
+  assert.equal(Object.keys(db.items['2302']).length, 12)
   assert.equal(db.items['2302'].requiredLevel, 8)
+  assert.equal(db.items['2302'].itemLevel, 12)
+  assert.equal(db.items['2302'].classId, 4)
+  assert.equal(db.items['2302'].subclassId, 0)
+  assert.equal(db.items['2302'].inventoryType, 8)
   assert.equal(db.recipes['2149'].output.quantity, null)
   assert.deepEqual(db.recipes['2149'].tools, { itemIds: [999999], categoryIds: [14, 14] })
+})
+
+test('requires nonnegative integer metadata, preserving zero', () => {
+  for (const field of ['itemLevel', 'classId', 'subclassId', 'inventoryType']) {
+    const db = fixture()
+    db.items['2302'][field] = 0
+    assert.equal(databaseSchema.parse(db).items['2302'][field], 0)
+    for (const invalid of [-1, 1.5, null, undefined, '8']) {
+      db.items['2302'][field] = invalid
+      assert.throws(() => databaseSchema.parse(db), `${field}: ${invalid}`)
+    }
+    delete db.items['2302'][field]
+    assert.throws(() => databaseSchema.parse(db), `${field}: missing`)
+  }
 })
 
 test('accepts observed Wowhead icon names containing a hyphen', () => {

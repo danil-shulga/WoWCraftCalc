@@ -14,6 +14,10 @@ it('преобразует только непосредственный сос�
     defaultPurchasePriceCopper: null,
     requiredLevel: 70,
     qualityId: 3,
+    itemLevel: 85,
+    classId: 4,
+    subclassId: 1,
+    inventoryType: 1,
   })
   expect(data.outputQuantity).toBe(7)
   expect(data.reagents).toHaveLength(1)
@@ -24,6 +28,10 @@ it('преобразует только непосредственный сос�
     quantity: 3,
     requiredLevel: 0,
     qualityId: 1,
+    itemLevel: 5,
+    classId: 7,
+    subclassId: 0,
+    inventoryType: 0,
   })
   expect(() => referenceRecipeToImport(db, recipe, 0)).toThrow()
 })

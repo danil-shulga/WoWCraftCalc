@@ -35,6 +35,10 @@ export const itemSchema = z.object({
   iconUrl: z.union([z.literal(''), z.url('Введите корректный URL')]),
   requiredLevel: z.number().int().nonnegative().nullable().optional(),
   qualityId: z.number().int().nonnegative().nullable().optional(),
+  itemLevel: z.number().int().nonnegative().nullable().optional(),
+  classId: z.number().int().nonnegative().nullable().optional(),
+  subclassId: z.number().int().nonnegative().nullable().optional(),
+  inventoryType: z.number().int().nonnegative().nullable().optional(),
   source: z
     .object({
       wowheadItemId: z.number().int().positive(),

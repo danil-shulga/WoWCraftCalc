@@ -318,6 +318,6 @@
     "unverifiedSuspiciousNames": [],
     "limitation": "No exhaustive acquisition/availability source was applied. Absence of suspicious names does not prove availability."
   },
-  "sha256": "10c62feb2822a30fe95e6ec3d3f0fcb51f94fedd3ddeac5845c0a20ff5a9761c",
+  "sha256": "04c56e82cc990e3b5fce96c8ef0457127b7d7a5da42f3ecde32b6e2f2bdcdbc1",
   "file": "public/data/tbc/craftcalc-db.2.5.6.69795.json"
 }
