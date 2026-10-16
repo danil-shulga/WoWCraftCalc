@@ -105,6 +105,45 @@ describe('страница Распыление', () => {
     vi.restoreAllMocks()
   })
 
+  it('считает Classic и показывает названия, иконки и цены материалов старого мира', () => {
+    const boots = catalog.boots
+    if (!boots) throw new Error('Нет предмета')
+    useCraftStore.getState().replaceData(
+      testCraftData(
+        {
+          items: {
+            boots: {
+              ...boots,
+              source: { wowheadItemId: 13856, wowheadVersion: 'classic' },
+              itemLevel: 51,
+              recipe: null,
+            },
+            dust: material('dust', 11176),
+            essence: material('essence', 16202),
+            shard: material('shard', 14343),
+          },
+        },
+        'classic',
+      ),
+    )
+    render(<ItemsPage section="disenchanting" />)
+    expect(cell('Распыление')).toHaveTextContent(/2.*серебра.*98.*меди/)
+    expect(
+      cell('Прибыль за распыление').querySelector(':scope > .money-display'),
+    ).toHaveTextContent(/98.*меди/)
+    const tooltip = estimateTooltip()
+    expect(tooltip).toHaveTextContent(/Сонная пыль.*2–5 шт\..*Шанс 75/)
+    expect(tooltip).toHaveTextContent('Простая Вечная субстанция')
+    expect(tooltip).toHaveTextContent('Малый сверкающий осколок')
+    expect(
+      within(tooltip).getAllByRole('listitem')[0]?.querySelector('img'),
+    ).toHaveAttribute('src', expect.stringContaining('inv_enchant_dustdream.jpg'))
+    act(() => {
+      useCraftStore.getState().setItemPrice('dust', 'salePriceCopper', 200)
+    })
+    expect(cell('Распыление')).toHaveTextContent(/5.*серебра.*60.*меди/)
+  })
+
   it('открывается из меню, заменяет продажу оценкой и сохраняет дерево рецепта', async () => {
     const user = userEvent.setup()
     render(<App />)
@@ -225,7 +264,7 @@ describe('страница Распыление', () => {
   })
 
   it.each([
-    [{ qualityId: 4 }, 'правило распыления пока не поддерживается'],
+    [{ qualityId: 5 }, 'правило распыления пока не поддерживается'],
     [{ itemLevel: undefined }, 'Недостаточно данных'],
     [
       { source: { wowheadItemId: 21766, wowheadVersion: 'tbc' as const } },
@@ -389,15 +428,18 @@ describe('страница Распыление', () => {
     },
   )
 
-  it('при смене версии сохраняет вкладку и объясняет ограничение TBC', async () => {
+  it('при смене версии сохраняет вкладку и ограничивает только непроверенную Forever', async () => {
     const user = userEvent.setup()
     render(<App />)
     await user.click(screen.getByRole('button', { name: 'Распыление' }))
     await user.click(screen.getByRole('button', { name: /Выбрать версию игры/ }))
     await user.click(screen.getByRole('button', { name: 'Classic' }))
     expect(screen.getByRole('heading', { name: 'Распыление' })).toBeVisible()
+    expect(screen.queryByText(/таблицы распыления пока не подтверждены/)).toBeNull()
+    await user.click(screen.getByRole('button', { name: /Выбрать версию игры/ }))
+    await user.click(screen.getByRole('button', { name: 'Forever' }))
     expect(
-      screen.getByText('Расчёт распыления пока доступен только в версии TBC.'),
+      screen.getByText(/Для Forever таблицы распыления пока не подтверждены/),
     ).toBeVisible()
     expect(screen.queryByText('Сапоги из ткани Пустоты')).toBeNull()
   })

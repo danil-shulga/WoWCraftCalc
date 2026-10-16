@@ -15,10 +15,11 @@
   [planner.ts](../src/domain/planner.ts) — планирование целых партий.
   Это разные расчёты: каталог усредняет стоимость единицы, план учитывает излишки.
 - [disenchanting.ts](../src/domain/disenchanting.ts) — чистая справочная оценка
-  дизенчанта TBC: зелёные ilvl 79–120 и синие ilvl 100–115.
+  распыления Classic и TBC: версии, диапазоны и распределения материалов.
+  Для Forever проверенного набора пока нет.
   [disenchanting-catalog.ts](../src/domain/disenchanting-catalog.ts) разрешает цены
   материалов из каталога и собирает расчёты для вкладки «Распыление».
-  Правила, явные допущения и контракт — в [документации](disenchanting-tbc.md).
+  Правила, явные допущения и контракт — в [документации](disenchanting.md).
 - [useCraftStore.ts](../src/store/useCraftStore.ts) — действия над каталогом и планом;
   [craft.selectors.ts](../src/store/craft.selectors.ts) — выборки активной версии;
   [persistence.ts](../src/store/persistence.ts) — сохранение и резервные копии.

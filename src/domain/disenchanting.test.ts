@@ -53,12 +53,12 @@ describe('выбор правил дизенчанта TBC', () => {
     })
   })
 
-  it.each([99, 100, 115, 116])('синяя граница %i', (itemLevel) => {
+  it.each([65, 66, 99, 100, 115, 116])('синяя граница %i', (itemLevel) => {
     const result = selectDisenchantRule({ ...armor, qualityId: 3, itemLevel }, 'tbc')
     expect(result.status).toBe(
-      itemLevel >= 100 && itemLevel <= 115 ? 'supported' : 'unsupported-rule',
+      itemLevel >= 1 && itemLevel <= 115 ? 'supported' : 'unsupported-rule',
     )
-    if (result.status !== 'supported') return
+    if (result.status !== 'supported' || itemLevel < 100) return
     expect(result.rule.outcomes).toEqual([
       {
         itemId: 22449,
@@ -114,12 +114,12 @@ describe('выбор правил дизенчанта TBC', () => {
     },
   )
 
-  it('не поддерживает эпики, старый мир и другую версию', () => {
+  it('поддерживает эпики и старый мир, отклоняет чужую версию источника', () => {
     expect(selectDisenchantRule({ ...armor, qualityId: 4 }, 'tbc').status).toBe(
-      'unsupported-rule',
+      'supported',
     )
     expect(selectDisenchantRule({ ...armor, itemLevel: 60 }, 'tbc').status).toBe(
-      'unsupported-rule',
+      'supported',
     )
     for (const version of ['forever', 'classic'] as const) {
       expect(selectDisenchantRule(armor, version).status).toBe('unsupported-version')
@@ -201,14 +201,14 @@ describe('выбор правил дизенчанта TBC', () => {
 describe('валидация набора правил', () => {
   function changedRule(change: (rule: DisenchantRuleSet['rules'][number]) => void) {
     const set = structuredClone(TBC_DISENCHANT_RULES)
-    const rule = set.rules[0]
+    const rule = set.rules.find(({ id }) => id === 'tbc-uncommon-armor-100-120')
     if (!rule) throw new Error('Нет правила')
     change(rule)
     return set
   }
 
   it('принимает статический набор и сохраняет разные знаменатели наблюдений', () => {
-    expect(parseDisenchantRuleSet(TBC_DISENCHANT_RULES).rules).toHaveLength(7)
+    expect(parseDisenchantRuleSet(TBC_DISENCHANT_RULES).rules).toHaveLength(48)
     const shield = TBC_DISENCHANT_RULES.evidence
       .flatMap(({ observations }) => observations)
       .filter(({ itemId }) => itemId === 25079)
@@ -446,7 +446,7 @@ describe('ожидаемый выход и стоимость дизенчант
   })
 
   it.each([
-    [{ ...armor, qualityId: 4 }, 'tbc', 'unsupported-rule'],
+    [{ ...armor, qualityId: 5 }, 'tbc', 'unsupported-rule'],
     [{ ...armor, source: undefined }, 'tbc', 'missing-metadata'],
     [{ source: { wowheadItemId: 21766 } }, 'tbc', 'not-disenchantable'],
     [armor, 'classic', 'unsupported-version'],

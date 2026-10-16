@@ -1,7 +1,7 @@
 import { getExactCraftUnitCost } from './calculations'
 import { calculateDisenchantComparison, getDisenchantProfit } from './disenchanting'
 import type { DisenchantResult } from './disenchanting'
-import { TBC_DISENCHANT_RULES } from './disenchanting-tbc'
+import { getDisenchantRuleSet } from './disenchanting-rules'
 import type { GameVersion } from './game-version'
 import type { Item, ItemCatalog, ItemId } from './item.types'
 import type { Profession } from './professions'
@@ -23,24 +23,24 @@ export interface CatalogDisenchantCalculation {
   materialIssues: DisenchantMaterialIssue[]
 }
 
-const materialIds = [
-  ...new Set(
-    TBC_DISENCHANT_RULES.rules.flatMap(({ outcomes }) =>
-      outcomes.map(({ itemId }) => itemId),
-    ),
-  ),
-]
-
 export function resolveDisenchantMaterialPrices(
   catalog: ItemCatalog,
+  version: GameVersion,
   prices?: PriceContext,
 ) {
+  const materialIds = [
+    ...new Set(
+      getDisenchantRuleSet(version)?.rules.flatMap(({ outcomes }) =>
+        outcomes.map(({ itemId }) => itemId),
+      ) ?? [],
+    ),
+  ]
   const candidates = new Map<number, Item[]>()
   for (const item of Object.values(catalog)) {
     const source = item.source
     if (
       !source ||
-      (source.wowheadVersion !== undefined && source.wowheadVersion !== 'tbc')
+      (source.wowheadVersion !== undefined && source.wowheadVersion !== version)
     )
       continue
     const entries = candidates.get(source.wowheadItemId) ?? []
@@ -76,7 +76,7 @@ export function createCatalogDisenchantSnapshot(
   ownedProfessions: ReadonlySet<Profession>,
   prices?: PriceContext,
 ): Record<ItemId, CatalogDisenchantCalculation> {
-  const { salePrices, issues } = resolveDisenchantMaterialPrices(catalog, prices)
+  const { salePrices, issues } = resolveDisenchantMaterialPrices(catalog, version, prices)
   const snapshot: Record<ItemId, CatalogDisenchantCalculation> = {}
   for (const itemId of itemIds) {
     const item = catalog[itemId]

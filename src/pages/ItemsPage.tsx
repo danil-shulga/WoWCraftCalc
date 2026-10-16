@@ -286,9 +286,10 @@ export function ItemsPage({ section }: ItemsPageProps) {
         )}
       </header>
 
-      {section === 'disenchanting' && gameVersion !== 'tbc' ? (
+      {section === 'disenchanting' && gameVersion === 'forever' ? (
         <p className="items-calculation-note">
-          Расчёт распыления пока доступен только в версии TBC.
+          Для Forever таблицы распыления пока не подтверждены. Формулы Classic и TBC не
+          учитывают бонусы распыления Forever.
         </p>
       ) : null}
 

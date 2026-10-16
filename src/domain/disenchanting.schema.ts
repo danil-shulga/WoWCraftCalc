@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-import { GAME_VERSION_REGISTRY } from './game-version'
+import { GAME_VERSIONS, GAME_VERSION_REGISTRY } from './game-version'
 
 const positiveInteger = z.number().int().positive()
 const metadataInteger = z.number().int().nonnegative()
@@ -73,8 +73,8 @@ const evidenceSchema = z.object({
 export const disenchantRuleSetSchema = z
   .object({
     schemaVersion: z.literal(1),
-    gameVersion: z.literal('tbc'),
-    build: z.literal(GAME_VERSION_REGISTRY.tbc.build),
+    gameVersion: z.enum(GAME_VERSIONS),
+    build: z.string().min(1),
     revision: z.string().min(1),
     rules: z.array(ruleSchema).min(1),
     overrides: z.array(
@@ -99,6 +99,8 @@ export const disenchantRuleSetSchema = z
     const issue = (message: string) => {
       ctx.addIssue({ code: 'custom', message })
     }
+    if (set.build !== GAME_VERSION_REGISTRY[set.gameVersion].build)
+      issue('Сборка не соответствует версии игры')
     const unique = (values: (string | number)[]) => new Set(values).size === values.length
     if (!unique(set.rules.map(({ id }) => id))) issue('Повтор ID правила')
     if (!unique(set.evidence.map(({ id }) => id))) issue('Повтор ID свидетельства')

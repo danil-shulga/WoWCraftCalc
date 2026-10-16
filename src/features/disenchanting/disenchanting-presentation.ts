@@ -2,6 +2,31 @@ import type { CatalogDisenchantCalculation } from '../../domain/disenchanting-ca
 import { splitCopper } from '../../domain/money'
 
 const materialNames: Readonly<Record<number, string>> = {
+  10940: 'Странная пыль',
+  10938: 'Малая магическая субстанция',
+  10939: 'Большая магическая субстанция',
+  10998: 'Простая Астральная субстанция',
+  11082: 'Великая астральная субстанция',
+  11083: 'Пыль духа',
+  11084: 'Большой мерцающий осколок',
+  10978: 'Малый мерцающий осколок',
+  11134: 'Простая Таинственная субстанция',
+  11135: 'Великая таинственная субстанция',
+  11137: 'Пыль провидения',
+  11138: 'Малый светящийся осколок',
+  11139: 'Большой светящийся осколок',
+  11174: 'Простая субстанция Пустоты',
+  11175: 'Великая субстанция Пустоты',
+  11176: 'Сонная пыль',
+  11177: 'Малый светозарный осколок',
+  11178: 'Большой светозарный осколок',
+  14343: 'Малый сверкающий осколок',
+  14344: 'Большой сверкающий осколок',
+  16202: 'Простая Вечная субстанция',
+  16203: 'Великая Вечная субстанция',
+  16204: 'Пыль иллюзий',
+  20725: 'Кристалл-источник',
+
   22445: 'Чародейская пыль',
   22446: 'Великая планарная субстанция',
   22447: 'Простая планарная субстанция',
@@ -11,6 +36,31 @@ const materialNames: Readonly<Record<number, string>> = {
 }
 
 const materialIcons: Readonly<Record<number, string>> = {
+  10940: 'inv_enchant_duststrange',
+  10938: 'inv_enchant_essencemagicsmall',
+  10939: 'inv_enchant_essencemagiclarge',
+  10998: 'inv_enchant_essenceastralsmall',
+  11082: 'inv_enchant_essenceastrallarge',
+  11083: 'inv_enchant_dustsoul',
+  11084: 'inv_enchant_shardglimmeringlarge',
+  10978: 'inv_enchant_shardglimmeringsmall',
+  11134: 'inv_enchant_essencemysticalsmall',
+  11135: 'inv_enchant_essencemysticallarge',
+  11137: 'inv_enchant_dustvision',
+  11138: 'inv_enchant_shardglowingsmall',
+  11139: 'inv_enchant_shardglowinglarge',
+  11174: 'inv_enchant_essencenethersmall',
+  11175: 'inv_enchant_essencenetherlarge',
+  11176: 'inv_enchant_dustdream',
+  11177: 'inv_enchant_shardradientsmall',
+  11178: 'inv_enchant_shardradientlarge',
+  14343: 'inv_enchant_shardbrilliantsmall',
+  14344: 'inv_enchant_shardbrilliantlarge',
+  16202: 'inv_enchant_essenceeternalsmall',
+  16203: 'inv_enchant_essenceeternallarge',
+  16204: 'inv_enchant_dustillusion',
+  20725: 'inv_enchant_shardnexuslarge',
+
   22445: 'inv_enchant_dustarcane',
   22446: 'inv_enchant_essencearcanelarge',
   22447: 'inv_enchant_essencearcanesmall',
@@ -54,7 +104,7 @@ export function describeDisenchantEstimate(
     case 'unsupported-rule':
       return 'Для этого качества, ilvl или типа экипировки правило распыления пока не поддерживается.'
     case 'unsupported-version':
-      return 'Расчёт распыления доступен только для предметов TBC.'
+      return 'Для этой версии игры расчёт распыления не подтверждён либо версия источника предмета не совпадает с выбранной.'
     case 'supported': {
       const materials = calculation.result.materials
         .filter(({ chance }) => chance.numerator > 0)

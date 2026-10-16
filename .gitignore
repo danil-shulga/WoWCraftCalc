@@ -13,3 +13,4 @@ data-preparation/raw/
 data-preparation/cache/
 data-preparation/staging/
 **/__pycache__/
+/TODO.md

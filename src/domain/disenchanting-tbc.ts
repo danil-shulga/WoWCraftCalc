@@ -1,23 +1,15 @@
 import exclusions from './disenchanting-tbc-exclusions.json'
+import {
+  disenchantArmor as armor,
+  disenchantWeapons as weapons,
+} from './disenchanting-equipment'
+import {
+  CLASSIC_COMMON_DISENCHANT_RULES,
+  CLASSIC_DISENCHANT_EVIDENCE,
+  classicHighLevelDisenchantRules,
+} from './disenchanting-classic'
 import { parseDisenchantRuleSet } from './disenchanting.schema'
 import type { DisenchantRule, DisenchantRuleSet } from './disenchanting.schema'
-
-const armor = [
-  {
-    classId: 4,
-    subclassIds: [1, 2, 3, 4],
-    inventoryTypes: [1, 3, 5, 6, 7, 8, 9, 10, 20],
-  },
-  { classId: 4, subclassIds: [1], inventoryTypes: [16] },
-  { classId: 4, subclassIds: [0], inventoryTypes: [2, 11, 12, 23] },
-  { classId: 4, subclassIds: [6], inventoryTypes: [14] },
-]
-const weapons = [
-  { classId: 2, subclassIds: [0, 4, 7, 13, 15], inventoryTypes: [13, 21, 22] },
-  { classId: 2, subclassIds: [1, 5, 6, 8, 10], inventoryTypes: [17] },
-  { classId: 2, subclassIds: [2], inventoryTypes: [15] },
-  { classId: 2, subclassIds: [3, 18, 19], inventoryTypes: [26] },
-]
 
 const greenRules: DisenchantRule[] = [
   {
@@ -105,9 +97,57 @@ export const TBC_DISENCHANT_RULES: DisenchantRuleSet = parseDisenchantRuleSet({
   schemaVersion: 1,
   gameVersion: 'tbc',
   build: '2.5.6.69795',
-  revision: '2026-10-16.1',
+  revision: '2026-10-17.1',
   rules: [
+    ...CLASSIC_COMMON_DISENCHANT_RULES,
+    ...classicHighLevelDisenchantRules('tbc'),
     ...greenRules,
+    {
+      id: 'tbc-rare-equipment-66-99',
+      qualityId: 3,
+      itemLevel: { min: 66, max: 99 },
+      equipment: [...armor, ...weapons],
+      evidenceIds: ['extended-reference-model'],
+      outcomes: [
+        {
+          itemId: 22448,
+          chance: { numerator: 199, denominator: 200 },
+          quantity: { kind: 'fixed', quantity: 1 },
+        },
+        {
+          itemId: 20725,
+          chance: { numerator: 1, denominator: 200 },
+          quantity: { kind: 'fixed', quantity: 1 },
+        },
+      ],
+    },
+    ...(
+      [
+        [90, 100, false],
+        [105, 164, true],
+      ] as const
+    ).map(([min, max, weighted]): DisenchantRule => ({
+      id: `tbc-epic-equipment-${String(min)}-${String(max)}`,
+      qualityId: 4,
+      itemLevel: { min, max },
+      equipment: [...armor, ...weapons],
+      evidenceIds: ['extended-reference-model'],
+      outcomes: [
+        {
+          itemId: 22450,
+          chance: { numerator: 1, denominator: 1 },
+          quantity: weighted
+            ? {
+                kind: 'weighted-model',
+                weights: [
+                  { quantity: 1, weight: 33 },
+                  { quantity: 2, weight: 67 },
+                ],
+              }
+            : { kind: 'uniform-model', range: { min: 1, max: 2 } },
+        },
+      ],
+    })),
     {
       id: 'tbc-rare-equipment-100-115',
       qualityId: 3,
@@ -135,13 +175,22 @@ export const TBC_DISENCHANT_RULES: DisenchantRuleSet = parseDisenchantRuleSet({
     evidenceIds: ['no-disenchant-csv'],
   })),
   evidence: [
+    CLASSIC_DISENCHANT_EVIDENCE,
+    {
+      id: 'extended-reference-model',
+      kind: 'reference-model',
+      url: 'https://warcraft.wiki.gg/wiki/Disenchanting_tables',
+      checkedAt: '2026-10-17',
+      itemIds: [19900, 21863, 21848],
+      note: 'Расширение справочной модели: синие ilvl 66–99, эпики 90–100 и 105–164. Для 105–164 модельные веса количества Void Crystal 33/67; равномерность 90–100 требует явного допущения. Неподтверждённые границы 89 и 101–104 не заполняются; см. docs/disenchanting.md.',
+    },
     {
       id: 'reference-model',
       kind: 'reference-model',
       url: 'https://warcraft.wiki.gg/wiki/Disenchanting_tables',
       checkedAt: '2026-10-16',
       itemIds: [],
-      note: 'Справочная модель из docs/disenchanting-tbc.md. Равномерность количеств — допущение; вероятности не доказаны частотами Wowhead.',
+      note: 'Справочная модель из docs/disenchanting.md. Равномерность количеств — допущение; вероятности не доказаны частотами Wowhead.',
     },
     ...(['green', 'rare'] as const).map((group) => ({
       id: `${group}-observations`,
@@ -152,7 +201,7 @@ export const TBC_DISENCHANT_RULES: DisenchantRuleSet = parseDisenchantRuleSet({
         group === 'green'
           ? [21853, 25293, 21849, 24076, 25559, 25610, 25079]
           : [23517, 21860, 25775],
-      note: 'Перенесено из docs/disenchanting-tbc.md. URL каждого наблюдения: https://www.wowhead.com/tbc/item={itemId}#disenchanting. Знаменатели сохраняются по материалам; отсутствие наблюдения не означает нулевой шанс.',
+      note: 'Перенесено из docs/disenchanting.md. URL каждого наблюдения: https://www.wowhead.com/tbc/item={itemId}#disenchanting. Знаменатели сохраняются по материалам; отсутствие наблюдения не означает нулевой шанс.',
       observations: observations
         .filter(
           ([itemId]) => [23517, 21860, 25775].includes(itemId) === (group === 'rare'),
@@ -169,7 +218,7 @@ export const TBC_DISENCHANT_RULES: DisenchantRuleSet = parseDisenchantRuleSet({
       id: 'no-disenchant-csv',
       kind: 'exclusion-source',
       url: `https://wago.tools/db2/ItemSparse/csv?build=${exclusions.build}&locale=enUS`,
-      checkedAt: '2026-10-16',
+      checkedAt: '2026-10-17',
       itemIds: exclusions.entries.map(({ itemId }) => itemId),
       note: `${exclusions.fileName}; SHA-256 ${exclusions.sha256}; ${exclusions.field} & ${String(exclusions.mask)}. ${exclusions.coverage} Значения flags сохранены по ID. Толкование бита: TrinityCore ItemTemplate.h (сторонняя реализация); для 21766 также комментарий Wowhead от 12.01.2008. Нулевой бит не доказывает возможность распыления.`,
     },

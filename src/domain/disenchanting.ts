@@ -3,7 +3,7 @@ import type { Item, ItemCatalog, ItemId } from './item.types'
 import { getExactCraftUnitCost } from './calculations'
 import type { CalculationOptions } from './calculations'
 import { resolveItemPrice } from './tsm'
-import { TBC_DISENCHANT_RULES } from './disenchanting-tbc'
+import { getDisenchantRuleSet } from './disenchanting-rules'
 import { parseDisenchantRuleSet } from './disenchanting.schema'
 import type {
   DisenchantQuantity,
@@ -30,15 +30,17 @@ export type DisenchantSelection =
 export function selectDisenchantRule(
   item: DisenchantItem,
   version: GameVersion,
-  ruleSet: DisenchantRuleSet = TBC_DISENCHANT_RULES,
+  ruleSet?: DisenchantRuleSet,
 ): DisenchantSelection {
-  if (
-    version !== 'tbc' ||
-    (item.source?.wowheadVersion != null && item.source.wowheadVersion !== version)
-  ) {
+  if (item.source?.wowheadVersion != null && item.source.wowheadVersion !== version) {
     return { status: 'unsupported-version' }
   }
-  const set = parseDisenchantRuleSet(ruleSet)
+  // Built-in sets are validated at module initialization; validate custom inputs per call.
+  const set =
+    ruleSet === undefined
+      ? getDisenchantRuleSet(version)
+      : parseDisenchantRuleSet(ruleSet)
+  if (set?.gameVersion !== version) return { status: 'unsupported-version' }
   const gameId = item.source?.wowheadItemId
   if (gameId == null || !Number.isSafeInteger(gameId) || gameId < 1) {
     return { status: 'missing-metadata', fields: ['source.wowheadItemId'] }
@@ -188,13 +190,13 @@ function meanQuantity(
   }
 }
 
-/** Prices are resolved by the caller, keyed by TBC game ID (never by local ID or name). */
+/** Prices are resolved by the caller, keyed by game ID within the active version. */
 export function calculateDisenchant(
   item: DisenchantItem,
   version: GameVersion,
   salePrices: ReadonlyMap<number, number | null>,
   options: DisenchantOptions = {},
-  ruleSet: DisenchantRuleSet = TBC_DISENCHANT_RULES,
+  ruleSet?: DisenchantRuleSet,
 ): DisenchantResult {
   const quantity = options.quantity ?? 1
   if (!Number.isSafeInteger(quantity) || quantity < 1) {
