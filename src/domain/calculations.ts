@@ -130,7 +130,7 @@ function getExactUnitCost(
     : getExactCraftUnitCost(catalog, itemId, options, path, craftCostCache)
 }
 
-function getExactCraftUnitCost(
+export function getExactCraftUnitCost(
   catalog: ItemCatalog,
   itemId: ItemId,
   options: CalculationOptions,

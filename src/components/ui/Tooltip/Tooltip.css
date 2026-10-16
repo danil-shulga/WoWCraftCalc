@@ -1,0 +1,27 @@
+.tooltip-trigger {
+  display: inline-flex;
+  cursor: help;
+}
+
+.tooltip-trigger:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+.tooltip-panel {
+  position: fixed;
+  z-index: 40;
+  box-sizing: border-box;
+  width: 440px;
+  padding: 14px;
+  overflow: auto;
+  border: 1px solid var(--border-strong);
+  border-radius: 10px;
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: var(--shadow);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  white-space: normal;
+}

@@ -13,6 +13,9 @@ import { ItemIdentity } from '../components/ui/ItemIdentity/ItemIdentity'
 import { SearchField } from '../components/ui/SearchField/SearchField'
 import { Toast } from '../components/ui/Toast/Toast'
 import { createCatalogCalculationSnapshot } from '../domain/calculations'
+import { createCatalogDisenchantSnapshot } from '../domain/disenchanting-catalog'
+import { describeDisenchantEstimate } from '../features/disenchanting/disenchanting-presentation'
+import { DisenchantEstimateDetails } from '../features/disenchanting/DisenchantEstimateDetails'
 import { getItemName, matchesItemName } from '../domain/item-names'
 import type { ItemId, ItemPriceField, ItemSection } from '../domain/item.types'
 import { ItemAddModal } from '../features/item-editor/ItemAddModal'
@@ -41,6 +44,11 @@ const pageContent: Record<
     description:
       'Добавляйте готовые предметы, задавайте цену продажи и составляйте рецепты.',
     addLabel: 'Добавить крафт',
+  },
+  disenchanting: {
+    title: 'Распыление',
+    description: 'Ожидаемая стоимость материалов и прибыль за распыление предмета.',
+    addLabel: 'Добавить предмет',
   },
   reagents: {
     title: 'Реагенты',
@@ -141,6 +149,45 @@ export function ItemsPage({ section }: ItemsPageProps) {
       ),
     [items, ownedProfessionSet, visibleItems, prices],
   )
+  const disenchantSnapshot = useMemo(
+    () =>
+      section === 'disenchanting'
+        ? createCatalogDisenchantSnapshot(
+            items,
+            gameVersion,
+            sectionItems.map(({ id }) => id),
+            ownedProfessionSet,
+            prices,
+          )
+        : {},
+    [section, items, gameVersion, sectionItems, ownedProfessionSet, prices],
+  )
+  const liveRows = useMemo(
+    () =>
+      sectionItems.map((item) => ({
+        item,
+        catalog: items,
+        calculationSnapshot,
+        disenchant: disenchantSnapshot[item.id],
+      })),
+    [sectionItems, items, calculationSnapshot, disenchantSnapshot],
+  )
+  const [previousRows, setPreviousRows] = useState(liveRows)
+  const [displayRows, setDisplayRows] = useState(liveRows)
+  if (previousRows !== liveRows) {
+    setPreviousRows(liveRows)
+    setDisplayRows((rows) => {
+      const next = [...liveRows]
+      rows.forEach((row, index) => {
+        if (!liveRows.some(({ item }) => item.id === row.item.id))
+          next.splice(Math.min(index, next.length), 0, row)
+      })
+      return next
+    })
+  }
+  const renderedRows = displayRows.filter(({ item }) =>
+    matchesItemName(item, searchQuery),
+  )
   const editingItem = editingItemId === null ? undefined : items[editingItemId]
   const deletingItem = deletingItemId === null ? undefined : items[deletingItemId]
   const removingFavorite =
@@ -204,7 +251,7 @@ export function ItemsPage({ section }: ItemsPageProps) {
           <div className="page__actions">
             {priceDrafts === null ? (
               <>
-                {sectionItems.length === 0 ? null : (
+                {sectionItems.length === 0 || section === 'disenchanting' ? null : (
                   <Button variant="secondary" type="button" onClick={startPriceEditing}>
                     Редактировать цены
                   </Button>
@@ -239,13 +286,21 @@ export function ItemsPage({ section }: ItemsPageProps) {
         )}
       </header>
 
-      {sectionItems.length === 0 ? (
+      {section === 'disenchanting' && gameVersion !== 'tbc' ? (
+        <p className="items-calculation-note">
+          Расчёт распыления пока доступен только в версии TBC.
+        </p>
+      ) : null}
+
+      {sectionItems.length === 0 && renderedRows.length === 0 ? (
         <div className="empty-state">
           <strong>Здесь пока ничего нет</strong>
           <p>
             {section === 'favorites'
               ? 'Нажмите звёздочку рядом с названием крафта или реагента, чтобы добавить его в избранное.'
-              : 'Создайте первый предмет, затем добавьте ему рецепт и цены.'}
+              : section === 'disenchanting'
+                ? 'Добавьте экипировку из базы или включите «Распыление» в настройках уже добавленного предмета.'
+                : 'Создайте первый предмет, затем добавьте ему рецепт и цены.'}
           </p>
           {section === 'favorites' ? null : (
             <Button
@@ -259,16 +314,20 @@ export function ItemsPage({ section }: ItemsPageProps) {
             </Button>
           )}
         </div>
-      ) : (
+      ) : null}
+      {renderedRows.length === 0 && sectionItems.length === 0 ? null : (
         <div className="items-content">
-          <SearchField value={searchQuery} onChange={setSearchQuery} />
+          {sectionItems.length > 0 ? (
+            <SearchField value={searchQuery} onChange={setSearchQuery} />
+          ) : null}
 
-          {visibleItems.length === 0 ? (
+          {sectionItems.length > 0 && visibleItems.length === 0 ? (
             <div className="search-empty-state">
               <strong>Ничего не найдено</strong>
               <p>Попробуйте изменить поисковый запрос.</p>
             </div>
-          ) : (
+          ) : null}
+          {renderedRows.length > 0 ? (
             <div
               className={`item-list${draggingId === null ? '' : ' item-list--dragging'}`}
               ref={listRef}
@@ -280,85 +339,127 @@ export function ItemsPage({ section }: ItemsPageProps) {
                   style={{ top: dropTarget.top, height: dropTarget.height }}
                 />
               ) : null}
-              {visibleItems.map((item) => (
-                <ItemTree
-                  planner={{
-                    itemName: getItemName(item, itemLanguage),
-                    quantity: plannerTargets.find((target) => target.itemId === item.id)
-                      ?.quantity,
-                    step: item.recipe?.outputQuantity ?? 1,
-                    onChange: (quantity) => {
-                      setPlannerQuantity(item.id, quantity)
-                    },
-                    onRemove: () => {
-                      removePlannerTarget(item.id)
-                    },
-                  }}
-                  key={item.id}
-                  rootDragAndDrop={{
-                    draggable: false,
-                    className: [
-                      'root-item-row--draggable',
-                      draggingId === item.id ? 'root-item-row--dragging' : '',
-                    ]
-                      .filter(Boolean)
-                      .join(' '),
-                    onPointerDown: (event) => {
-                      startPointerDrag(item.id, event)
-                    },
-                    onClickCapture: suppressDragClick,
-                    onDragStart: (event) => {
-                      event.preventDefault()
-                    },
-                    onKeyDown: (event) => {
-                      if (
-                        event.target !== event.currentTarget ||
-                        !event.altKey ||
-                        (event.key !== 'ArrowUp' && event.key !== 'ArrowDown')
-                      )
-                        return
-                      event.preventDefault()
-                      const neighbor =
-                        visibleItems[
-                          visibleItems.indexOf(item) + (event.key === 'ArrowUp' ? -1 : 1)
-                        ]
-                      if (neighbor)
-                        moveRootItem(
-                          section,
-                          item.id,
-                          neighbor.id,
-                          event.key === 'ArrowUp' ? 'before' : 'after',
-                        )
-                    },
-                  }}
-                  showPurchasePrice={section !== 'crafts'}
-                  rootItemId={item.id}
-                  itemLanguage={itemLanguage}
-                  catalog={items}
-                  calculationSnapshot={calculationSnapshot}
-                  {...(priceDrafts === null
-                    ? {}
-                    : {
-                        quickPriceEdit: {
-                          field: priceField,
-                          value: priceDrafts[item.id] ?? null,
-                          onChange: (value: number | null) => {
-                            setPriceDrafts((current) =>
-                              current === null ? null : { ...current, [item.id]: value },
-                            )
-                          },
+              {renderedRows.map(
+                ({ item, catalog, calculationSnapshot: rowCalculation, disenchant }) => {
+                  const removing = !liveRows.some((row) => row.item.id === item.id)
+                  return (
+                    <ItemTree
+                      presence={{
+                        removing,
+                        onRemoved: () => {
+                          setDisplayRows((rows) =>
+                            rows.filter((row) => row.item.id !== item.id),
+                          )
                         },
-                      })}
-                  expandedPaths={expandedPaths}
-                  onToggleExpanded={toggleExpanded}
-                  onEditItem={setEditingItemId}
-                  onDeleteItem={setDeletingItemId}
-                  onToggleFavorite={toggleFavorite}
-                  onSetAcquisition={setAcquisition}
-                />
-              ))}
+                      }}
+                      valuation={
+                        disenchant
+                          ? {
+                              label: 'Распыление',
+                              value: disenchant.result.expectedValueCopper,
+                              profitLabel: 'Прибыль за распыление',
+                              profit: disenchant.configuredProfit,
+                              allProfessionsProfit: disenchant.allProfessionsProfit,
+                              boughtReagentsProfit: disenchant.boughtReagentsProfit,
+                              buyProfit: disenchant.buyProfit,
+                              description: describeDisenchantEstimate(
+                                disenchant,
+                                item.recipe !== null,
+                              ),
+                              tooltip: (
+                                <DisenchantEstimateDetails
+                                  calculation={disenchant}
+                                  hasRecipe={item.recipe !== null}
+                                />
+                              ),
+                            }
+                          : undefined
+                      }
+                      planner={{
+                        itemName: getItemName(item, itemLanguage),
+                        quantity: plannerTargets.find(
+                          (target) => target.itemId === item.id,
+                        )?.quantity,
+                        step: item.recipe?.outputQuantity ?? 1,
+                        onChange: (quantity) => {
+                          setPlannerQuantity(item.id, quantity)
+                        },
+                        onRemove: () => {
+                          removePlannerTarget(item.id)
+                        },
+                      }}
+                      key={item.id}
+                      rootDragAndDrop={{
+                        draggable: false,
+                        className: [
+                          'root-item-row--draggable',
+                          draggingId === item.id ? 'root-item-row--dragging' : '',
+                        ]
+                          .filter(Boolean)
+                          .join(' '),
+                        onPointerDown: (event) => {
+                          startPointerDrag(item.id, event)
+                        },
+                        onClickCapture: suppressDragClick,
+                        onDragStart: (event) => {
+                          event.preventDefault()
+                        },
+                        onKeyDown: (event) => {
+                          if (
+                            event.target !== event.currentTarget ||
+                            !event.altKey ||
+                            (event.key !== 'ArrowUp' && event.key !== 'ArrowDown')
+                          )
+                            return
+                          event.preventDefault()
+                          const neighbor =
+                            visibleItems[
+                              visibleItems.indexOf(item) +
+                                (event.key === 'ArrowUp' ? -1 : 1)
+                            ]
+                          if (neighbor)
+                            moveRootItem(
+                              section,
+                              item.id,
+                              neighbor.id,
+                              event.key === 'ArrowUp' ? 'before' : 'after',
+                            )
+                        },
+                      }}
+                      showPurchasePrice={
+                        section !== 'crafts' && section !== 'disenchanting'
+                      }
+                      rootItemId={item.id}
+                      itemLanguage={itemLanguage}
+                      catalog={catalog}
+                      calculationSnapshot={rowCalculation}
+                      {...(priceDrafts === null
+                        ? {}
+                        : {
+                            quickPriceEdit: {
+                              field: priceField,
+                              value: priceDrafts[item.id] ?? null,
+                              onChange: (value: number | null) => {
+                                setPriceDrafts((current) =>
+                                  current === null
+                                    ? null
+                                    : { ...current, [item.id]: value },
+                                )
+                              },
+                            },
+                          })}
+                      expandedPaths={expandedPaths}
+                      onToggleExpanded={toggleExpanded}
+                      onEditItem={setEditingItemId}
+                      onDeleteItem={setDeletingItemId}
+                      onToggleFavorite={toggleFavorite}
+                      onSetAcquisition={setAcquisition}
+                    />
+                  )
+                },
+              )}
             </div>
-          )}
+          ) : null}
         </div>
       )}
 
@@ -376,8 +477,8 @@ export function ItemsPage({ section }: ItemsPageProps) {
           itemLanguage={itemLanguage}
           catalog={items}
           onSave={createItem}
-          onImport={(data) => importRecipe(data, request)}
-          onAddReferenceItem={(data) => addReferenceItem(data, request)}
+          onImport={(data) => importRecipe({ ...data, productSection: section }, request)}
+          onAddReferenceItem={(data) => addReferenceItem(data, request, section)}
           onSuccess={(message) => {
             setNotification((current) => ({ id: (current?.id ?? 0) + 1, message }))
           }}

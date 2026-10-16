@@ -94,7 +94,7 @@ const recipeImportSchema = z.object({
     .min(1),
   outputQuantity: z.number().int().positive(),
   profession: z.enum(PROFESSION_IDS).nullable(),
-  productSection: z.enum(['crafts', 'reagents']).optional(),
+  productSection: z.enum(['crafts', 'reagents', 'disenchanting']).optional(),
 })
 
 export type RecipeImportResult =
@@ -156,6 +156,7 @@ interface CraftStore extends PersistedCraftData {
   addReferenceItem: (
     data: RecipeImportItem,
     expected?: WorkspaceRequest,
+    section?: ItemSection,
   ) => ReferenceItemAddResult
   replaceData: (data: PersistedCraftData) => string | null
   resetData: () => string | null
@@ -699,7 +700,7 @@ export const useCraftStore = create<CraftStore>()(
               ...new Set([
                 ...productSections,
                 'crafts' as const,
-                ...(data.productSection === 'reagents' ? ['reagents' as const] : []),
+                ...(data.productSection ? [data.productSection] : []),
               ]),
             ],
             purchasePriceCopper: currentProduct
@@ -804,7 +805,7 @@ export const useCraftStore = create<CraftStore>()(
           }
         },
 
-        addReferenceItem: (data, expected) => {
+        addReferenceItem: (data, expected, section = 'reagents') => {
           if (!requestIsCurrent(expected))
             return {
               success: false,
@@ -836,7 +837,7 @@ export const useCraftStore = create<CraftStore>()(
                 ? {}
                 : { wowheadVersion: data.wowheadVersion }),
             },
-            sections: [...new Set([...(current?.sections ?? []), 'reagents' as const])],
+            sections: [...new Set([...(current?.sections ?? []), section])],
             purchasePriceCopper: current
               ? current.purchasePriceCopper
               : (data.defaultPurchasePriceCopper ?? null),

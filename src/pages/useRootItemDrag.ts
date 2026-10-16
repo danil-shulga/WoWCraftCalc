@@ -76,7 +76,8 @@ export function useRootItemDrag(
           drag.destination = index
         }
       })
-      const gap = Number.parseFloat(getComputedStyle(list).rowGap) || 10
+      const rowGap = Number.parseFloat(getComputedStyle(list).rowGap)
+      const gap = Number.isFinite(rowGap) ? rowGap : 10
       const shift = source.height + gap
       drag.trees.forEach(({ element }, index) => {
         let translate = 0
@@ -234,8 +235,9 @@ export function useRootItemDrag(
         )
       )
         return
-      const elements =
-        listRef.current?.querySelectorAll<HTMLElement>(':scope > .item-tree')
+      const elements = listRef.current?.querySelectorAll<HTMLElement>(
+        ':scope > .item-tree:not([data-removing])',
+      )
       if (!elements) return
       const trees = Array.from(elements).flatMap((element, index): TreePosition[] => {
         const item = items[index]

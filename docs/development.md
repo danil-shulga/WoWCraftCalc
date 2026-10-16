@@ -8,12 +8,17 @@
 
 - [App.tsx](../src/app/App.tsx) — разделы, настройки, переключение версии,
   подключение общего расчёта плана и клиента TSM.
-- [ItemsPage.tsx](../src/pages/ItemsPage.tsx) — крафты, реагенты и избранное;
+- [ItemsPage.tsx](../src/pages/ItemsPage.tsx) — крафты, реагенты, распыление и избранное;
   [PlannerPage.tsx](../src/pages/PlannerPage.tsx) — цели, закупка и этапы изготовления.
   «Выгодные» пока показывают заглушку.
 - [calculations.ts](../src/domain/calculations.ts) — себестоимость и прибыль каталога;
   [planner.ts](../src/domain/planner.ts) — планирование целых партий.
   Это разные расчёты: каталог усредняет стоимость единицы, план учитывает излишки.
+- [disenchanting.ts](../src/domain/disenchanting.ts) — чистая справочная оценка
+  дизенчанта TBC: зелёные ilvl 79–120 и синие ilvl 100–115.
+  [disenchanting-catalog.ts](../src/domain/disenchanting-catalog.ts) разрешает цены
+  материалов из каталога и собирает расчёты для вкладки «Распыление».
+  Правила, явные допущения и контракт — в [документации](disenchanting-tbc.md).
 - [useCraftStore.ts](../src/store/useCraftStore.ts) — действия над каталогом и планом;
   [craft.selectors.ts](../src/store/craft.selectors.ts) — выборки активной версии;
   [persistence.ts](../src/store/persistence.ts) — сохранение и резервные копии.

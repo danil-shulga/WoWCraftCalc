@@ -1,5 +1,5 @@
 import { ItemTreeRow } from '../ItemTreeRow/ItemTreeRow'
-import type { HTMLAttributes } from 'react'
+import type { HTMLAttributes, ReactNode } from 'react'
 import { IconButton } from '../../ui/IconButton/IconButton'
 import type { Item, ItemId, ItemPriceField } from '../../../domain/item.types'
 import { getItemName } from '../../../domain/item-names'
@@ -13,7 +13,20 @@ import {
   type PlanQuantityControlProps,
 } from '../../../features/planner/PlanQuantityControl'
 
+export interface RootItemValuation {
+  label: string
+  value: number | null
+  profitLabel: string
+  profit: number | null
+  allProfessionsProfit: number | null
+  boughtReagentsProfit: number | null
+  buyProfit: number | null
+  description: string
+  tooltip?: ReactNode
+}
+
 interface RootItemRowProps {
+  valuation?: RootItemValuation | undefined
   planner?: PlanQuantityControlProps | undefined
   dragAndDrop?: HTMLAttributes<HTMLElement> | undefined
   showPurchasePrice?: boolean
@@ -41,6 +54,7 @@ interface RootItemRowProps {
 }
 
 export function RootItemRow({
+  valuation,
   planner,
   dragAndDrop,
   showPurchasePrice = true,
@@ -63,6 +77,7 @@ export function RootItemRow({
   onToggleFavorite,
 }: RootItemRowProps) {
   const itemName = getItemName(item, itemLanguage)
+  const profit = valuation ? valuation.profit : configuredProfit
 
   return (
     <ItemTreeRow
@@ -112,34 +127,52 @@ export function RootItemRow({
           </dd>
         </div>
         <ItemPriceCell
-          title="Продажа"
+          title={valuation?.label ?? 'Продажа'}
           editLabel="Цена продажи"
           itemName={itemName}
-          value={salePrice}
-          isTsm={saleIsTsm}
+          value={valuation ? valuation.value : salePrice}
+          isTsm={valuation ? false : saleIsTsm}
           field="salePriceCopper"
-          quickPriceEdit={quickPriceEdit}
+          quickPriceEdit={valuation ? undefined : quickPriceEdit}
+          description={valuation?.description}
+          tooltip={valuation?.tooltip}
         />
         <div>
-          <dt>Прибыль за крафт</dt>
+          <dt>{valuation?.profitLabel ?? 'Прибыль за крафт'}</dt>
           <dd
             className={`profit-value ${
-              (configuredProfit ?? 0) >= 0 ? 'money-positive' : 'money-negative'
+              profit === null ? '' : profit >= 0 ? 'money-positive' : 'money-negative'
             }`}
             tabIndex={0}
           >
-            <MoneyDisplay value={configuredProfit} />
+            <MoneyDisplay value={profit} />
             <span className="profit-tooltip" role="tooltip">
+              {valuation ? (
+                <span>
+                  Купить и распылить:{' '}
+                  <strong>
+                    <MoneyDisplay value={valuation.buyProfit} />
+                  </strong>
+                </span>
+              ) : null}
               <span>
                 Все профессии:{' '}
                 <strong>
-                  <MoneyDisplay value={allProfessionsProfit} />
+                  <MoneyDisplay
+                    value={
+                      valuation ? valuation.allProfessionsProfit : allProfessionsProfit
+                    }
+                  />
                 </strong>
               </span>
               <span>
                 Все реагенты купить:{' '}
                 <strong>
-                  <MoneyDisplay value={boughtReagentsProfit} />
+                  <MoneyDisplay
+                    value={
+                      valuation ? valuation.boughtReagentsProfit : boughtReagentsProfit
+                    }
+                  />
                 </strong>
               </span>
             </span>

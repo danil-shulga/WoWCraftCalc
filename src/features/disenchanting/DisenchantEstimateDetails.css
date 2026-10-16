@@ -1,0 +1,60 @@
+.disenchant-details {
+  display: grid;
+  gap: 8px;
+}
+
+.disenchant-details__heading {
+  color: var(--gold-highlight);
+  font-size: 0.9375rem;
+}
+
+.disenchant-details__note {
+  margin: 0;
+  color: var(--muted);
+}
+
+.disenchant-details__materials {
+  display: grid;
+  gap: 8px;
+  margin: 2px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.disenchant-details__materials > li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--field);
+}
+
+.disenchant-details__drop {
+  display: grid;
+  gap: 2px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.disenchant-details__drop > span,
+.disenchant-details__price > span:first-child {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.disenchant-details__price {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.disenchant-details__issue {
+  grid-column: 1 / -1;
+  color: var(--gold);
+  font-size: 0.75rem;
+}

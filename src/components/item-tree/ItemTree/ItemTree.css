@@ -11,6 +11,30 @@
   grid-template-rows: 1fr;
 }
 
+.item-tree--animated {
+  display: grid;
+  grid-template-rows: 1fr;
+}
+
+.item-tree--animated > .item-tree__node {
+  padding-bottom: 10px;
+}
+
+.item-tree--entering {
+  animation: item-tree-expand 150ms ease-out;
+}
+
+.item-tree--removing {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  animation: item-tree-collapse 150ms ease-out;
+}
+
+.item-tree--entering > .item-tree__node,
+.item-tree--removing > .item-tree__node {
+  overflow: hidden;
+}
+
 .item-tree__expansion--opening {
   animation: item-tree-expand 150ms ease-out;
 }
@@ -49,7 +73,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .item-tree__expansion {
+  .item-tree__expansion,
+  .item-tree--animated {
     animation-duration: 1ms;
   }
 }

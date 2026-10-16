@@ -147,7 +147,12 @@ function ReferenceReview({
         className="reference-db__product"
       />
       {recipe === null ? (
-        <p>Будет добавлен реагент. Существующий рецепт сохранится.</p>
+        <p>
+          {section === 'disenchanting'
+            ? 'Предмет будет показан в разделе «Распыление».'
+            : 'Будет добавлен реагент.'}{' '}
+          Существующий рецепт сохранится.
+        </p>
       ) : (
         <>
           <ItemQuantityList
@@ -206,7 +211,11 @@ function ReferenceReview({
           Отмена
         </Button>
         <Button variant="primary" type="button" onClick={confirm}>
-          {recipe === null ? 'Добавить реагент' : 'Подтвердить импорт'}
+          {recipe === null
+            ? section === 'disenchanting'
+              ? 'Добавить предмет'
+              : 'Добавить реагент'
+            : 'Подтвердить импорт'}
         </Button>
       </div>
     </section>
@@ -305,7 +314,7 @@ function ReferenceBrowser(
             }}
           />
           <SearchableSelect
-            label={section === 'crafts' ? 'Профессия' : 'Используется в профессии'}
+            label={section !== 'reagents' ? 'Профессия' : 'Используется в профессии'}
             value={profession}
             options={[{ value: '', label: 'Все профессии' }, ...PROFESSION_OPTIONS]}
             onChange={(value) => {
@@ -386,12 +395,20 @@ function ReferenceBrowser(
           {recipes.length > 0 ? (
             <SearchableSelect
               label="Рецепт"
-              disabled={section !== 'reagents' && recipes.length === 1}
+              disabled={section === 'crafts' && recipes.length === 1}
               value={recipeId}
               placeholder="Выберите рецепт…"
               options={[
-                ...(section === 'reagents'
-                  ? [{ value: '', label: 'Только реагент, без импорта рецепта' }]
+                ...(section !== 'crafts'
+                  ? [
+                      {
+                        value: '',
+                        label:
+                          section === 'disenchanting'
+                            ? 'Только предмет, без импорта рецепта'
+                            : 'Только реагент, без импорта рецепта',
+                      },
+                    ]
                   : []),
                 ...recipes.map((option) => ({
                   value: String(option.spellId),

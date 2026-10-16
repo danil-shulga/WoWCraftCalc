@@ -15,6 +15,23 @@ describe('реагенты без рецепта создания предмет
   const database = parseReferenceDatabase(value, 'tbc')
   const index = buildReferenceDatabaseIndex(database)
 
+  it('находит экипировку для распыления среди продуктов, не включая материалы', () => {
+    expect(
+      searchReferenceItems(index, 'disenchanting', 'Netherweave Boots').map(
+        ({ itemId }) => itemId,
+      ),
+    ).toContain(21853)
+    expect(
+      searchReferenceItems(index, 'disenchanting', 'Netherweave Boots', 'tailoring').map(
+        ({ itemId }) => itemId,
+      ),
+    ).toContain(21853)
+    expect(
+      searchReferenceItems(index, 'disenchanting', 'Netherweave Boots', 'alchemy'),
+    ).toEqual([])
+    expect(searchReferenceItems(index, 'disenchanting', 'Arcane Dust')).toEqual([])
+  })
+
   it.each([
     [22572, 'Mote of Air'],
     [22575, 'Mote of Life'],

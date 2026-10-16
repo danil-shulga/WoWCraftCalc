@@ -92,6 +92,13 @@ export function ItemDescriptionFields({
             toggleSection('reagents', checked)
           }}
         />
+        <Checkbox
+          label="Распыление"
+          checked={draft.sections.includes('disenchanting')}
+          onChange={(checked) => {
+            toggleSection('disenchanting', checked)
+          }}
+        />
       </fieldset>
 
       <div className="price-grid">

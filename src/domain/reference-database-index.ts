@@ -94,11 +94,17 @@ export function searchReferenceItems(
   language: ItemLanguage = 'ru',
 ): ReferenceItem[] {
   const ids =
-    section === 'crafts' ? index.recipesByProduct.keys() : index.reagentIds.values()
+    section === 'disenchanting'
+      ? Object.values(index.database.items)
+          .filter(({ classId }) => classId === 2 || classId === 4)
+          .map(({ itemId }) => itemId)
+      : section === 'crafts'
+        ? index.recipesByProduct.keys()
+        : index.reagentIds.values()
   const professionIds =
     profession === null
       ? null
-      : (section === 'crafts'
+      : (section !== 'reagents'
           ? index.productsByProfession
           : index.reagentsByProfession
         ).get(profession)

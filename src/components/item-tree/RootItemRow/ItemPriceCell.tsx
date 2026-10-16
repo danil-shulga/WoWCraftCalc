@@ -1,6 +1,8 @@
+import type { ReactNode } from 'react'
 import type { ItemPriceField } from '../../../domain/item.types'
 import { InlineMoneyInput } from '../../ui/InlineMoneyInput/InlineMoneyInput'
 import { MoneyDisplay } from '../../ui/MoneyDisplay/MoneyDisplay'
+import { Tooltip } from '../../ui/Tooltip/Tooltip'
 import './ItemPriceCell.css'
 
 export interface QuickPriceEdit {
@@ -9,6 +11,8 @@ export interface QuickPriceEdit {
   onChange: (value: number | null) => void
 }
 interface ItemPriceCellProps {
+  description?: string | undefined
+  tooltip?: ReactNode
   title: string
   editLabel: string
   itemName: string
@@ -18,6 +22,8 @@ interface ItemPriceCellProps {
   quickPriceEdit?: QuickPriceEdit | undefined
 }
 export function ItemPriceCell({
+  description,
+  tooltip,
   title,
   editLabel,
   itemName,
@@ -32,7 +38,7 @@ export function ItemPriceCell({
       <dt>{title}</dt>
       <dd
         className={editing ? 'item-row__price-editor' : undefined}
-        title={isTsm ? 'Цена TSM' : undefined}
+        title={tooltip ? undefined : (description ?? (isTsm ? 'Цена TSM' : undefined))}
       >
         {editing ? (
           <>
@@ -47,6 +53,10 @@ export function ItemPriceCell({
               </small>
             ) : null}
           </>
+        ) : tooltip ? (
+          <Tooltip content={tooltip}>
+            <MoneyDisplay value={value} />
+          </Tooltip>
         ) : (
           <MoneyDisplay value={value} />
         )}

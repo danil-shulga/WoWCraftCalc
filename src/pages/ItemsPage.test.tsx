@@ -476,6 +476,11 @@ describe('ItemsPage', () => {
       screen.getByRole('button', { name: 'Удалить из избранного: Лечебное зелье' }),
     )
     await user.click(screen.getByRole('button', { name: 'Удалить из избранного' }))
+    const leavingTree = screen.getByText('Лечебное зелье').closest('.item-tree')
+    if (!leavingTree) throw new Error('Нет уходящего дерева')
+    expect(leavingTree).toHaveAttribute('inert')
+    expect(leavingTree).toHaveAttribute('aria-hidden', 'true')
+    fireEvent.animationEnd(leavingTree)
     expect(screen.getByText('Здесь пока ничего нет')).toBeVisible()
     const state = useCraftStore.getState()
     expect(state.workspaces[state.activeVersion].items.potion).toBeDefined()

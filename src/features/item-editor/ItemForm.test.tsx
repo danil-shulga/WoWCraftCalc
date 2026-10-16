@@ -15,6 +15,24 @@ const item: Item = {
 }
 
 describe('ItemForm', () => {
+  it('позволяет показывать предмет только в распылении', async () => {
+    const user = userEvent.setup()
+    const onSave = vi.fn()
+    render(
+      <ItemForm
+        initialItem={item}
+        defaultSection="reagents"
+        onSave={onSave}
+        onCancel={vi.fn()}
+      />,
+    )
+    await user.click(screen.getByRole('checkbox', { name: 'Распыление' }))
+    await user.click(screen.getByRole('checkbox', { name: 'Реагенты' }))
+    await user.click(screen.getByRole('button', { name: 'Сохранить' }))
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({ sections: ['disenchanting'] }),
+    )
+  })
   it.each(['RU', 'EN'])('сохраняет одно заполненное название %s', async (language) => {
     const user = userEvent.setup()
     const onSave = vi.fn()

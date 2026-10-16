@@ -29,6 +29,8 @@ function CurrentPage({
       return <PlannerPage {...plannerProps} />
     case 'crafts':
       return <ItemsPage key="crafts" section="crafts" />
+    case 'disenchanting':
+      return <ItemsPage key="disenchanting" section="disenchanting" />
     case 'reagents':
       return <ItemsPage key="reagents" section="reagents" />
     case 'profitable':

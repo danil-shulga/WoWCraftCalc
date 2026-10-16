@@ -45,7 +45,7 @@ export const itemSchema = z.object({
       wowheadVersion: z.enum(WOWHEAD_VERSIONS).optional(),
     })
     .optional(),
-  sections: z.array(z.enum(['crafts', 'reagents'])).min(1),
+  sections: z.array(z.enum(['crafts', 'reagents', 'disenchanting'])).min(1),
   isFavorite: z.boolean().optional(),
   purchasePriceCopper: nullableCopperSchema,
   salePriceCopper: nullableCopperSchema,
@@ -70,6 +70,7 @@ export const versionWorkspaceSchema = z.object({
       crafts: z.array(z.string().min(1)).optional(),
       reagents: z.array(z.string().min(1)).optional(),
       favorites: z.array(z.string().min(1)).optional(),
+      disenchanting: z.array(z.string().min(1)).optional(),
     })
     .optional(),
   items: z.record(z.string(), itemSchema),

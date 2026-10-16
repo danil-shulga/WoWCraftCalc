@@ -6,7 +6,7 @@ import type { CraftPlan } from './planner.types'
 
 export type ItemId = string
 
-export type ItemSection = 'crafts' | 'reagents'
+export type ItemSection = 'crafts' | 'reagents' | 'disenchanting'
 export type RootItemSection = ItemSection | 'favorites'
 export type RootItemOrder = Partial<Record<RootItemSection, ItemId[] | undefined>>
 

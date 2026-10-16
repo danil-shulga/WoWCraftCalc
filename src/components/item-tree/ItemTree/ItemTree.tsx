@@ -11,6 +11,7 @@ import type {
 } from '../../../domain/item.types'
 import { ReagentItemRow } from '../ReagentItemRow/ReagentItemRow'
 import { RootItemRow } from '../RootItemRow/RootItemRow'
+import type { RootItemValuation } from '../RootItemRow/RootItemRow'
 import './ItemTree.css'
 import type { PlanQuantityControlProps } from '../../../features/planner/PlanQuantityControl'
 
@@ -21,6 +22,8 @@ interface QuickPriceEdit {
 }
 
 interface ItemTreeProps {
+  presence?: { removing: boolean; onRemoved: () => void } | undefined
+  valuation?: RootItemValuation | undefined
   planner?: PlanQuantityControlProps | undefined
   rootDragAndDrop?: HTMLAttributes<HTMLElement> | undefined
   showPurchasePrice?: boolean
@@ -50,6 +53,7 @@ interface ItemTreeNodeProps extends ItemTreeProps {
 }
 
 function ItemTreeNode({
+  valuation,
   planner,
   rootDragAndDrop,
   showPurchasePrice = true,
@@ -104,6 +108,7 @@ function ItemTreeNode({
     <li className="item-tree__node">
       {recipeLine === null ? (
         <RootItemRow
+          valuation={valuation}
           planner={planner}
           dragAndDrop={rootDragAndDrop}
           showPurchasePrice={showPurchasePrice}
@@ -189,8 +194,20 @@ function ItemTreeNode({
 }
 
 export function ItemTree(props: ItemTreeProps) {
+  const [entering, setEntering] = useState(true)
+  const removing = props.presence?.removing ?? false
   return (
-    <ul className="item-tree">
+    <ul
+      className={`item-tree${props.presence ? ` item-tree--animated${removing ? ' item-tree--removing' : entering ? ' item-tree--entering' : ''}` : ''}`}
+      data-removing={removing || undefined}
+      inert={removing}
+      aria-hidden={removing || undefined}
+      onAnimationEnd={(event) => {
+        if (event.target !== event.currentTarget) return
+        if (removing) props.presence?.onRemoved()
+        else setEntering(false)
+      }}
+    >
       <ItemTreeNode
         {...props}
         itemId={props.rootItemId}
