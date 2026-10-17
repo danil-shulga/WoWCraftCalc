@@ -48,8 +48,10 @@ Props и особенности: [общие контролы](ui-features.md#о
   `ItemAddModal`, `ItemEditModal` — добавление и объединённое редактирование.
 - `recipe-editor/RecipeEditor.tsx` — ручной состав рецепта и анимации реагентов.
 - `reference-database`: `ReferenceDatabaseForm` — загрузка базы;
-  `ReferenceBrowser` — поиск и выбор предмета/рецепта;
-  `ReferenceReview` — предпросмотр и подтверждение.
+  `ReferenceBrowser` — поиск, выбор набора и подтверждение;
+  `useReferenceDrafts` — независимые черновики рецептов и выхода;
+  `ReferenceSelection` — выбранные позиции и анимации;
+  `ReferenceReview` — общий управляемый предпросмотр.
 - `wowhead-import`: `WowheadImportForm` — импорт рецепта;
   `ItemNamesLoader` — недостающие переводы.
 - `planner`: `PlanQuantityControl` — тележка и количество;

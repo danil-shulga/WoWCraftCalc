@@ -3,9 +3,9 @@ import {
   getImportAmbiguityError,
 } from '../domain/imported-item-matching'
 import type {
-  ItemMetadata,
   RecipeImportData,
   RecipeImportItem,
+  ReferenceImportEntry,
 } from '../domain/recipe-import.types'
 import { create } from 'zustand'
 import { tsmSettingsSchema } from '../domain/tsm'
@@ -25,7 +25,6 @@ import type {
   Item,
   ItemCatalog,
   ItemId,
-  ItemNames,
   ItemNamesUpdate,
   ItemPriceField,
   ItemSection,
@@ -34,7 +33,15 @@ import type {
   RootItemSection,
   VersionWorkspace,
 } from '../domain/item.types'
-import { PROFESSION_IDS, type Profession } from '../domain/professions'
+import type { Profession } from '../domain/professions'
+import {
+  mergeImportedItem,
+  prepareReferenceBatch,
+  recipeImportItemSchema,
+  recipeImportSchema,
+  type ReferenceBatchResult,
+} from './reference-import'
+export type { ReferenceBatchResult } from './reference-import'
 import {
   WOWHEAD_VERSIONS,
   type CurrencyDisplayMode,
@@ -54,32 +61,6 @@ export interface RecipeImportTarget {
   itemId: ItemId
   input: ItemInput
 }
-
-const recipeImportItemSchema = z.object({
-  wowheadItemId: z.number().int().positive(),
-  name: z.string().trim().min(1),
-  names: itemNamesSchema.optional(),
-  wowheadVersion: z.enum(WOWHEAD_VERSIONS).optional(),
-  iconUrl: z.union([z.literal(''), z.url()]),
-  requiredLevel: itemSchema.shape.requiredLevel,
-  qualityId: itemSchema.shape.qualityId,
-  itemLevel: itemSchema.shape.itemLevel,
-  classId: itemSchema.shape.classId,
-  subclassId: itemSchema.shape.subclassId,
-  inventoryType: itemSchema.shape.inventoryType,
-  defaultPurchasePriceCopper: z.number().int().nonnegative().nullable().optional(),
-  defaultSalePriceCopper: z.number().int().nonnegative().nullable().optional(),
-})
-
-const recipeImportSchema = z.object({
-  product: recipeImportItemSchema,
-  reagents: z
-    .array(recipeImportItemSchema.extend({ quantity: z.number().int().positive() }))
-    .min(1),
-  outputQuantity: z.number().int().positive(),
-  profession: z.enum(PROFESSION_IDS).nullable(),
-  productSection: z.enum(['crafts', 'reagents', 'disenchanting']).optional(),
-})
 
 export type RecipeImportResult =
   | {
@@ -142,6 +123,11 @@ interface CraftStore extends PersistedCraftData {
     expected?: WorkspaceRequest,
     section?: ItemSection,
   ) => ReferenceItemAddResult
+  importReferenceBatch: (
+    entries: readonly ReferenceImportEntry[],
+    expected: WorkspaceRequest,
+    section: ItemSection,
+  ) => ReferenceBatchResult
   replaceData: (data: PersistedCraftData) => string | null
   resetData: () => string | null
   setProfessionOwned: (profession: Profession, owned: boolean) => void
@@ -182,30 +168,6 @@ const craftStorage = createCraftStorage(
 )
 const storageKey = STORAGE_KEY
 const storageVersion = STORAGE_VERSION
-
-function mergeItemNames(
-  current: Item | undefined,
-  imported: RecipeImportItem,
-): ItemNames {
-  return {
-    ru: imported.names?.ru ?? current?.names?.ru ?? null,
-    en: imported.names?.en ?? current?.names?.en ?? null,
-  }
-}
-
-function mergeItemMetadata(
-  current: Item | undefined,
-  imported: RecipeImportItem,
-): ItemMetadata {
-  return {
-    requiredLevel: imported.requiredLevel ?? current?.requiredLevel ?? null,
-    qualityId: imported.qualityId ?? current?.qualityId ?? null,
-    itemLevel: imported.itemLevel ?? current?.itemLevel ?? null,
-    classId: imported.classId ?? current?.classId ?? null,
-    subclassId: imported.subclassId ?? current?.subclassId ?? null,
-    inventoryType: imported.inventoryType ?? current?.inventoryType ?? null,
-  }
-}
 
 function getPersistenceError(error: unknown): string {
   return error instanceof Error ? error.message : 'Не удалось сохранить данные CraftCalc'
@@ -612,37 +574,11 @@ export const useCraftStore = create<CraftStore>()(
           const productItemId = currentProduct?.id ?? crypto.randomUUID()
           const productCreated = currentProduct === undefined
           const nextItems: ItemCatalog = { ...currentItems }
-          const productSections = currentProduct?.sections ?? []
           const importedProduct: Item = {
-            ...mergeItemMetadata(currentProduct, data.product),
-            isFavorite: currentProduct?.isFavorite,
-            id: productItemId,
-            name: data.product.name,
-            names: mergeItemNames(currentProduct, data.product),
-            iconUrl:
-              data.product.iconUrl.length > 0
-                ? data.product.iconUrl
-                : (currentProduct?.iconUrl ?? ''),
-            source: {
-              wowheadItemId: data.product.wowheadItemId,
-              ...(data.product.wowheadVersion === undefined
-                ? {}
-                : { wowheadVersion: data.product.wowheadVersion }),
-            },
-            sections: [
-              ...new Set([
-                ...productSections,
-                'crafts' as const,
-                ...(data.productSection ? [data.productSection] : []),
-              ]),
-            ],
-            purchasePriceCopper: currentProduct
-              ? currentProduct.purchasePriceCopper
-              : (data.product.defaultPurchasePriceCopper ?? null),
-            salePriceCopper: currentProduct
-              ? currentProduct.salePriceCopper
-              : (data.product.defaultSalePriceCopper ?? null),
-            recipe: currentProduct?.recipe ?? null,
+            ...mergeImportedItem(currentProduct, data.product, productItemId, [
+              'crafts',
+              ...(data.productSection ? [data.productSection] : []),
+            ]),
             ...(target === undefined
               ? {}
               : {
@@ -676,31 +612,12 @@ export const useCraftStore = create<CraftStore>()(
               reagentsCreated += 1
             }
 
-            nextItems[reagentItemId] = {
-              ...mergeItemMetadata(reagent, importedReagent),
-              isFavorite: reagent?.isFavorite,
-              id: reagentItemId,
-              name: importedReagent.name,
-              names: mergeItemNames(reagent, importedReagent),
-              iconUrl:
-                importedReagent.iconUrl.length > 0
-                  ? importedReagent.iconUrl
-                  : (reagent?.iconUrl ?? ''),
-              source: {
-                wowheadItemId: importedReagent.wowheadItemId,
-                ...(importedReagent.wowheadVersion === undefined
-                  ? {}
-                  : { wowheadVersion: importedReagent.wowheadVersion }),
-              },
-              sections: [...new Set([...(reagent?.sections ?? []), 'reagents' as const])],
-              purchasePriceCopper: reagent
-                ? reagent.purchasePriceCopper
-                : (importedReagent.defaultPurchasePriceCopper ?? null),
-              salePriceCopper: reagent
-                ? reagent.salePriceCopper
-                : (importedReagent.defaultSalePriceCopper ?? null),
-              recipe: reagent?.recipe ?? null,
-            }
+            nextItems[reagentItemId] = mergeImportedItem(
+              reagent,
+              importedReagent,
+              reagentItemId,
+              ['reagents'],
+            )
 
             const previousLine = currentProduct?.recipe?.reagents.find(
               (line) => line.itemId === reagentItemId,
@@ -758,29 +675,34 @@ export const useCraftStore = create<CraftStore>()(
           if (ambiguity !== null) return { success: false, error: ambiguity }
           const current = findImportedItem(items, data)
           const itemId = current?.id ?? crypto.randomUUID()
-          const item: Item = {
-            ...mergeItemMetadata(current, data),
-            id: itemId,
-            name: data.name,
-            names: mergeItemNames(current, data),
-            iconUrl: data.iconUrl.length > 0 ? data.iconUrl : (current?.iconUrl ?? ''),
-            source: {
-              wowheadItemId: data.wowheadItemId,
-              ...(data.wowheadVersion === undefined
-                ? {}
-                : { wowheadVersion: data.wowheadVersion }),
-            },
-            sections: [...new Set([...(current?.sections ?? []), section])],
-            purchasePriceCopper: current
-              ? current.purchasePriceCopper
-              : (data.defaultPurchasePriceCopper ?? null),
-            salePriceCopper: current
-              ? current.salePriceCopper
-              : (data.defaultSalePriceCopper ?? null),
-            recipe: current?.recipe ?? null,
-          }
+          const item = mergeImportedItem(current, data, itemId, [section])
           set({ items: { ...items, [itemId]: item } })
           return { success: true, itemId, created: current === undefined }
+        },
+
+        importReferenceBatch: (entries, expected, section) => {
+          if (!requestIsCurrent(expected))
+            return {
+              success: false,
+              error: 'Версия игры изменилась. Повторите добавление',
+            }
+          const result = prepareReferenceBatch(
+            get().items,
+            entries,
+            section,
+            getState().activeVersion,
+          )
+          if (!result.success) return result
+          set({ items: result.items })
+          const persistenceError = usePersistenceStatusStore.getState().hydrationError
+          if (persistenceError !== null)
+            return { success: false, error: persistenceError }
+          return {
+            success: true,
+            created: result.created,
+            reused: result.reused,
+            recipes: result.recipes,
+          }
         },
 
         replaceData: (data) => {

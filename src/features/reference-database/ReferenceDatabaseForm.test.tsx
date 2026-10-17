@@ -3,8 +3,10 @@ import { readFileSync } from 'node:fs'
 import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { ComponentProps } from 'react'
+import type { ReferenceImportEntry } from '../../domain/recipe-import.types'
 import type { Item } from '../../domain/item.types'
 
+import { referenceItemName } from '../../domain/reference-database-index'
 import { buildReferenceDatabaseIndex } from '../../domain/reference-database-index'
 import { parseReferenceDatabase } from '../../domain/reference-database.schema'
 import { ItemsPage } from '../../pages/ItemsPage'
@@ -16,7 +18,14 @@ import { ReferenceDatabaseForm } from './ReferenceDatabaseForm'
 function renderForm(props: Partial<ComponentProps<typeof ReferenceDatabaseForm>> = {}) {
   const callbacks = {
     onImport: vi.fn(useCraftStore.getState().importRecipe),
-    onAddItem: vi.fn(useCraftStore.getState().addReferenceItem),
+    onImportBatch: vi.fn((entries: readonly ReferenceImportEntry[]) => {
+      const state = useCraftStore.getState()
+      return state.importReferenceBatch(
+        entries,
+        { version: state.activeVersion, revision: state.workspaceRevision },
+        props.section ?? 'crafts',
+      )
+    }),
     onClose: vi.fn(),
     onSuccess: vi.fn(),
   }
@@ -30,43 +39,37 @@ function renderForm(props: Partial<ComponentProps<typeof ReferenceDatabaseForm>>
       isActive
       {...callbacks}
       {...props}
+      {...(props.targetItem === undefined
+        ? {
+            onImportBatch:
+              ('onImportBatch' in props ? props.onImportBatch : undefined) ??
+              callbacks.onImportBatch,
+          }
+        : {
+            targetItem: props.targetItem,
+            onImport: props.onImport ?? callbacks.onImport,
+          })}
     />,
   )
   return { ...rendered, ...callbacks }
 }
 
 describe('вкладка базы', () => {
-  it('прокручивает окно до нижней границы за 150 мс без повторения при изменении выхода', async () => {
-    const frames: FrameRequestCallback[] = []
-    const requestFrame = vi
-      .spyOn(window, 'requestAnimationFrame')
-      .mockImplementation((callback) => {
-        frames.push(callback)
-        return frames.length
-      })
-    vi.spyOn(performance, 'now').mockReturnValue(1000)
+  it('сохраняет прокрутку окна при выборе предмета и изменении выхода', async () => {
+    const requestFrame = vi.spyOn(window, 'requestAnimationFrame')
     const user = userEvent.setup()
-    const { container, unmount } = renderForm()
+    const { container } = renderForm()
     container.setAttribute('role', 'dialog')
     Object.defineProperties(container, {
       scrollHeight: { configurable: true, value: 1200 },
       clientHeight: { configurable: true, value: 500 },
     })
     container.scrollTop = 100
-    await screen.findByRole('searchbox')
-    expect(requestFrame).not.toHaveBeenCalled()
-    await user.click(screen.getByRole('button', { name: /Венец Грёз/ }))
+    await user.click(await screen.findByRole('button', { name: /^Венец Грёз/ }))
     expect(container.scrollTop).toBe(100)
-    frames.shift()?.(1075)
-    expect(container.scrollTop).toBeGreaterThan(100)
-    expect(container.scrollTop).toBeLessThan(700)
-    frames.shift()?.(1150)
-    expect(container.scrollTop).toBe(700)
-    expect(frames).toHaveLength(0)
-    requestFrame.mockClear()
     await user.click(screen.getByRole('button', { name: 'Увеличить значение' }))
+    expect(container.scrollTop).toBe(100)
     expect(requestFrame).not.toHaveBeenCalled()
-    unmount()
   })
 
   beforeEach(() => {
@@ -148,8 +151,8 @@ describe('вкладка базы', () => {
         buildReferenceDatabaseIndex(database),
       )
       const user = userEvent.setup()
-      const { onImport } = renderForm()
-      await user.click(await screen.findByRole('button', { name: /Венец Грёз/ }))
+      const { onImportBatch } = renderForm()
+      await user.click(await screen.findByRole('button', { name: /^Венец Грёз/ }))
       const expectedOutput = quantity ?? 1
       const input = screen.getByLabelText('Предметов за один крафт')
       expect(input).toHaveValue(expectedOutput)
@@ -162,10 +165,10 @@ describe('вкладка базы', () => {
       expect(input).toHaveValue(expectedOutput + 1)
       await user.click(screen.getByRole('button', { name: 'Уменьшить значение' }))
       expect(input).toHaveValue(expectedOutput)
-      await user.click(screen.getByRole('button', { name: 'Подтвердить импорт' }))
-      expect(onImport).toHaveBeenCalledWith(
-        expect.objectContaining({ outputQuantity: expectedOutput }),
-      )
+      await user.click(screen.getByRole('button', { name: 'Добавить выбранные (1)' }))
+      expect(onImportBatch.mock.calls[0]?.[0]).toMatchObject([
+        { kind: 'recipe', data: { outputQuantity: expectedOutput } },
+      ])
     },
   )
 
@@ -190,10 +193,10 @@ describe('вкладка базы', () => {
 
   it('ищет RU/EN, фильтрует профессию и подтверждает отредактированный выход без лишних подписей', async () => {
     const user = userEvent.setup()
-    const { onImport, onClose } = renderForm()
+    const { onImportBatch, onClose } = renderForm()
     const search = await screen.findByRole('searchbox')
     await user.type(search, 'DREAM')
-    await user.click(screen.getByRole('button', { name: /Венец Грёз/ }))
+    await user.click(screen.getByRole('button', { name: /^Венец Грёз/ }))
     expect(screen.getByLabelText('Предметов за один крафт')).toHaveValue(1)
     expect(screen.getByRole('combobox', { name: 'Рецепт' })).toHaveValue(
       'Портняжное дело (Tailoring)',
@@ -217,19 +220,19 @@ describe('вкладка базы', () => {
     fireEvent.change(screen.getByLabelText('Предметов за один крафт'), {
       target: { value: '2.5' },
     })
-    await user.click(screen.getByRole('button', { name: 'Подтвердить импорт' }))
+    await user.click(screen.getByRole('button', { name: 'Добавить выбранные (1)' }))
     expect(screen.getByRole('alert')).toHaveTextContent('положительное целое')
-    expect(onImport).not.toHaveBeenCalled()
+    expect(onImportBatch).not.toHaveBeenCalled()
     fireEvent.change(screen.getByLabelText('Предметов за один крафт'), {
       target: { value: '7' },
     })
     await user.click(screen.getByRole('combobox', { name: 'Профессия' }))
     await user.click(screen.getByRole('option', { name: 'Алхимия (Alchemy)' }))
     expect(screen.getByText('Ничего не найдено')).toBeVisible()
-    await user.click(screen.getByRole('button', { name: 'Подтвердить импорт' }))
-    expect(onImport).toHaveBeenCalledWith(
-      expect.objectContaining({ outputQuantity: 7, profession: 'tailoring' }),
-    )
+    await user.click(screen.getByRole('button', { name: 'Добавить выбранные (1)' }))
+    expect(onImportBatch.mock.calls[0]?.[0]).toMatchObject([
+      { kind: 'recipe', data: { outputQuantity: 7, profession: 'tailoring' } },
+    ])
     expect(onClose).toHaveBeenCalledOnce()
   })
 
@@ -256,8 +259,8 @@ describe('вкладка базы', () => {
     )
     const user = userEvent.setup()
     renderForm()
-    await user.click(await screen.findByRole('button', { name: /Венец Грёз/ }))
-    expect(screen.getByRole('button', { name: 'Подтвердить импорт' })).toBeVisible()
+    await user.click(await screen.findByRole('button', { name: /^Венец Грёз/ }))
+    expect(screen.getByRole('button', { name: 'Добавить выбранные (1)' })).toBeVisible()
     expect(screen.getByLabelText('Предметов за один крафт')).toHaveValue(1)
     expect(screen.getByRole('combobox', { name: 'Рецепт' })).toBeEnabled()
     await user.click(screen.getByRole('combobox', { name: 'Рецепт' }))
@@ -294,27 +297,27 @@ describe('вкладка базы', () => {
       buildReferenceDatabaseIndex(db),
     )
     const user = userEvent.setup()
-    const { onImport } = renderForm()
+    const { onImportBatch } = renderForm()
     await user.click(await screen.findByRole('combobox', { name: 'Профессия' }))
     await user.click(screen.getByRole('option', { name: 'Алхимия (Alchemy)' }))
-    await user.click(screen.getByRole('button', { name: /Венец Грёз/ }))
+    await user.click(screen.getByRole('button', { name: /^Венец Грёз/ }))
     expect(screen.getByRole('combobox', { name: 'Рецепт' })).toHaveValue(
       'Алхимия (Alchemy)',
     )
     expect(screen.getByLabelText('Предметов за один крафт')).toHaveValue(5)
-    await user.click(screen.getByRole('button', { name: 'Подтвердить импорт' }))
-    expect(onImport).toHaveBeenCalledWith(
-      expect.objectContaining({ outputQuantity: 5, profession: 'alchemy' }),
-    )
+    await user.click(screen.getByRole('button', { name: 'Добавить выбранные (1)' }))
+    expect(onImportBatch.mock.calls[0]?.[0]).toMatchObject([
+      { kind: 'recipe', data: { outputQuantity: 5, profession: 'alchemy' } },
+    ])
   })
 
   it('добавляет реагент без рецепта и не предлагает результаты крафтов в этом разделе', async () => {
     const user = userEvent.setup()
-    const { onAddItem, onImport } = renderForm({ section: 'reagents' })
-    await user.click(await screen.findByRole('button', { name: /Ткань/ }))
+    const { onImportBatch, onImport } = renderForm({ section: 'reagents' })
+    await user.click(await screen.findByRole('button', { name: /^Ткань/ }))
     expect(screen.queryByRole('button', { name: /Венец/ })).not.toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: 'Добавить реагент' }))
-    expect(onAddItem).toHaveBeenCalledOnce()
+    await user.click(screen.getByRole('button', { name: 'Добавить выбранные (1)' }))
+    expect(onImportBatch).toHaveBeenCalledOnce()
     expect(onImport).not.toHaveBeenCalled()
     expect(
       Object.values(
@@ -354,10 +357,10 @@ describe('вкладка базы', () => {
       buildReferenceDatabaseIndex(db),
     )
     const user = userEvent.setup()
-    const { onAddItem } = renderForm({ section: 'reagents' })
-    await user.click(await screen.findByRole('button', { name: /Венец Грёз/ }))
+    const { onImportBatch } = renderForm({ section: 'reagents' })
+    await user.click(await screen.findByRole('button', { name: /^Венец Грёз/ }))
     expect(screen.getByRole('combobox', { name: 'Рецепт' })).toBeEnabled()
-    expect(screen.getByRole('button', { name: 'Подтвердить импорт' })).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Добавить выбранные (1)' })).toBeVisible()
     expect(screen.getByRole('combobox', { name: 'Рецепт' })).toHaveValue(
       'Портняжное дело (Tailoring)',
     )
@@ -365,9 +368,9 @@ describe('вкладка базы', () => {
     await user.click(
       screen.getByRole('option', { name: 'Только реагент, без импорта рецепта' }),
     )
-    expect(screen.getByRole('button', { name: 'Добавить реагент' })).toBeVisible()
-    await user.click(screen.getByRole('button', { name: 'Добавить реагент' }))
-    expect(onAddItem).toHaveBeenCalledOnce()
+    expect(screen.getByRole('button', { name: 'Добавить выбранные (1)' })).toBeVisible()
+    await user.click(screen.getByRole('button', { name: 'Добавить выбранные (1)' }))
+    expect(onImportBatch).toHaveBeenCalledOnce()
     expect(
       Object.values(
         useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items,
@@ -381,7 +384,7 @@ describe('вкладка базы', () => {
     fireEvent.change(screen.getByLabelText('Предметов за один крафт'), {
       target: { value: '3' },
     })
-    await user.click(screen.getByRole('button', { name: 'Подтвердить импорт' }))
+    await user.click(screen.getByRole('button', { name: 'Добавить выбранные (1)' }))
     expect(
       Object.values(
         useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items,
@@ -402,8 +405,7 @@ describe('вкладка базы', () => {
         section="crafts"
         itemLanguage="ru"
         isActive
-        onImport={rendered.onImport}
-        onAddItem={rendered.onAddItem}
+        onImportBatch={rendered.onImportBatch}
         onSuccess={rendered.onSuccess}
         onClose={rendered.onClose}
       />,
@@ -431,8 +433,8 @@ describe('вкладка базы', () => {
       await promise
     })
     expect(screen.getByRole('searchbox')).toBeVisible()
-    expect(first.onImport).not.toHaveBeenCalled()
-    expect(second.onImport).not.toHaveBeenCalled()
+    expect(first.onImportBatch).not.toHaveBeenCalled()
+    expect(second.onImportBatch).not.toHaveBeenCalled()
     expect(
       useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items,
     ).toEqual({})
@@ -448,10 +450,10 @@ describe('вкладка базы', () => {
     const user = userEvent.setup()
     const onClose = vi.fn()
     renderForm({
-      onImport: () => ({ success: false, error: 'Циклическая зависимость' }),
+      onImportBatch: () => ({ success: false, error: 'Циклическая зависимость' }),
       onClose,
     })
-    await user.click(await screen.findByRole('button', { name: /Венец Грёз/ }))
+    await user.click(await screen.findByRole('button', { name: /^Венец Грёз/ }))
     const icon = within(
       screen.getByRole('region', { name: 'Предпросмотр из базы' }),
     ).getByTitle('Иконка: Венец Грёз')
@@ -461,7 +463,7 @@ describe('вкладка базы', () => {
     })
     fireEvent.error(icon)
     expect(icon.getAttribute('src')).toMatch(/item-placeholder.svg$/)
-    await user.click(screen.getByRole('button', { name: 'Подтвердить импорт' }))
+    await user.click(screen.getByRole('button', { name: 'Добавить выбранные (1)' }))
     expect(screen.getByRole('alert')).toHaveTextContent('Циклическая')
     expect(onClose).not.toHaveBeenCalled()
   })
@@ -502,12 +504,14 @@ describe('вкладка базы', () => {
     expect(group.scrollTop).toBe(0)
     await user.click(screen.getByRole('button', { name: 'Далее' }))
     frames.shift()?.(1150)
-    await user.type(screen.getByRole('searchbox'), 'Dreamweave Circlet')
+    fireEvent.change(screen.getByRole('searchbox'), {
+      target: { value: 'Dreamweave Circlet' },
+    })
     expect(within(group).getAllByRole('button')).toHaveLength(1)
     expect(screen.getByRole('status')).toHaveTextContent('Страница 1')
   })
 
-  it('проводит сценарий реальной базы: импорт, цены, повтор и восстановление', async () => {
+  it('проводит сценарий реальной базы: два продукта с общими реагентами, цены, повтор и восстановление', async () => {
     const db = parseReferenceDatabase(
       JSON.parse(
         readFileSync('public/data/forever/craftcalc-db.1.60.1.70338.json', 'utf8'),
@@ -516,22 +520,58 @@ describe('вкладка базы', () => {
     vi.mocked(loader.loadReferenceDatabase).mockResolvedValue(
       buildReferenceDatabaseIndex(db),
     )
+    const crownRecipe = Object.values(db.recipes).find(
+      (recipe) => recipe.productItemId === 10041,
+    )
+    if (!crownRecipe) throw new Error('Нет рецепта венца')
+    const otherRecipe = Object.values(db.recipes).find(
+      (recipe) =>
+        recipe.productItemId !== 10041 &&
+        recipe.reagents.some((line) =>
+          crownRecipe.reagents.some((other) => line.itemId === other.itemId),
+        ),
+    )
+    const otherItem = otherRecipe && db.items[String(otherRecipe.productItemId)]
+    if (!otherRecipe || !otherItem)
+      throw new Error('Нет второго предмета с общими реагентами')
+    const expectedCount = new Set([
+      10041,
+      otherItem.itemId,
+      ...crownRecipe.reagents.map((line) => line.itemId),
+      ...otherRecipe.reagents.map((line) => line.itemId),
+    ]).size
     const user = userEvent.setup()
     render(<ItemsPage section="crafts" />)
     const opener = screen.getByRole('button', { name: '+ Добавить крафт' })
     const choose = async () => {
       await user.click(opener)
-      await user.type(
-        await screen.findByRole('searchbox', { name: 'Поиск по названию предмета' }),
-        'Венец из ткани Грёз',
+      const dialog = within(screen.getByRole('dialog'))
+      const search = await dialog.findByRole('searchbox', {
+        name: 'Поиск по названию предмета',
+      })
+      fireEvent.change(search, { target: { value: 'Венец из ткани Грёз' } })
+      await user.click(screen.getByRole('button', { name: /^Венец из ткани Грез/ }))
+      fireEvent.change(search, {
+        target: { value: otherItem.names.en ?? referenceItemName(otherItem, 'ru') },
+      })
+      await user.click(
+        within(dialog.getByRole('group', { name: 'Результаты поиска в базе' })).getByText(
+          referenceItemName(otherItem, 'ru'),
+          { exact: true },
+        ),
       )
-      await user.click(screen.getByRole('button', { name: /Венец из ткани Грез/ }))
+      await user.click(
+        within(screen.getByRole('region', { name: 'Выбранные предметы' })).getByRole(
+          'button',
+          { name: /^Венец из ткани Грез/ },
+        ),
+      )
     }
     await choose()
     fireEvent.change(screen.getByLabelText('Предметов за один крафт'), {
       target: { value: '1' },
     })
-    await user.click(screen.getByRole('button', { name: 'Подтвердить импорт' }))
+    await user.click(screen.getByRole('button', { name: 'Добавить выбранные (2)' }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(opener).toHaveFocus()
     const item = Object.values(
@@ -543,14 +583,11 @@ describe('вкладка базы', () => {
       useCraftStore.getState().setItemPrice(item.id, 'purchasePriceCopper', 0)
       useCraftStore.getState().setItemPrice(item.id, 'salePriceCopper', 999)
     })
-    await user.click(opener)
-    const dialog = screen.getByRole('dialog')
-    await user.type(await within(dialog).findByRole('searchbox'), 'Dreamweave Circlet')
-    await user.click(within(dialog).getByRole('button', { name: /Венец из ткани Грез/ }))
+    await choose()
     expect(screen.getByLabelText('Предметов за один крафт')).toHaveValue(
       item.recipe?.outputQuantity,
     )
-    await user.click(screen.getByRole('button', { name: 'Подтвердить импорт' }))
+    await user.click(screen.getByRole('button', { name: 'Добавить выбранные (2)' }))
     expect(
       useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items[
         item.id
@@ -573,6 +610,6 @@ describe('вкладка базы', () => {
       Object.keys(
         useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items,
       ),
-    ).toHaveLength(7)
+    ).toHaveLength(expectedCount)
   })
 })

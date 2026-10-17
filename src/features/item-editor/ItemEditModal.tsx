@@ -134,10 +134,6 @@ export function ItemEditModal({
             if (!result.success) return { success: false, error: result.error }
             return onImport(data, result.input)
           }}
-          onAddReferenceItem={() => ({
-            success: false,
-            error: 'Выберите предмет с рецептом',
-          })}
           onSuccess={onSuccess}
           onClose={close}
           renderManual={() => (

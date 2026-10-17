@@ -32,8 +32,11 @@
 - [useBulkPriceDraft.ts](../src/features/item-editor/useBulkPriceDraft.ts) —
   локальные черновики массовых цен и защита переключения версии.
 - [ReferenceReview.tsx](../src/features/reference-database/ReferenceReview.tsx) —
-  предпросмотр и подтверждение импорта базы; поиск и выбор — в `ReferenceBrowser.tsx`,
+  управляемый предпросмотр базы; поиск и подтверждение набора — в `ReferenceBrowser.tsx`,
+  черновики — в `useReferenceDrafts.ts`, список выбора — в `ReferenceSelection.tsx`,
   загрузка и повтор — в `ReferenceDatabaseForm.tsx` рядом.
+  [reference-import.ts](../src/store/reference-import.ts) готовит пакет без записи;
+  действие `importReferenceBatch` в `useCraftStore.ts` применяет его одним обновлением.
 - [src/features](../src/features) — редакторы и интеграции;
   [src/components/ui](../src/components/ui) — общие контролы.
   Краткая [карта компонентов](ui-components.md) помогает выбрать реализацию;
@@ -57,6 +60,11 @@ node node_modules/vite/bin/vite.js
 ```
 
 Обычная сборка: `npm run build`, просмотр: `npm run preview`.
+Оба сервера используют `http://localhost:5173/` и завершаются с ошибкой, если
+порт занят, без перехода на другой порт. Для проверки используй уже работающий
+сервер или останови его перед запуском другого. Каталог хранится в браузере
+для конкретного адреса и профиля: открывай именно `localhost`, а не `127.0.0.1`,
+и тот же профиль браузера, чтобы использовать сохранённые данные.
 Для сборки со свежими ценами порядок такой: `npm run build` →
 `npm run tsm:refresh` → `npm run preview`, поскольку сборка очищает `dist`.
 Подробности — в [документации TSM](tsm-tbc.md).

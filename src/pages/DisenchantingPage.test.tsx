@@ -404,7 +404,7 @@ describe('страница Распыление', () => {
       await user.click(screen.getByRole('button', { name: '+ Добавить предмет' }))
       const dialog = within(screen.getByRole('dialog'))
       await user.type(await dialog.findByRole('searchbox'), 'Netherweave Boots')
-      await user.click(dialog.getByRole('button', { name: /Сапоги из ткани Пустоты/ }))
+      await user.click(dialog.getByRole('button', { name: /^Сапоги из ткани Пустоты/ }))
       if (!withRecipe) {
         await user.click(dialog.getByRole('combobox', { name: 'Рецепт' }))
         await user.click(
@@ -413,7 +413,7 @@ describe('страница Распыление', () => {
       }
       await user.click(
         dialog.getByRole('button', {
-          name: withRecipe ? 'Подтвердить импорт' : 'Добавить предмет',
+          name: 'Добавить выбранные (1)',
         }),
       )
       expect(screen.queryByRole('dialog')).toBeNull()

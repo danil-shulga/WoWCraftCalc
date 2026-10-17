@@ -1,14 +1,12 @@
-import type { RecipeImportData, RecipeImportItem } from '../../domain/recipe-import.types'
+import type { RecipeImportData } from '../../domain/recipe-import.types'
 import { useState, type ReactNode } from 'react'
 
 import { Tabs } from '../../components/ui/Tabs/Tabs'
-import type { Item, ItemCatalog, ItemSection } from '../../domain/item.types'
+import type { ItemCatalog, ItemSection } from '../../domain/item.types'
 import type { ItemLanguage } from '../../domain/user-settings'
 import type { GameVersion } from '../../domain/game-version'
-import type {
-  RecipeImportResult,
-  ReferenceItemAddResult,
-} from '../../store/useCraftStore'
+import type { RecipeImportResult } from '../../store/useCraftStore'
+import type { ReferenceDatabaseModeProps } from '../reference-database/reference-database-form.types'
 import { ReferenceDatabaseForm } from '../reference-database/ReferenceDatabaseForm'
 import { WowheadImportForm } from '../wowhead-import/WowheadImportForm'
 type AddMethod = 'database' | 'wowhead' | 'manual'
@@ -25,35 +23,33 @@ const recipeMethods: readonly { value: AddMethod; label: string }[] = [
   { value: 'manual', label: 'Вручную' },
 ]
 
-interface ItemSourceFormProps {
+type ItemSourceFormProps = ReferenceDatabaseModeProps & {
   gameVersion: GameVersion
   itemLanguage: ItemLanguage
   defaultSection: ItemSection
   catalog: ItemCatalog
   isActive?: boolean
   initialMethod?: AddMethod
-  targetItem?: Item
   onImport: (data: RecipeImportData) => RecipeImportResult
-  onAddReferenceItem: (data: RecipeImportItem) => ReferenceItemAddResult
   onSuccess: (message: string) => void
   onClose: () => void
   renderManual: () => ReactNode
 }
 
-export function ItemSourceForm({
-  gameVersion,
-  itemLanguage,
-  defaultSection,
-  catalog,
-  isActive = true,
-  initialMethod = 'database',
-  targetItem,
-  onImport,
-  onAddReferenceItem,
-  onSuccess,
-  onClose: close,
-  renderManual,
-}: ItemSourceFormProps) {
+export function ItemSourceForm(props: ItemSourceFormProps) {
+  const {
+    gameVersion,
+    itemLanguage,
+    defaultSection,
+    catalog,
+    isActive = true,
+    initialMethod = 'database',
+    targetItem,
+    onImport,
+    onSuccess,
+    onClose: close,
+    renderManual,
+  } = props
   const [method, setMethod] = useState<AddMethod>(initialMethod)
   const [hasVisitedManual, setHasVisitedManual] = useState(initialMethod === 'manual')
 
@@ -76,9 +72,9 @@ export function ItemSourceForm({
           section={defaultSection}
           itemLanguage={itemLanguage}
           isActive={isActive && method === 'database'}
-          {...(targetItem === undefined ? {} : { targetItem })}
-          onImport={onImport}
-          onAddItem={onAddReferenceItem}
+          {...(props.targetItem === undefined
+            ? { onImportBatch: props.onImportBatch }
+            : { targetItem: props.targetItem, onImport })}
           onSuccess={onSuccess}
           onClose={close}
         />

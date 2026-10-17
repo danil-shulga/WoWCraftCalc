@@ -1,3 +1,11 @@
+import { FormError } from '../../components/ui/FormError/FormError'
+import {
+  referenceItemToImport,
+  referenceRecipeToImport,
+} from '../../domain/reference-database-import'
+import type { ReferenceImportEntry } from '../../domain/recipe-import.types'
+import { ReferenceSelection } from './ReferenceSelection'
+import { useReferenceDrafts } from './useReferenceDrafts'
 import { Button } from '../../components/ui/Button/Button'
 import { useDraftGuard } from '../../app/draft-guard'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -17,7 +25,9 @@ import { ReferenceReview } from './ReferenceReview'
 export function ReferenceBrowser(
   props: ReferenceDatabaseFormProps & { index: ReferenceDatabaseIndex },
 ) {
-  const { index, section, itemLanguage, targetItem } = props
+  const { index, section, itemLanguage, targetItem, catalog } = props
+  const isBatch = targetItem === undefined
+  const [error, setError] = useState<string | null>(null)
   const PROFESSION_OPTIONS = professionOptionsFor(index.database.gameVersion)
   const [initialItem] = useState(() => {
     if (targetItem === undefined) return undefined
@@ -47,6 +57,13 @@ export function ReferenceBrowser(
     if (scrollFrameRef.current !== null) cancelAnimationFrame(scrollFrameRef.current)
     const list = resultsRef.current
     if (!list) return
+    if (
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    ) {
+      list.scrollTop = 0
+      return
+    }
     const startTop = list.scrollTop
     const startTime = performance.now()
     const animate = (time: number) => {
@@ -56,17 +73,17 @@ export function ReferenceBrowser(
     }
     scrollFrameRef.current = requestAnimationFrame(animate)
   }
-  const [selectedId, setSelectedId] = useState<number | null>(initialItem?.itemId ?? null)
-  const [recipeId, setRecipeId] = useState(() => {
-    const recipe =
-      initialItem === undefined
-        ? undefined
-        : index.recipesByProduct.get(initialItem.itemId)?.[0]
-    return recipe === undefined ? '' : String(recipe.spellId)
+  const selection = useReferenceDrafts({
+    index,
+    catalog,
+    itemLanguage,
+    targetItem,
+    initialItem,
+    profession,
   })
-  useDraftGuard(selectedId !== null)
-  const selectedProfession =
-    PROFESSION_OPTIONS.find((option) => option.value === profession)?.value ?? null
+  const selectedId = selection.previewId
+  const recipeId = selection.preview?.recipeId ?? ''
+  useDraftGuard(selection.selectedIds.length > 0 || selectedId !== null)
   const results = useMemo(
     () =>
       searchReferenceItems(
@@ -85,6 +102,94 @@ export function ReferenceBrowser(
   const recipes =
     selectedId === null ? [] : (index.recipesByProduct.get(selectedId) ?? [])
   const recipe = index.database.recipes[recipeId] ?? null
+  const fail = (message: string, sourceId?: number) => {
+    const item =
+      sourceId === undefined ? undefined : index.database.items[String(sourceId)]
+    setError(item ? `${referenceItemName(item, itemLanguage)}: ${message}` : message)
+    if (sourceId !== undefined && item) selection.open(sourceId)
+  }
+  const confirm = () => {
+    setError(null)
+    if (props.targetItem !== undefined) {
+      if (!recipe || !selection.preview) return
+      try {
+        const data = referenceRecipeToImport(
+          index.database,
+          recipe,
+          selection.preview.output,
+          itemLanguage,
+        )
+        const result = props.onImport({ ...data, productSection: section })
+        if (!result.success) {
+          fail(result.error)
+          return
+        }
+        const created = Number(result.productCreated) + result.reagentsCreated
+        props.onSuccess(
+          `Из базы: добавлено предметов ${String(created)}, переиспользовано ${String(recipe.reagents.length + 1 - created)}. Рецепт сохранён.`,
+        )
+        props.onClose()
+      } catch (caught) {
+        fail(
+          caught instanceof Error
+            ? caught.message
+            : 'Не удалось добавить предмет из базы',
+        )
+      }
+      return
+    }
+    const entries: ReferenceImportEntry[] = []
+    for (const id of selection.selectedIds) {
+      const item = index.database.items[String(id)]
+      const draft = selection.drafts.find((entry) => entry.itemId === id)
+      if (!item || !draft) return
+      const recipe = index.database.recipes[draft.recipeId]
+      try {
+        if (!recipe && section === 'crafts') throw new Error('Выберите рецепт для крафта')
+        entries.push(
+          recipe
+            ? {
+                kind: 'recipe',
+                data: referenceRecipeToImport(
+                  index.database,
+                  recipe,
+                  draft.output,
+                  itemLanguage,
+                ),
+              }
+            : {
+                kind: 'item',
+                item: referenceItemToImport(
+                  item,
+                  index.database.gameVersion,
+                  itemLanguage,
+                ),
+              },
+        )
+      } catch (caught) {
+        fail(
+          caught instanceof Error ? caught.message : 'Не удалось подготовить предмет',
+          id,
+        )
+        return
+      }
+    }
+    try {
+      const result = props.onImportBatch(entries)
+      if (!result.success) {
+        fail(result.error, result.sourceItemId)
+        return
+      }
+      props.onSuccess(
+        `Из базы: выбрано ${String(entries.length)}, добавлено предметов ${String(result.created)}, переиспользовано ${String(result.reused)}. Сохранено рецептов: ${String(result.recipes)}.`,
+      )
+      props.onClose()
+    } catch (caught) {
+      fail(
+        caught instanceof Error ? caught.message : 'Не удалось добавить предметы из базы',
+      )
+    }
+  }
   return (
     <div className="editor-form reference-db">
       <p className="reference-db__intro">
@@ -92,7 +197,9 @@ export function ReferenceBrowser(
         {index.database.mode} · сборка {index.database.build}
         <br />
         {initialItem === undefined
-          ? ' Выберите предмет и проверьте данные перед добавлением'
+          ? isBatch
+            ? 'Выберите один или несколько предметов и проверьте данные перед добавлением'
+            : 'Выберите рецепт редактируемого предмета'
           : null}
       </p>
       {initialItem === undefined ? (
@@ -125,29 +232,26 @@ export function ReferenceBrowser(
             ) : (
               results.slice(page * 50, (page + 1) * 50).map((item) => (
                 <Button
-                  variant="plain"
-                  className="reference-db__result"
-                  type="button"
                   key={item.itemId}
-                  aria-pressed={selectedId === item.itemId}
+                  variant="plain"
+                  type="button"
+                  className="reference-db__result"
+                  aria-pressed={
+                    isBatch
+                      ? selection.selectedIds.includes(item.itemId)
+                      : selectedId === item.itemId
+                  }
                   onClick={() => {
-                    setSelectedId(item.itemId)
-                    const options = index.recipesByProduct.get(item.itemId) ?? []
-                    const defaultRecipe =
-                      options.find(
-                        (option) => option.profession === selectedProfession,
-                      ) ?? options[0]
-                    setRecipeId(
-                      defaultRecipe === undefined ? '' : String(defaultRecipe.spellId),
-                    )
+                    if (isBatch)
+                      selection.toggle(
+                        item.itemId,
+                        !selection.selectedIds.includes(item.itemId),
+                      )
+                    else selection.open(item.itemId)
                   }}
                 >
                   <ItemIdentity
-                    item={{
-                      name: String(item.itemId),
-                      names: item.names,
-                      iconUrl: item.iconUrl,
-                    }}
+                    item={{ ...item, name: String(item.itemId) }}
                     language={itemLanguage}
                   />
                 </Button>
@@ -182,6 +286,21 @@ export function ReferenceBrowser(
           </div>
         </>
       ) : null}
+      {isBatch ? (
+        <ReferenceSelection
+          index={index}
+          itemLanguage={itemLanguage}
+          selectedIds={selection.selectedIds}
+          rows={selection.rows}
+          previewId={selectedId}
+          onOpen={selection.open}
+          onRemove={(id) => {
+            selection.toggle(id, false)
+          }}
+          onClear={selection.clear}
+          onExit={selection.finishExit}
+        />
+      ) : null}
       {selected ? (
         <>
           {recipes.length > 0 ? (
@@ -210,7 +329,7 @@ export function ReferenceBrowser(
                     )?.label ?? option.profession,
                 })),
               ]}
-              onChange={setRecipeId}
+              onChange={selection.setRecipeId}
             />
           ) : null}
           {section === 'crafts' && recipe === null ? (
@@ -221,20 +340,38 @@ export function ReferenceBrowser(
             </p>
           ) : (
             <ReferenceReview
-              key={`${String(selected.itemId)}-${recipeId}`}
-              {...props}
+              key={String(selected.itemId)}
+              index={index}
               item={selected}
               recipe={recipe}
+              catalog={catalog}
+              section={section}
+              itemLanguage={itemLanguage}
+              targetItem={targetItem}
+              output={selection.preview?.output ?? 1}
+              onOutputChange={selection.setOutput}
             />
           )}
         </>
-      ) : (
-        <div className="editor-form__actions">
-          <Button variant="secondary" type="button" onClick={props.onClose}>
-            Отмена
+      ) : null}
+      <FormError message={error} />
+      <div className="editor-form__actions">
+        <Button variant="secondary" type="button" onClick={props.onClose}>
+          Отмена
+        </Button>
+        {isBatch || recipe !== null ? (
+          <Button
+            variant="primary"
+            type="button"
+            onClick={confirm}
+            disabled={isBatch ? selection.selectedIds.length === 0 : recipe === null}
+          >
+            {isBatch
+              ? `Добавить выбранные (${String(selection.selectedIds.length)})`
+              : 'Подтвердить импорт'}
           </Button>
-        </div>
-      )}
+        ) : null}
+      </div>
     </div>
   )
 }

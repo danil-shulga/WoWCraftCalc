@@ -22,7 +22,7 @@ function ImportHarness(
       title="Добавить крафт"
       defaultSection="crafts"
       onSave={vi.fn()}
-      onAddReferenceItem={vi.fn()}
+      onImportBatch={vi.fn()}
       onSuccess={vi.fn()}
       {...props}
     />

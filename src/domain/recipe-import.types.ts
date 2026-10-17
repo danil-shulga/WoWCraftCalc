@@ -24,3 +24,6 @@ export interface RecipeImportData {
   profession: Profession | null
   productSection?: ItemSection | undefined
 }
+
+export type ReferenceImportEntry =
+  { kind: 'item'; item: RecipeImportItem } | { kind: 'recipe'; data: RecipeImportData }

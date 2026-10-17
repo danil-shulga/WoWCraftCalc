@@ -1,4 +1,7 @@
-import type { RecipeImportData, RecipeImportItem } from '../../domain/recipe-import.types'
+import type {
+  RecipeImportData,
+  ReferenceImportEntry,
+} from '../../domain/recipe-import.types'
 import { useState } from 'react'
 
 import { Modal } from '../../components/ui/Modal/Modal'
@@ -9,7 +12,7 @@ import type { PriceContext } from '../../domain/tsm'
 import type {
   ItemInput,
   RecipeImportResult,
-  ReferenceItemAddResult,
+  ReferenceBatchResult,
 } from '../../store/useCraftStore'
 import { ItemForm } from './ItemForm'
 import { ItemSourceForm } from './ItemSourceForm'
@@ -23,7 +26,7 @@ interface ItemAddModalProps {
   catalog: ItemCatalog
   onSave: (input: ItemInput) => void
   onImport: (data: RecipeImportData) => RecipeImportResult
-  onAddReferenceItem: (data: RecipeImportItem) => ReferenceItemAddResult
+  onImportBatch: (entries: readonly ReferenceImportEntry[]) => ReferenceBatchResult
   onSuccess: (message: string) => void
   onClose: () => void
 }
@@ -37,7 +40,7 @@ export function ItemAddModal({
   catalog,
   onSave,
   onImport,
-  onAddReferenceItem,
+  onImportBatch,
   onSuccess,
   onClose,
 }: ItemAddModalProps) {
@@ -58,7 +61,7 @@ export function ItemAddModal({
         defaultSection={defaultSection}
         catalog={catalog}
         onImport={onImport}
-        onAddReferenceItem={onAddReferenceItem}
+        onImportBatch={onImportBatch}
         onSuccess={onSuccess}
         onClose={close}
         renderManual={() => (

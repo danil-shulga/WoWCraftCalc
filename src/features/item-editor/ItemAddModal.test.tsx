@@ -30,7 +30,7 @@ function ModalHarness() {
           catalog={{}}
           onSave={vi.fn()}
           onImport={vi.fn()}
-          onAddReferenceItem={vi.fn()}
+          onImportBatch={vi.fn()}
           onSuccess={vi.fn()}
           onClose={() => {
             setIsOpen(false)
