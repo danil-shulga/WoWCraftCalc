@@ -1,10 +1,18 @@
+import {
+  findImportedItem,
+  getImportAmbiguityError,
+} from '../domain/imported-item-matching'
+import type {
+  ItemMetadata,
+  RecipeImportData,
+  RecipeImportItem,
+} from '../domain/recipe-import.types'
 import { create } from 'zustand'
 import { tsmSettingsSchema } from '../domain/tsm'
 import type { TsmSettings } from '../domain/tsm'
 import { persist } from 'zustand/middleware'
 import { z } from 'zod'
 
-import { getItemSearchNames, normalizeItemName } from '../domain/item-names'
 import { isPlannerQuantity } from '../domain/planner'
 import { itemNamesSchema, itemSchema, recipeSchema } from '../domain/item.schema'
 import { GAME_VERSION_REGISTRY } from '../domain/game-version'
@@ -31,7 +39,6 @@ import {
   WOWHEAD_VERSIONS,
   type CurrencyDisplayMode,
   type ItemLanguage,
-  type WowheadVersion,
 } from '../domain/user-settings'
 import {
   createCraftStorage,
@@ -46,29 +53,6 @@ export type ItemInput = Omit<Item, 'id' | 'recipe' | 'isFavorite'>
 export interface RecipeImportTarget {
   itemId: ItemId
   input: ItemInput
-}
-
-type ItemMetadata = Pick<
-  Item,
-  'requiredLevel' | 'qualityId' | 'itemLevel' | 'classId' | 'subclassId' | 'inventoryType'
->
-
-export interface RecipeImportItem extends ItemMetadata {
-  wowheadItemId: number
-  name: string
-  names?: ItemNames | undefined
-  wowheadVersion?: WowheadVersion | undefined
-  iconUrl: string
-  defaultPurchasePriceCopper?: number | null | undefined
-  defaultSalePriceCopper?: number | null | undefined
-}
-
-export interface RecipeImportData {
-  product: RecipeImportItem
-  reagents: (RecipeImportItem & { quantity: number })[]
-  outputQuantity: number
-  profession: Profession | null
-  productSection?: ItemSection | undefined
 }
 
 const recipeImportItemSchema = z.object({
@@ -225,57 +209,6 @@ function mergeItemMetadata(
 
 function getPersistenceError(error: unknown): string {
   return error instanceof Error ? error.message : 'Не удалось сохранить данные CraftCalc'
-}
-
-function findImportedItemCandidates(
-  items: ItemCatalog,
-  importedItem: RecipeImportItem,
-  excludedIds: ReadonlySet<ItemId> = new Set(),
-): Item[] {
-  const candidates = Object.values(items).filter((item) => !excludedIds.has(item.id))
-  const compatibleSource = (item: Item) =>
-    item.source?.wowheadVersion === undefined ||
-    importedItem.wowheadVersion === undefined ||
-    item.source.wowheadVersion === importedItem.wowheadVersion
-  const sourceMatches = candidates.filter(
-    (item) =>
-      !excludedIds.has(item.id) &&
-      item.source?.wowheadItemId === importedItem.wowheadItemId &&
-      compatibleSource(item),
-  )
-
-  if (sourceMatches.length > 0) {
-    return sourceMatches
-  }
-
-  const importedNames = new Set(getItemSearchNames(importedItem).map(normalizeItemName))
-  const nameMatches = candidates.filter(
-    (item) =>
-      compatibleSource(item) &&
-      (item.source === undefined ||
-        item.source.wowheadItemId === importedItem.wowheadItemId) &&
-      getItemSearchNames(item).some((name) => importedNames.has(normalizeItemName(name))),
-  )
-
-  return nameMatches
-}
-
-export function findImportedItem(
-  items: ItemCatalog,
-  importedItem: RecipeImportItem,
-  excludedIds: ReadonlySet<ItemId> = new Set(),
-): Item | undefined {
-  const matches = findImportedItemCandidates(items, importedItem, excludedIds)
-  return matches.length === 1 ? matches[0] : undefined
-}
-
-function getImportAmbiguityError(
-  items: ItemCatalog,
-  importedItem: RecipeImportItem,
-): string | null {
-  return findImportedItemCandidates(items, importedItem).length > 1
-    ? `Неоднозначное сопоставление «${importedItem.name}»: несколько предметов в каталоге. Уточните названия или источники перед импортом.`
-    : null
 }
 
 export const useCraftStore = create<CraftStore>()(

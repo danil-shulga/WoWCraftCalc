@@ -13,6 +13,8 @@ alwaysApply: false
   `useLocalStorageUsage` в App только читает хранилище каждые две секунды,
   по событиям `storage` и `focus`; не измеряй квоту пробными записями.
 
+- Предметные типы импорта — в `src/domain/recipe-import.types.ts`; результаты
+  действий и `WorkspaceRequest` принадлежат store. Валидация и запись остаются в действиях.
 - Изменяй каталог действиями `useCraftStore`; обновления должны быть иммутабельными.
 - `moveRootItem` переставляет корневую строку до/после другой в активном workspace.
   Необязательный `rootItemOrder` хранит массивы ID отдельно для `crafts`, `reagents`, `disenchanting`

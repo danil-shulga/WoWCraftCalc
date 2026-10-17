@@ -1,4 +1,5 @@
-import type { RecipeImportData, RecipeImportItem } from '../store/useCraftStore'
+import type { RecipeImportData, RecipeImportItem } from './recipe-import.types'
+
 import { referenceItemName } from './reference-database-index'
 import type {
   ReferenceDatabase,

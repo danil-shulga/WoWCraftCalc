@@ -1,7 +1,7 @@
 import { Button } from '../components/ui/Button/Button'
 import { usePriceContext } from '../features/tsm/tsm-client'
 import { PriceModeSelector } from '../features/tsm/PriceModeSelector'
-import { useDraftGuard } from '../app/draft-guard'
+import { useBulkPriceDraft } from '../features/item-editor/useBulkPriceDraft'
 import { selectActiveItems, selectActiveProfessions } from '../store/craft.selectors'
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { selectActiveWorkspace } from '../store/craft.selectors'
@@ -99,23 +99,20 @@ export function ItemsPage({ section }: ItemsPageProps) {
   const favoriteTriggerRef = useRef<HTMLElement | null>(null)
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set())
   const [searchQuery, setSearchQuery] = useState('')
-  const [priceDrafts, setPriceDrafts] = useState<Record<ItemId, number | null> | null>(
-    null,
-  )
-
   const content = pageContent[section]
   const priceField: ItemPriceField =
     section === 'crafts' ? 'salePriceCopper' : 'purchasePriceCopper'
-  useDraftGuard(
-    priceDrafts !== null &&
-      Object.entries(priceDrafts).some(
-        ([id, value]) => value !== items[id]?.[priceField],
-      ),
-  )
   const sectionItems = useMemo(
     () => selectItemsBySection(items, section, itemLanguage, rootItemOrder?.[section]),
     [items, section, itemLanguage, rootItemOrder],
   )
+  const {
+    priceDrafts,
+    startPriceEditing,
+    changePriceDraft,
+    cancelPriceEditing,
+    savePriceDrafts,
+  } = useBulkPriceDraft(items, sectionItems, priceField, setItemPrices)
   const visibleItems = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLocaleLowerCase('ru-RU')
 
@@ -220,26 +217,6 @@ export function ItemsPage({ section }: ItemsPageProps) {
     })
   }
 
-  const startPriceEditing = () => {
-    const drafts: Record<ItemId, number | null> = {}
-
-    for (const item of sectionItems) {
-      drafts[item.id] = item[priceField]
-    }
-
-    setPriceDrafts(drafts)
-  }
-
-  const savePriceDrafts = () => {
-    if (priceDrafts === null) {
-      return
-    }
-
-    setItemPrices(priceField, priceDrafts)
-
-    setPriceDrafts(null)
-  }
-
   return (
     <section className="page">
       <header className="page__header">
@@ -268,13 +245,7 @@ export function ItemsPage({ section }: ItemsPageProps) {
               </>
             ) : (
               <>
-                <Button
-                  variant="secondary"
-                  type="button"
-                  onClick={() => {
-                    setPriceDrafts(null)
-                  }}
-                >
+                <Button variant="secondary" type="button" onClick={cancelPriceEditing}>
                   Отмена
                 </Button>
                 <Button variant="primary" type="button" onClick={savePriceDrafts}>
@@ -441,11 +412,7 @@ export function ItemsPage({ section }: ItemsPageProps) {
                               field: priceField,
                               value: priceDrafts[item.id] ?? null,
                               onChange: (value: number | null) => {
-                                setPriceDrafts((current) =>
-                                  current === null
-                                    ? null
-                                    : { ...current, [item.id]: value },
-                                )
+                                changePriceDraft(item.id, value)
                               },
                             },
                           })}

@@ -2,11 +2,7 @@ import { testCraftData, setTestCraftState } from '../test/craft-state'
 import { persistedCraftDataSchema } from '../domain/item.schema'
 import { getAutomaticAcquisitionMethod, getCraftUnitCost } from '../domain/calculations'
 import type { ItemCatalog } from '../domain/item.types'
-import {
-  findImportedItem,
-  useCraftStore,
-  usePersistenceStatusStore,
-} from './useCraftStore'
+import { useCraftStore, usePersistenceStatusStore } from './useCraftStore'
 
 describe('настройки CraftStore', () => {
   beforeEach(() => {
@@ -96,42 +92,6 @@ describe('целостность CraftStore', () => {
 
   afterEach(() => {
     vi.restoreAllMocks()
-  })
-
-  it('сопоставляет ручной предмет по EN и не объединяет разные версии игры', () => {
-    const item =
-      useCraftStore.getState().workspaces[useCraftStore.getState().activeVersion].items
-        .reagent
-    if (item === undefined) throw new Error('Нет тестового предмета')
-    const catalog = { reagent: { ...item, names: { ru: 'Нефрит', en: 'Jade' } } }
-    expect(
-      findImportedItem(catalog, {
-        wowheadItemId: 1529,
-        name: 'Другое имя',
-        names: { ru: 'Другое имя', en: 'JADE' },
-        iconUrl: '',
-      })?.id,
-    ).toBe('reagent')
-    const sourced = {
-      reagent: {
-        ...catalog.reagent,
-        source: { wowheadItemId: 1529, wowheadVersion: 'forever' as const },
-      },
-    }
-    expect(
-      findImportedItem(sourced, {
-        wowheadItemId: 1529,
-        wowheadVersion: 'tbc',
-        name: 'Jade',
-        iconUrl: '',
-      }),
-    ).toBeUndefined()
-    expect(
-      findImportedItem(
-        { ...catalog, duplicate: { ...catalog.reagent, id: 'duplicate' } },
-        { wowheadItemId: 1529, name: 'Jade', iconUrl: '' },
-      ),
-    ).toBeUndefined()
   })
 
   it('повторный двуязычный импорт дополняет имена и сохраняет локальные данные', () => {

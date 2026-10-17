@@ -7,7 +7,8 @@ alwaysApply: false
 # Импорт Wowhead
 
 - Сетевые запросы и разбор tooltip находятся в `wowhead-import.ts`;
-  сопоставление и атомарное обновление каталога — в `useCraftStore.importRecipe`.
+  чистое сопоставление — в `src/domain/imported-item-matching.ts`,
+  атомарное обновление каталога — в `useCraftStore.importRecipe`.
 - Поддерживаются HTTPS-ссылки `wowhead.com`/`www.wowhead.com` на `spell=`
   для `classic`, `tbc`, `forever`; запрос tooltip должен сохранять выбранную версию.
 - Ответы сети проверяй Zod. HTML разбирай через `DOMParser` в отдельном документе,

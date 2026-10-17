@@ -23,12 +23,21 @@
 - [useCraftStore.ts](../src/store/useCraftStore.ts) — действия над каталогом и планом;
   [craft.selectors.ts](../src/store/craft.selectors.ts) — выборки активной версии;
   [persistence.ts](../src/store/persistence.ts) — сохранение и резервные копии.
+- [recipe-import.types.ts](../src/domain/recipe-import.types.ts) — предметные типы
+  импорта; [imported-item-matching.ts](../src/domain/imported-item-matching.ts) —
+  чистое сопоставление по источнику и именам. Результаты действий и запрос workspace
+  остаются в store.
 - [game-version.ts](../src/domain/game-version.ts) — версии, профессии и пути баз;
   [item.schema.ts](../src/domain/item.schema.ts) — проверка пользовательских данных.
+- [useBulkPriceDraft.ts](../src/features/item-editor/useBulkPriceDraft.ts) —
+  локальные черновики массовых цен и защита переключения версии.
+- [ReferenceReview.tsx](../src/features/reference-database/ReferenceReview.tsx) —
+  предпросмотр и подтверждение импорта базы; поиск и выбор — в `ReferenceBrowser.tsx`,
+  загрузка и повтор — в `ReferenceDatabaseForm.tsx` рядом.
 - [src/features](../src/features) — редакторы и интеграции;
   [src/components/ui](../src/components/ui) — общие контролы.
-  Карта компонентов и правила переиспользования — в
-  [ui-and-features.mdc](../.cursor/rules/ui-and-features.mdc).
+  Краткая [карта компонентов](ui-components.md) помогает выбрать реализацию;
+  [подробности UI](ui-features.md) читай по затрагиваемому сценарию.
 
 ## Запуск
 
@@ -55,6 +64,9 @@ node node_modules/vite/bin/vite.js
 ## Проверки
 
 - Начинай с ближайших тестов: `npm run test -- путь/к/файлу.test.ts`.
+- Тесты каталога: `src/pages/ItemsPage.test.tsx` — базовые сценарии;
+  соседние `ItemsPage.drag/favorites/prices/planner.test.tsx` — перенос, избранное,
+  массовые цены и план. Общая фикстура — `src/test/items-page-fixture.ts`.
 - После изменения кода запускай `npm run check` и `npm run build`.
   `check` последовательно выполняет TypeScript, ESLint, Prettier и Vitest;
   если один этап упал, следующие не запускались.

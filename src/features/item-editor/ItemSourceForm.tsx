@@ -1,3 +1,4 @@
+import type { RecipeImportData, RecipeImportItem } from '../../domain/recipe-import.types'
 import { useState, type ReactNode } from 'react'
 
 import { Tabs } from '../../components/ui/Tabs/Tabs'
@@ -5,9 +6,7 @@ import type { Item, ItemCatalog, ItemSection } from '../../domain/item.types'
 import type { ItemLanguage } from '../../domain/user-settings'
 import type { GameVersion } from '../../domain/game-version'
 import type {
-  RecipeImportData,
   RecipeImportResult,
-  RecipeImportItem,
   ReferenceItemAddResult,
 } from '../../store/useCraftStore'
 import { ReferenceDatabaseForm } from '../reference-database/ReferenceDatabaseForm'

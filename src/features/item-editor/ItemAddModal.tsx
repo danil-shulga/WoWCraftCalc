@@ -1,3 +1,4 @@
+import type { RecipeImportData, RecipeImportItem } from '../../domain/recipe-import.types'
 import { useState } from 'react'
 
 import { Modal } from '../../components/ui/Modal/Modal'
@@ -7,9 +8,7 @@ import type { GameVersion } from '../../domain/game-version'
 import type { PriceContext } from '../../domain/tsm'
 import type {
   ItemInput,
-  RecipeImportData,
   RecipeImportResult,
-  RecipeImportItem,
   ReferenceItemAddResult,
 } from '../../store/useCraftStore'
 import { ItemForm } from './ItemForm'

@@ -1,3 +1,5 @@
+import { findImportedItem } from '../../domain/imported-item-matching'
+import type { RecipeImportData } from '../../domain/recipe-import.types'
 import { ItemQuantityList } from '../../components/ui/ItemQuantityList/ItemQuantityList'
 import { FormError } from '../../components/ui/FormError/FormError'
 import { Button } from '../../components/ui/Button/Button'
@@ -11,11 +13,7 @@ import type { Item, ItemCatalog } from '../../domain/item.types'
 import type { ItemLanguage } from '../../domain/user-settings'
 import { GAME_VERSION_REGISTRY, professionOptionsFor } from '../../domain/game-version'
 import type { GameVersion } from '../../domain/game-version'
-import {
-  findImportedItem,
-  type RecipeImportData,
-  type RecipeImportResult,
-} from '../../store/useCraftStore'
+import type { RecipeImportResult } from '../../store/useCraftStore'
 import '../EditorForm.css'
 import { fetchWowheadRecipe, type WowheadRecipeImport } from './wowhead-import'
 import './WowheadImportForm.css'

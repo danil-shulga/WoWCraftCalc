@@ -1,3 +1,4 @@
+import type { RecipeImportData } from '../../domain/recipe-import.types'
 import { FormError } from '../../components/ui/FormError/FormError'
 import { Button } from '../../components/ui/Button/Button'
 import { useEffect, useRef, useState } from 'react'
@@ -10,11 +11,7 @@ import { getItemName, getSecondaryItemName } from '../../domain/item-names'
 import type { Item, ItemCatalog, ItemSection, Recipe } from '../../domain/item.types'
 import type { Profession } from '../../domain/professions'
 import type { ItemLanguage } from '../../domain/user-settings'
-import type {
-  ItemInput,
-  RecipeImportData,
-  RecipeImportResult,
-} from '../../store/useCraftStore'
+import type { ItemInput, RecipeImportResult } from '../../store/useCraftStore'
 import { RecipeEditor } from '../recipe-editor/RecipeEditor'
 import { ItemDescriptionFields } from './ItemDescriptionFields'
 import { ItemSourceForm } from './ItemSourceForm'
