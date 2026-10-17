@@ -5,22 +5,21 @@ import { SearchableSelect } from '../../components/ui/SearchableSelect/Searchabl
 import { FormError } from '../../components/ui/FormError/FormError'
 import { TSM_METRIC_LABELS, TSM_REALMS } from '../../domain/tsm'
 import type { TsmMarket, TsmSettings } from '../../domain/tsm'
-import type { TsmState } from './tsm-client'
+import { useTsmStore } from './tsm-client'
 import './TsmSettingsSection.css'
 import '../EditorForm.css'
 
 export interface TsmSettingsSectionProps {
   settings: TsmSettings
-  state: TsmState
   onChange: (settings: TsmSettings) => void
   onCheck: () => void
 }
 export function TsmSettingsSection({
   settings,
-  state,
   onChange,
   onCheck,
 }: TsmSettingsSectionProps) {
+  const state = useTsmStore()
   const [region, setRegion] = useState<TsmMarket['region']>(
     settings.market?.region ?? 'eu',
   )

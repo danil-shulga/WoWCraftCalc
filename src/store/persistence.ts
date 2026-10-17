@@ -6,6 +6,7 @@ import { persistedCraftDataSchema } from '../domain/item.schema'
 import { GAME_VERSIONS, GAME_VERSION_REGISTRY } from '../domain/game-version'
 import { getCatalogValidationError } from '../domain/recipe-validation'
 import type { PersistedCraftData } from '../domain/item.types'
+import { notifyLocalStorageChanged } from './local-storage-events'
 
 export const STORAGE_KEY = 'craft-calc-versioned-data'
 export const STORAGE_VERSION = 1
@@ -53,14 +54,19 @@ export function createCraftStorage(
   const storage = createJSONStorage<PersistedCraftData>(
     () => ({
       getItem: (name) => {
-        localStorage.removeItem('craft-calc-data')
+        if (localStorage.getItem('craft-calc-data') !== null) {
+          localStorage.removeItem('craft-calc-data')
+          notifyLocalStorageChanged()
+        }
         return localStorage.getItem(name)
       },
       setItem: (name, value) => {
         localStorage.setItem(name, value)
+        notifyLocalStorageChanged()
       },
       removeItem: (name) => {
         localStorage.removeItem(name)
+        notifyLocalStorageChanged()
       },
     }),
     {

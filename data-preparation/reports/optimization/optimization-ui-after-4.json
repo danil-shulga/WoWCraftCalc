@@ -1,0 +1,46 @@
+{
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+  "productCount": 100,
+  "samples": 20,
+  "warmups": 3,
+  "queries": ["Test product 00", "zz-no-match", "Test product 0", "Test product 099", ""],
+  "storageUnchanged": true,
+  "results": [
+    {
+      "scenario": "mount",
+      "medianMs": 81.09999999776483,
+      "p95Ms": 157.69999999925494,
+      "minMs": 73.39999999850988,
+      "maxMs": 159.20000000298023,
+      "medianRenderMs": 52.69999999925494,
+      "commits": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    },
+    {
+      "scenario": "search",
+      "medianMs": 150.90000000223517,
+      "p95Ms": 237.59999999776483,
+      "minMs": 139.5,
+      "maxMs": 486.80000000074506,
+      "medianRenderMs": 102.30000000819564,
+      "commits": [5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
+    },
+    {
+      "scenario": "plan-update",
+      "medianMs": 46.5,
+      "p95Ms": 120.5,
+      "minMs": 41.19999999925494,
+      "maxMs": 124.80000000074506,
+      "medianRenderMs": 22.700000002980232,
+      "commits": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    },
+    {
+      "scenario": "price-update",
+      "medianMs": 2.100000001490116,
+      "p95Ms": 3.600000001490116,
+      "minMs": 1.8999999985098839,
+      "maxMs": 6,
+      "medianRenderMs": 1,
+      "commits": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    }
+  ]
+}

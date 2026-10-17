@@ -7,6 +7,100 @@ import {
   searchReferenceItems,
 } from './reference-database-index'
 import { parseReferenceDatabase } from './reference-database.schema'
+import { referenceFixture } from '../test/reference-fixture'
+
+function tiedNamesDatabase() {
+  const db = parseReferenceDatabase(referenceFixture())
+  const product = db.items['1']
+  const reagent = db.items['2']
+  const recipe = db.recipes['10']
+  if (!product || !reagent || !recipe) throw new Error('Нет данных фикстуры')
+  const names = { ru: 'Одинаковый', en: 'Equal' }
+  db.items['1'] = { ...product, names }
+  db.items['3'] = { ...product, itemId: 3, names, recipeSpellIds: [5, 6] }
+  db.items['4'] = { ...reagent, itemId: 4 }
+  db.recipes['5'] = {
+    ...recipe,
+    spellId: 5,
+    productItemId: 3,
+    reagents: [
+      { itemId: 4, quantity: 1 },
+      { itemId: 2, quantity: 1 },
+    ],
+  }
+  db.recipes['6'] = { ...db.recipes['5'], spellId: 6 }
+  db.recipes['10'] = {
+    ...recipe,
+    reagents: [
+      { itemId: 2, quantity: 1 },
+      { itemId: 4, quantity: 1 },
+    ],
+  }
+  return parseReferenceDatabase(db)
+}
+
+describe('подготовленный порядок поиска', () => {
+  it.each(['ru', 'en'] as const)(
+    'сохраняет порядок равных имён каждого раздела: %s',
+    (language) => {
+      const index = buildReferenceDatabaseIndex(tiedNamesDatabase())
+      for (const profession of [null, 'tailoring'] as const) {
+        expect(
+          searchReferenceItems(index, 'crafts', '', profession, language).map(
+            ({ itemId }) => itemId,
+          ),
+        ).toEqual([3, 1])
+        expect(
+          searchReferenceItems(index, 'reagents', '', profession, language).map(
+            ({ itemId }) => itemId,
+          ),
+        ).toEqual([4, 2])
+        expect(
+          searchReferenceItems(index, 'disenchanting', '', profession, language).map(
+            ({ itemId }) => itemId,
+          ),
+        ).toEqual([1, 3])
+      }
+      expect(index.recipesByProduct.get(3)).toHaveLength(2)
+      expect(searchReferenceItems(index, 'crafts', '', 'alchemy', language)).toEqual([])
+    },
+  )
+
+  it('меняет порядок по языку, сохраняя подстановку отсутствующего перевода', () => {
+    const db = tiedNamesDatabase()
+    const first = db.items['1']
+    const third = db.items['3']
+    if (!first || !third) throw new Error('Нет предмета')
+    db.items['1'] = { ...first, names: { ru: 'Яркий', en: 'Amber' } }
+    db.items['3'] = { ...third, names: { ru: 'Алый', en: null } }
+    const index = buildReferenceDatabaseIndex(db)
+    expect(
+      searchReferenceItems(index, 'crafts', '', null, 'ru').map(({ itemId }) => itemId),
+    ).toEqual([3, 1])
+    expect(
+      searchReferenceItems(index, 'crafts', '', null, 'en').map(({ itemId }) => itemId),
+    ).toEqual([1, 3])
+    expect(
+      searchReferenceItems(index, 'crafts', '  АЛЫЙ  ', null, 'en').map(
+        ({ itemId }) => itemId,
+      ),
+    ).toEqual([3])
+  })
+
+  it('не сортирует результаты заново при запросе или смене языка поиска', () => {
+    const index = buildReferenceDatabaseIndex(tiedNamesDatabase())
+    const compare = vi.spyOn(String.prototype, 'localeCompare')
+    try {
+      for (const language of ['ru', 'en'] as const) {
+        for (const section of ['crafts', 'reagents', 'disenchanting'] as const)
+          searchReferenceItems(index, section, '  EQUAL  ', null, language)
+      }
+      expect(compare).not.toHaveBeenCalled()
+    } finally {
+      compare.mockRestore()
+    }
+  })
+})
 
 describe('реагенты без рецепта создания предмета', () => {
   const value: unknown = JSON.parse(

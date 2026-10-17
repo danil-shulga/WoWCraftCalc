@@ -90,6 +90,27 @@ npm run dev:agent
   не заменяет эту проверку.
 - Скрипты справочников: `npm run data:test`; скрипты цен: `npm run tsm:test`.
   Эти проверки не входят в `check`.
+- Замеры чистых функций без HTTP-сервера:
+  `node scripts/measure-performance.mjs --output путь-к-отчёту.json`.
+  Добавь `--full --compare data-preparation/reports/optimization/optimization-baseline.json`
+  для проверки совпадения
+  входных данных и результатов с исходным замером. Время не является порогом CI.
+  Методика и фактические результаты — в
+  [отчёте оптимизации](../data-preparation/reports/optimization/README.md).
+- Браузерный замер `ItemsPage`: на работающем `dev:agent` открыть
+  `http://localhost:5174/src/test/items-page-benchmark.html` и нажать
+  «Запустить замер». Страница использует отдельный каталог в памяти и отключает
+  его запись; не заменяет сохранённый каталог. Сравнение операций по ID:
+  `node scripts/measure-row-indexes.mjs`.
+- Поиск и память индексов:
+  `node --expose-gc scripts/measure-search.mjs --full --compare data-preparation/reports/optimization/optimization-search-before-4.json --output путь-к-новому-отчёту.json`.
+  `--full` у обоих скриптов читает полные артефакты из `releases`, чтобы повторять
+  замеры этапов 1–4 после переноса файлов. Сравнение проверяет содержимое и результаты,
+  допуская смену пути файла. Без флага читается текущая браузерная проекция.
+  Парное сравнение полного и компактного файла, gzip/Brotli, разбора, валидации
+  и индексации: `node scripts/measure-reference-payloads.mjs --output путь-к-отчёту.json`.
+  Сценарий проверяет входы и порядок результатов на трёх базах; `--expose-gc`
+  позволяет оценить удерживаемый объём индекса, без него поле памяти равно `null`.
 - Для документации достаточно Prettier изменённых файлов, проверки ссылок
   и `git diff --check`. Для `.mdc` указывай `--parser markdown`.
 - Если общая проверка падает на неизменённых файлах, отдели исходные проблемы
@@ -102,11 +123,17 @@ npm run dev:agent
   под ключом `craft-calc-versioned-data`, версия сохранения — 1.
   Экспорт `craftcalc-versioned-backup` v1 включает все три workspace и настройки.
 - Справочники schema 2 в `public/data/<version>` отделены от пользовательских
-  данных. Происхождение и пересборка описаны в [документации баз](versioned-databases.md).
+  данных. Это компактные проекции runtime-схемы; полные артефакты для подготовки
+  и проверок лежат в `data-preparation/releases/<version>` и не попадают на сайт.
+  Происхождение и пересборка описаны в [документации баз](versioned-databases.md).
 - Старый `public/data/craftcalc-db.1.60.1.70338.json` нужен скриптам сравнения
   и тестам. Отсутствие импорта в приложении не делает его ненужным.
 - Кэш TSM хранится отдельно в `sessionStorage` и не входит в JSON backup.
   Снимки сайта готовятся Python-скриптами; браузер читает опубликованные JSON.
+- Индикатор localStorage использует общий снимок в `src/app/useLocalStorageUsage.ts`,
+  без таймера. После успешной записи/удаления вызывай `notifyLocalStorageChanged`
+  из `src/store/local-storage-events.ts`; массовое удаление уведомляет один раз.
+  `storage` и `focus` обновляют оценку сторонних записей. SessionStorage не учитывается.
 - Несохранённые формы регистрируются в [draft-guard.ts](../src/app/draft-guard.ts).
   Асинхронные изменения проверяют версию и `workspaceRevision`, чтобы ответ
   старого запроса не изменил другой каталог.

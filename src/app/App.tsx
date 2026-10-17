@@ -1,7 +1,7 @@
 import { Button } from '../components/ui/Button/Button'
 import { selectActiveItems, selectActiveProfessions } from '../store/craft.selectors'
 import { useEffect, useLayoutEffect, useState } from 'react'
-import { checkTsmUpdate, startTsmClient, useTsmStore } from '../features/tsm/tsm-client'
+import { checkTsmUpdate, startTsmClient } from '../features/tsm/tsm-client'
 import { DraftContext } from './draft-guard'
 import type { GameVersion } from '../domain/game-version'
 import { GAME_VERSION_REGISTRY } from '../domain/game-version'
@@ -57,7 +57,6 @@ export function App() {
   const workspaces = useCraftStore((state) => state.workspaces)
   const tbcPricing = useCraftStore((state) => state.tbcPricing)
   const setTbcPricing = useCraftStore((state) => state.setTbcPricing)
-  const tsmState = useTsmStore()
   const activeVersion = useCraftStore((state) => state.activeVersion)
   const workspaceRevision = useCraftStore((state) => state.workspaceRevision)
   const setActiveVersion = useCraftStore((state) => state.setActiveVersion)
@@ -169,7 +168,6 @@ export function App() {
             }
             tsm={{
               settings: tbcPricing,
-              state: tsmState,
               onChange: setTbcPricing,
               onCheck: () => {
                 void checkTsmUpdate()

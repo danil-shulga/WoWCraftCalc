@@ -64,18 +64,32 @@ def release():
                             "differentItemFields": differences, "sharedSpellIds": len(common_spells),
                             "differentRecipeIds": [int(key) for key in common_spells if a["recipes"][key] != b["recipes"][key]],
                             "note": "Separate records are preserved even where IDs coincide. No cross-version cache or localization borrowing."})
-    for version, (path, db) in prepared.items():
-        destination = ROOT / "public/data" / version / f"craftcalc-db.{db['build']}.json"
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        temporary = destination.with_suffix(".json.part")
-        shutil.copyfile(path, temporary)
-        temporary.replace(destination)
+    browser_root = WORK / "staging/browser"
+    subprocess.run(["node", str(ROOT / "scripts/versioned_databases/compact.mjs"), str(browser_root),
+                    *[str(path) for path, _ in prepared.values()]], cwd=ROOT, check=True)
+    browser_manifest = json.loads((browser_root / "manifest.json").read_text(encoding="utf-8"))
+    for entry in browser_manifest:
+        version = entry["gameVersion"]
+        path, db = prepared[version]
+        full_destination = WORK / "releases" / version / f"craftcalc-db.{db['build']}.json"
+        destination = ROOT / "public/data" / entry["file"]
+        for source, target in [(path, full_destination), (browser_root / entry["file"], destination)]:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            temporary = target.with_suffix(".json.part")
+            shutil.copyfile(source, temporary)
+            temporary.replace(target)
+        browser = {"file": destination.relative_to(ROOT).as_posix(), "sha256": entry["sha256"],
+                   "bytes": entry["bytes"], "runtimeEquivalent": entry["runtimeEquivalent"]}
         report_path = WORK / "reports" / f"{version}.{db['build']}.json"
         report = json.loads(report_path.read_text(encoding="utf-8"))
-        report["file"] = destination.relative_to(ROOT).as_posix()
+        report["file"] = full_destination.relative_to(ROOT).as_posix()
+        report["browser"] = browser
         save_json(report_path, report)
         prettier(report_path)
-        print("Released", report["file"], report["sha256"])
+        check = next(check for check in checks if check["gameVersion"] == version)
+        check["file"] = report["file"]
+        check["browser"] = browser
+        print("Released", browser["file"], browser["sha256"])
     if hashlib.sha256((ROOT / "public/data/craftcalc-db.1.60.1.70338.json").read_bytes()).hexdigest() != originals:
         raise ValueError("Original Forever changed")
     report_path = WORK / "reports" / "release.json"
@@ -84,7 +98,7 @@ def release():
                             "availabilityStatus": "client-table-candidates; exhaustive player availability validation deferred"})
     prettier(report_path)
     subprocess.run(["node", str(ROOT / "scripts/versioned_databases/contract.mjs"),
-                    *[str(ROOT / "public/data" / version / f"craftcalc-db.{build}.json") for version, build in BUILDS.items()]], cwd=ROOT, check=True)
+                    *[str(WORK / "releases" / version / f"craftcalc-db.{build}.json") for version, build in BUILDS.items()]], cwd=ROOT, check=True)
 
 
 if __name__ == "__main__":

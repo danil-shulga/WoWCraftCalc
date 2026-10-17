@@ -42,16 +42,20 @@ export function selectItemsBySection(
   language: ItemLanguage = 'ru',
   order: readonly ItemId[] = [],
 ): Item[] {
-  const sorted = sortByName(
-    Object.values(catalog).filter((item) =>
-      section === 'favorites' ? item.isFavorite : item.sections.includes(section),
-    ),
-    language,
-  )
+  const sorted = sortByName(selectSectionItems(catalog, section), language)
   const ranks = new Map(order.map((id, index) => [id, index]))
   return sorted.sort(
     (left, right) =>
       (ranks.get(left.id) ?? order.length) - (ranks.get(right.id) ?? order.length),
+  )
+}
+
+export function selectSectionItems(
+  catalog: ItemCatalog,
+  section: ItemSection | 'favorites',
+): Item[] {
+  return Object.values(catalog).filter((item) =>
+    section === 'favorites' ? item.isFavorite : item.sections.includes(section),
   )
 }
 

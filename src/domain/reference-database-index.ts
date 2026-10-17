@@ -19,6 +19,7 @@ export interface ReferenceDatabaseIndex {
   productsByProfession: Map<Profession, Set<number>>
   reagentsByProfession: Map<Profession, Set<number>>
   reagentIds: Set<number>
+  sortedItemIds: Record<ItemLanguage, Record<ItemSection, number[]>>
 }
 
 export function buildReferenceDatabaseIndex(
@@ -31,6 +32,10 @@ export function buildReferenceDatabaseIndex(
     productsByProfession: new Map(),
     reagentsByProfession: new Map(),
     reagentIds: new Set(),
+    sortedItemIds: {
+      ru: { crafts: [], reagents: [], disenchanting: [] },
+      en: { crafts: [], reagents: [], disenchanting: [] },
+    },
   }
   for (const item of Object.values(database.items)) {
     index.searchNames.set(
@@ -83,6 +88,26 @@ export function buildReferenceDatabaseIndex(
       }
     }
   }
+  const items = Object.values(database.items)
+  const sectionIds = {
+    crafts: [...index.recipesByProduct.keys()],
+    reagents: [...index.reagentIds],
+    disenchanting: items
+      .filter(({ classId }) => classId === 2 || classId === 4)
+      .map(({ itemId }) => itemId),
+  }
+  for (const language of ['ru', 'en'] as const) {
+    const names = new Map(
+      items.map((item) => [item.itemId, referenceItemName(item, language)]),
+    )
+    for (const section of ['crafts', 'reagents', 'disenchanting'] as const) {
+      // У равных имён сохраняется исходный порядок именно своего раздела.
+      index.sortedItemIds[language][section] = [...sectionIds[section]].sort(
+        (left, right) =>
+          (names.get(left) ?? '').localeCompare(names.get(right) ?? '', language),
+      )
+    }
+  }
   return index
 }
 
@@ -93,14 +118,7 @@ export function searchReferenceItems(
   profession: Profession | null = null,
   language: ItemLanguage = 'ru',
 ): ReferenceItem[] {
-  const ids =
-    section === 'disenchanting'
-      ? Object.values(index.database.items)
-          .filter(({ classId }) => classId === 2 || classId === 4)
-          .map(({ itemId }) => itemId)
-      : section === 'crafts'
-        ? index.recipesByProduct.keys()
-        : index.reagentIds.values()
+  const ids = index.sortedItemIds[language][section]
   const professionIds =
     profession === null
       ? null
@@ -119,10 +137,5 @@ export function searchReferenceItems(
     )
       items.push(item)
   }
-  return items.sort((a, b) =>
-    referenceItemName(a, language).localeCompare(
-      referenceItemName(b, language),
-      language,
-    ),
-  )
+  return items
 }

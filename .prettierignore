@@ -5,3 +5,7 @@ package-lock.json
 data-preparation/raw/
 data-preparation/cache/
 data-preparation/staging/
+# Generated browser projections must remain compact.
+public/data/classic/craftcalc-db.1.14.4.51829.json
+public/data/tbc/craftcalc-db.2.5.6.69795.json
+public/data/forever/craftcalc-db.1.60.1.70338.json

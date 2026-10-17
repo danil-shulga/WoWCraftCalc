@@ -3147,5 +3147,11 @@
   },
   "additionalItemIds": [10998, 11138, 12735, 13180],
   "sha256": "27e42f051164d0d77c6e6d3141e50820a4d1bc325643cb572a27ada1bf27a4f8",
-  "file": "public/data/forever/craftcalc-db.1.60.1.70338.json"
+  "file": "data-preparation/releases/forever/craftcalc-db.1.60.1.70338.json",
+  "browser": {
+    "file": "public/data/forever/craftcalc-db.1.60.1.70338.json",
+    "sha256": "74c8273320f2c5f9a6dc52417d965de102b40f73a9d2cfd1c4780c192fb56348",
+    "bytes": 1714483,
+    "runtimeEquivalent": true
+  }
 }

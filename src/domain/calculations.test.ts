@@ -1,5 +1,6 @@
 import {
   createCatalogCalculationSnapshot,
+  getAutomaticAcquisitionMethod,
   getCraftUnitCost,
   getProfitPerCraft,
   getRecipeBatchCost,
@@ -7,6 +8,8 @@ import {
 } from './calculations'
 import { recipeWouldCreateCycle } from './recipe-validation'
 import type { Item, ItemCatalog } from './item.types'
+import type { Profession } from './professions'
+import { DEFAULT_TSM_SETTINGS } from './tsm'
 
 function makeItem(item: Partial<Item> & Pick<Item, 'id' | 'name'>): Item {
   return {
@@ -347,6 +350,60 @@ describe('craft calculations', () => {
     expect(getProfitPerCraft(emptyRecipeCatalog, 'product')).toBeNull()
   })
 
+  it('сохраняет неизвестную стоимость повреждённых цепочек в общем снимке', () => {
+    const damaged: ItemCatalog = {
+      first: makeItem({
+        id: 'first',
+        name: 'Первый',
+        purchasePriceCopper: 100,
+        recipe: {
+          outputQuantity: 1,
+          profession: 'engineering',
+          reagents: [{ itemId: 'second', quantity: 1, acquisition: 'craft' }],
+        },
+      }),
+      second: makeItem({
+        id: 'second',
+        name: 'Второй',
+        purchasePriceCopper: 100,
+        recipe: {
+          outputQuantity: 1,
+          profession: 'engineering',
+          reagents: [{ itemId: 'first', quantity: 1, acquisition: 'craft' }],
+        },
+      }),
+      missing: makeItem({
+        id: 'missing',
+        name: 'Нет реагента',
+        purchasePriceCopper: 100,
+        recipe: {
+          outputQuantity: 1,
+          profession: 'engineering',
+          reagents: [{ itemId: 'absent', quantity: 1, acquisition: 'craft' }],
+        },
+      }),
+    }
+    const professions = new Set<Profession>(['engineering'])
+    const ids = new Set(Object.keys(damaged))
+    const result = createCatalogCalculationSnapshot(damaged, professions, ids)
+    expect(
+      createCatalogCalculationSnapshot(
+        Object.fromEntries(Object.entries(damaged).reverse()),
+        professions,
+        ids,
+      ),
+    ).toEqual(result)
+    for (const id of ids) {
+      expect(result[id]).toMatchObject({
+        craftUnitCost: null,
+        automaticMethod: 'buy',
+        configuredProfit: null,
+        allProfessionsProfit: null,
+        boughtReagentsProfit: null,
+      })
+    }
+  })
+
   it('строит единый снимок для стоимости и сценариев прибыли', () => {
     const snapshot = createCatalogCalculationSnapshot(
       catalog,
@@ -370,6 +427,105 @@ describe('craft calculations', () => {
     })
     expect(snapshot.bar?.configuredProfit).toBeNull()
   })
+
+  it.each([null, 0, 1, 100])(
+    'сохраняет независимые результаты общих цепочек при цене материала %s',
+    (materialPrice) => {
+      const shared: ItemCatalog = {
+        ...catalog,
+        ore: makeItem({
+          id: 'ore',
+          name: 'Руда',
+          purchasePriceCopper: materialPrice,
+          source: { wowheadItemId: 2770, wowheadVersion: 'tbc' },
+          purchasePriceSource: 'tsm',
+        }),
+        bar: makeItem({
+          id: 'bar',
+          name: 'Слиток',
+          purchasePriceCopper: 1,
+          recipe: {
+            outputQuantity: 3,
+            profession: 'mining',
+            reagents: [{ itemId: 'ore', quantity: 1, acquisition: 'buy' }],
+          },
+        }),
+        ring: makeItem({
+          id: 'ring',
+          name: 'Кольцо',
+          salePriceCopper: 100,
+          recipe: {
+            outputQuantity: 2,
+            profession: 'blacksmithing',
+            reagents: [{ itemId: 'bar', quantity: 2, acquisition: 'auto' }],
+          },
+        }),
+      }
+      const market = {
+        region: 'eu',
+        realm: 'thunderstrike',
+        faction: 'alliance',
+      } as const
+      for (const ownedProfessions of [
+        new Set<Profession>(),
+        new Set<Profession>(['mining']),
+      ]) {
+        for (const snapshot of [
+          null,
+          {
+            schemaVersion: 1 as const,
+            market,
+            scannedAt: '2026-10-16T12:00:00Z',
+            items: { '2770': { recent: 3, marketValue: null } },
+          },
+        ]) {
+          const prices = {
+            version: 'tbc' as const,
+            settings: { ...DEFAULT_TSM_SETTINGS, market },
+            snapshot,
+          }
+          const ids = new Set(Object.keys(shared))
+          const result = createCatalogCalculationSnapshot(
+            shared,
+            ownedProfessions,
+            ids,
+            prices,
+          )
+          expect(
+            createCatalogCalculationSnapshot(
+              Object.fromEntries(Object.entries(shared).reverse()),
+              ownedProfessions,
+              ids,
+              prices,
+            ),
+          ).toEqual(result)
+          for (const id of ids) {
+            expect(result[id]).toMatchObject({
+              craftUnitCost: getCraftUnitCost(shared, id, { ownedProfessions, prices }),
+              automaticMethod: getAutomaticAcquisitionMethod(
+                shared,
+                id,
+                ownedProfessions,
+                prices,
+              ),
+              configuredProfit: getProfitPerCraft(shared, id, {
+                ownedProfessions,
+                prices,
+              }),
+              allProfessionsProfit: getProfitPerCraft(shared, id, {
+                scenario: 'all-professions',
+                prices,
+              }),
+              boughtReagentsProfit: getProfitPerCraft(shared, id, {
+                scenario: 'buy-reagents',
+                prices,
+              }),
+            })
+          }
+        }
+      }
+    },
+  )
 })
 
 describe('recipe validation', () => {

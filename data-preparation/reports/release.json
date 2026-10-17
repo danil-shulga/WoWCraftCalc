@@ -1,6 +1,6 @@
 {
   "snapshotDate": "2026-10-12",
-  "originalForeverSha256": "4e34c2c38bd40e2dcf3ee23d602d4e04221c2de893eb31be164cd393d455dc93",
+  "originalForeverSha256": "698ad0b24208a358dac2e04f4d405425c0406ea114450c85330d19fdb7648e8b",
   "checks": [
     {
       "gameVersion": "classic",
@@ -33,6 +33,13 @@
         },
         "reagentItems": 434,
         "itemsBothCraftAndReagent": 116
+      },
+      "file": "data-preparation/releases/classic/craftcalc-db.1.14.4.51829.json",
+      "browser": {
+        "file": "public/data/classic/craftcalc-db.1.14.4.51829.json",
+        "sha256": "03cb54557922e5644de79b47e80f3cc41d95a5f9f87eb55d8dd790c66f062d59",
+        "bytes": 1015374,
+        "runtimeEquivalent": true
       }
     },
     {
@@ -67,6 +74,13 @@
         },
         "reagentItems": 621,
         "itemsBothCraftAndReagent": 208
+      },
+      "file": "data-preparation/releases/tbc/craftcalc-db.2.5.6.69795.json",
+      "browser": {
+        "file": "public/data/tbc/craftcalc-db.2.5.6.69795.json",
+        "sha256": "2413086b0cdd4623e0030993a0317137e368f9ceb69d827bbb4c9d68192d923b",
+        "bytes": 1706375,
+        "runtimeEquivalent": true
       }
     },
     {
@@ -103,6 +117,13 @@
         },
         "reagentItems": 535,
         "itemsBothCraftAndReagent": 164
+      },
+      "file": "data-preparation/releases/forever/craftcalc-db.1.60.1.70338.json",
+      "browser": {
+        "file": "public/data/forever/craftcalc-db.1.60.1.70338.json",
+        "sha256": "74c8273320f2c5f9a6dc52417d965de102b40f73a9d2cfd1c4780c192fb56348",
+        "bytes": 1714483,
+        "runtimeEquivalent": true
       }
     }
   ],

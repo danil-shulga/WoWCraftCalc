@@ -78,6 +78,9 @@ export function createCatalogDisenchantSnapshot(
 ): Record<ItemId, CatalogDisenchantCalculation> {
   const { salePrices, issues } = resolveDisenchantMaterialPrices(catalog, version, prices)
   const snapshot: Record<ItemId, CatalogDisenchantCalculation> = {}
+  const configuredCache = new Map<ItemId, number | null>()
+  const allProfessionsCache = new Map<ItemId, number | null>()
+  const buyReagentsCache = new Map<ItemId, number | null>()
   for (const itemId of itemIds) {
     const item = catalog[itemId]
     if (!item) continue
@@ -87,6 +90,7 @@ export function createCatalogDisenchantSnapshot(
       version,
       salePrices,
       { acceptUniformQuantities: true, ownedProfessions, prices },
+      configuredCache,
     )
     const {
       disenchant: result,
@@ -99,11 +103,23 @@ export function createCatalogDisenchantSnapshot(
       buyProfit,
       allProfessionsProfit: getDisenchantProfit(
         result,
-        getExactCraftUnitCost(catalog, itemId, { prices, scenario: 'all-professions' }),
+        getExactCraftUnitCost(
+          catalog,
+          itemId,
+          { prices, scenario: 'all-professions' },
+          new Set(),
+          allProfessionsCache,
+        ),
       ),
       boughtReagentsProfit: getDisenchantProfit(
         result,
-        getExactCraftUnitCost(catalog, itemId, { prices, scenario: 'buy-reagents' }),
+        getExactCraftUnitCost(
+          catalog,
+          itemId,
+          { prices, scenario: 'buy-reagents' },
+          new Set(),
+          buyReagentsCache,
+        ),
       ),
       materialIssues: issues.filter((issue) =>
         result.missingPriceItemIds.includes(issue.itemId),

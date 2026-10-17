@@ -36,7 +36,8 @@ Props и особенности: [общие контролы](ui-features.md#о
 - `RootItemRow` — корневая строка: цены, прибыль, действия и план.
 - `RootItemRow/ItemPriceCell.tsx` — ячейка покупки/продажи и ручной ввод.
 - `ReagentItemRow` — вложенный реагент и способ получения.
-- `src/components/navigation/Sidebar/Sidebar.tsx` — меню, версия и объём хранилища.
+- `src/components/navigation/Sidebar/Sidebar.tsx` — меню, версия и объём хранилища;
+  App передаёт общий снимок оценки, обновляемый по событиям без опроса.
 
 Подробности: [дерево и навигация](ui-features.md#дерево-и-навигация-srccomponents).
 
@@ -51,7 +52,7 @@ Props и особенности: [общие контролы](ui-features.md#о
   `ItemAddModal`, `ItemEditModal` — добавление и объединённое редактирование.
 - `recipe-editor/RecipeEditor.tsx` — ручной состав рецепта и анимации реагентов.
 - `reference-database`: `ReferenceDatabaseForm` — загрузка базы;
-  `ReferenceBrowser` — поиск, выбор набора и подтверждение;
+  `ReferenceBrowser` — поиск по подготовленному индексу RU/EN, выбор набора и подтверждение;
   `useReferenceDrafts` — независимые черновики рецептов и выхода;
   `ReferenceSelection` — выбранные позиции и анимации;
   `ReferenceReview` — общий управляемый предпросмотр.
@@ -62,7 +63,8 @@ Props и особенности: [общие контролы](ui-features.md#о
   `usePlanner` — единое подключение расчёта в App.
 - `tsm`: `PriceModeSelector` — «Приоритетные цены»: «Заданные / TSM»,
   при отсутствии приоритетной суммы используется второй источник;
-  `TsmSettingsSection` — рынок, показатель и обновление снимка.
+  `TsmSettingsSection` — рынок, показатель и обновление снимка;
+  подписывается на статусы TSM только пока блок смонтирован.
 - `disenchanting`: `DisenchantEstimateDetails` — материалы и оценка;
   `disenchanting-presentation.ts` — подписи статусов.
 - `user-settings/UserSettingsModal.tsx` — настройки;
@@ -73,7 +75,9 @@ Props и особенности: [общие контролы](ui-features.md#о
 ## Страницы и сборка
 
 - `src/pages/ItemsPage.tsx` — общий каталог крафтов, реагентов, распыления
-  и избранного, поиск, массовые цены и диалоги.
+  и избранного, поиск, массовые цены и диалоги; живые строки и цели плана
+  индексируются по локальному ID. Поиск использует подготовленные имена
+  и фильтрует готовые результаты расчёта раздела.
 - `src/pages/useRootItemDrag.ts` — Pointer Events и автопрокрутка корневых деревьев.
 - `src/pages/PlannerPage.tsx` — цели, производство, покупки и итоги.
 - `src/pages/PlaceholderPage.tsx` — заглушка.

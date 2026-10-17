@@ -293,18 +293,19 @@ export function createCatalogCalculationSnapshot(
 
   return Object.fromEntries(
     Object.keys(catalog).map((itemId) => {
-      const automaticMethod = getAutomaticAcquisitionMethod(
-        catalog,
-        itemId,
-        ownedProfessions,
-        prices,
-      )
       const exactCraftCost = getExactCraftUnitCost(
         catalog,
         itemId,
         configuredOptions,
         new Set(),
         configuredCache,
+      )
+      const automaticMethod = resolveAcquisitionMethod(
+        catalog,
+        itemId,
+        'auto',
+        configuredOptions,
+        exactCraftCost,
       )
       const craftUnitCost = exactCraftCost === null ? null : Math.round(exactCraftCost)
       const item = catalog[itemId]

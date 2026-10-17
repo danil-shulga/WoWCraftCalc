@@ -319,5 +319,11 @@
     "limitation": "No exhaustive acquisition/availability source was applied. Absence of suspicious names does not prove availability."
   },
   "sha256": "04c56e82cc990e3b5fce96c8ef0457127b7d7a5da42f3ecde32b6e2f2bdcdbc1",
-  "file": "public/data/tbc/craftcalc-db.2.5.6.69795.json"
+  "file": "data-preparation/releases/tbc/craftcalc-db.2.5.6.69795.json",
+  "browser": {
+    "file": "public/data/tbc/craftcalc-db.2.5.6.69795.json",
+    "sha256": "2413086b0cdd4623e0030993a0317137e368f9ceb69d827bbb4c9d68192d923b",
+    "bytes": 1706375,
+    "runtimeEquivalent": true
+  }
 }

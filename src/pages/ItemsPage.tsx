@@ -17,11 +17,11 @@ import { createCatalogCalculationSnapshot } from '../domain/calculations'
 import { createCatalogDisenchantSnapshot } from '../domain/disenchanting-catalog'
 import { describeDisenchantEstimate } from '../features/disenchanting/disenchanting-presentation'
 import { DisenchantEstimateDetails } from '../features/disenchanting/DisenchantEstimateDetails'
-import { getItemName, matchesItemName } from '../domain/item-names'
+import { getItemName, getItemSearchNames, normalizeItemName } from '../domain/item-names'
 import type { ItemId, ItemPriceField, ItemSection } from '../domain/item.types'
 import { ItemAddModal } from '../features/item-editor/ItemAddModal'
 import { ItemEditModal } from '../features/item-editor/ItemEditModal'
-import { selectItemsBySection } from '../store/craft.selectors'
+import { selectItemsBySection, selectSectionItems } from '../store/craft.selectors'
 import { useCraftStore } from '../store/useCraftStore'
 import './ItemsPage.css'
 import './PageLayout.css'
@@ -61,6 +61,10 @@ const pageContent: Record<
 
 export function ItemsPage({ section }: ItemsPageProps) {
   const plannerTargets = useCraftStore(selectPlannerTargets)
+  const plannerTargetsById = useMemo(
+    () => new Map(plannerTargets.map((target) => [target.itemId, target])),
+    [plannerTargets],
+  )
   const setPlannerQuantity = useCraftStore((state) => state.setPlannerQuantity)
   const removePlannerTarget = useCraftStore((state) => state.removePlannerTarget)
   const prices = usePriceContext()
@@ -100,12 +104,33 @@ export function ItemsPage({ section }: ItemsPageProps) {
   const favoriteTriggerRef = useRef<HTMLElement | null>(null)
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set())
   const [searchQuery, setSearchQuery] = useState('')
+  const normalizedQuery = useMemo(() => normalizeItemName(searchQuery), [searchQuery])
+  const searchNamesById = useMemo(
+    () =>
+      new Map(
+        Object.values(items).map((item) => [
+          item.id,
+          getItemSearchNames(item).map(normalizeItemName),
+        ]),
+      ),
+    [items],
+  )
   const content = pageContent[section]
   const priceField: ItemPriceField =
     section === 'crafts' ? 'salePriceCopper' : 'purchasePriceCopper'
   const sectionItems = useMemo(
     () => selectItemsBySection(items, section, itemLanguage, rootItemOrder?.[section]),
     [items, section, itemLanguage, rootItemOrder],
+  )
+  const calculationItems = useMemo(
+    () => selectSectionItems(items, section),
+    [items, section],
+  )
+  // Прибыль готовится для всего раздела: поиск её не пересчитывает,
+  // но правка цены обновляет и скрытые строки.
+  const profitItemIds = useMemo(
+    () => new Set(calculationItems.map(({ id }) => id)),
+    [calculationItems],
   )
   const {
     priceDrafts,
@@ -115,14 +140,14 @@ export function ItemsPage({ section }: ItemsPageProps) {
     savePriceDrafts,
   } = useBulkPriceDraft(items, sectionItems, priceField, setItemPrices)
   const visibleItems = useMemo(() => {
-    const normalizedQuery = searchQuery.trim().toLocaleLowerCase('ru-RU')
-
     if (normalizedQuery.length === 0) {
       return sectionItems
     }
 
-    return sectionItems.filter((item) => matchesItemName(item, searchQuery))
-  }, [searchQuery, sectionItems])
+    return sectionItems.filter((item) =>
+      searchNamesById.get(item.id)?.some((name) => name.includes(normalizedQuery)),
+    )
+  }, [normalizedQuery, sectionItems, searchNamesById])
   const moveDraggedItem = useCallback(
     (itemId: ItemId, targetId: ItemId, position: 'before' | 'after') => {
       moveRootItem(section, itemId, targetId, position)
@@ -139,13 +164,8 @@ export function ItemsPage({ section }: ItemsPageProps) {
   const ownedProfessionSet = useMemo(() => new Set(ownedProfessions), [ownedProfessions])
   const calculationSnapshot = useMemo(
     () =>
-      createCatalogCalculationSnapshot(
-        items,
-        ownedProfessionSet,
-        new Set(visibleItems.map((item) => item.id)),
-        prices,
-      ),
-    [items, ownedProfessionSet, visibleItems, prices],
+      createCatalogCalculationSnapshot(items, ownedProfessionSet, profitItemIds, prices),
+    [items, ownedProfessionSet, profitItemIds, prices],
   )
   const disenchantSnapshot = useMemo(
     () =>
@@ -153,38 +173,43 @@ export function ItemsPage({ section }: ItemsPageProps) {
         ? createCatalogDisenchantSnapshot(
             items,
             gameVersion,
-            sectionItems.map(({ id }) => id),
+            calculationItems.map(({ id }) => id),
             ownedProfessionSet,
             prices,
           )
         : {},
-    [section, items, gameVersion, sectionItems, ownedProfessionSet, prices],
+    [section, items, gameVersion, calculationItems, ownedProfessionSet, prices],
   )
   const liveRows = useMemo(
     () =>
       sectionItems.map((item) => ({
         item,
+        searchNames: searchNamesById.get(item.id) ?? [],
         catalog: items,
         calculationSnapshot,
         disenchant: disenchantSnapshot[item.id],
       })),
-    [sectionItems, items, calculationSnapshot, disenchantSnapshot],
+    [sectionItems, searchNamesById, items, calculationSnapshot, disenchantSnapshot],
   )
   const [previousRows, setPreviousRows] = useState(liveRows)
   const [displayRows, setDisplayRows] = useState(liveRows)
+  const liveRowIds = useMemo(
+    () => new Set(liveRows.map(({ item }) => item.id)),
+    [liveRows],
+  )
   if (previousRows !== liveRows) {
     setPreviousRows(liveRows)
     setDisplayRows((rows) => {
       const next = [...liveRows]
       rows.forEach((row, index) => {
-        if (!liveRows.some(({ item }) => item.id === row.item.id))
+        if (!liveRowIds.has(row.item.id))
           next.splice(Math.min(index, next.length), 0, row)
       })
       return next
     })
   }
-  const renderedRows = displayRows.filter(({ item }) =>
-    matchesItemName(item, searchQuery),
+  const renderedRows = displayRows.filter(({ searchNames }) =>
+    searchNames.some((name) => name.includes(normalizedQuery)),
   )
   const editingItem = editingItemId === null ? undefined : items[editingItemId]
   const deletingItem = deletingItemId === null ? undefined : items[deletingItemId]
@@ -314,7 +339,7 @@ export function ItemsPage({ section }: ItemsPageProps) {
               ) : null}
               {renderedRows.map(
                 ({ item, catalog, calculationSnapshot: rowCalculation, disenchant }) => {
-                  const removing = !liveRows.some((row) => row.item.id === item.id)
+                  const removing = !liveRowIds.has(item.id)
                   return (
                     <ItemTree
                       presence={{
@@ -350,9 +375,7 @@ export function ItemsPage({ section }: ItemsPageProps) {
                       }
                       planner={{
                         itemName: getItemName(item, itemLanguage),
-                        quantity: plannerTargets.find(
-                          (target) => target.itemId === item.id,
-                        )?.quantity,
+                        quantity: plannerTargetsById.get(item.id)?.quantity,
                         step: getItemRecipe(items, item.id)?.outputQuantity ?? 1,
                         onChange: (quantity) => {
                           setPlannerQuantity(item.id, quantity)

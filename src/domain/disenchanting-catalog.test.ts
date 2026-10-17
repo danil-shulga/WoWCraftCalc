@@ -4,6 +4,9 @@ import {
   resolveDisenchantMaterialPrices,
 } from './disenchanting-catalog'
 import { DEFAULT_TSM_SETTINGS } from './tsm'
+import { calculateDisenchantComparison, getDisenchantProfit } from './disenchanting'
+import { getExactCraftUnitCost } from './calculations'
+import type { Profession } from './professions'
 
 function item(id: string, input: Partial<Item> = {}): Item {
   return {
@@ -41,6 +44,81 @@ const catalog: ItemCatalog = {
 }
 
 describe('распыление предметов каталога', () => {
+  it.each([null, 0, 1, 100])(
+    'изолирует сценарии и порядок обхода общих реагентов при цене %s',
+    (purchasePriceCopper) => {
+      const boots = catalog.boots
+      if (!boots?.recipe) throw new Error('Нет рецепта')
+      const items: ItemCatalog = {
+        ...catalog,
+        raw: item('raw', { purchasePriceCopper }),
+        cloth: item('cloth', {
+          purchasePriceCopper: 10,
+          recipe: {
+            outputQuantity: 3,
+            profession: 'tailoring',
+            reagents: [{ itemId: 'raw', quantity: 1, acquisition: 'buy' }],
+          },
+        }),
+        boots: {
+          ...boots,
+          recipe: {
+            ...boots.recipe,
+            reagents: [{ itemId: 'cloth', quantity: 2, acquisition: 'auto' }],
+          },
+        },
+        other: {
+          ...boots,
+          id: 'other',
+          recipe: {
+            ...boots.recipe,
+            reagents: [{ itemId: 'cloth', quantity: 5, acquisition: 'craft' }],
+          },
+        },
+      }
+      const ids = ['boots', 'other']
+      for (const ownedProfessions of [
+        new Set<Profession>(),
+        new Set<Profession>(['tailoring']),
+      ]) {
+        const snapshot = createCatalogDisenchantSnapshot(
+          items,
+          'tbc',
+          ids,
+          ownedProfessions,
+        )
+        expect(
+          createCatalogDisenchantSnapshot(
+            items,
+            'tbc',
+            [...ids].reverse(),
+            ownedProfessions,
+          ),
+        ).toEqual(snapshot)
+        const { salePrices } = resolveDisenchantMaterialPrices(items, 'tbc')
+        for (const id of ids) {
+          const comparison = calculateDisenchantComparison(items, id, 'tbc', salePrices, {
+            ownedProfessions,
+            acceptUniformQuantities: true,
+          })
+          expect(snapshot[id]).toMatchObject({
+            result: comparison.disenchant,
+            buyProfit: comparison.buyProfitCopper,
+            configuredProfit: comparison.craftProfitCopper,
+            allProfessionsProfit: getDisenchantProfit(
+              comparison.disenchant,
+              getExactCraftUnitCost(items, id, { scenario: 'all-professions' }),
+            ),
+            boughtReagentsProfit: getDisenchantProfit(
+              comparison.disenchant,
+              getExactCraftUnitCost(items, id, { scenario: 'buy-reagents' }),
+            ),
+          })
+        }
+      }
+    },
+  )
+
   it.each(['classic', 'tbc'] as const)(
     'разрешает материалы старого мира только из своей версии %s',
     (version) => {

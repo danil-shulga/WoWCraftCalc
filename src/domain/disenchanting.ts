@@ -310,6 +310,8 @@ export function calculateDisenchantComparison(
   version: GameVersion,
   salePrices: ReadonlyMap<number, number | null>,
   options: DisenchantOptions & CalculationOptions = {},
+  // Общий кэш допустим только в одном расчёте с теми же каталогом и настройками.
+  craftCostCache = new Map<ItemId, number | null>(),
 ): {
   disenchant: DisenchantResult
   buyProfitCopper: number | null
@@ -325,7 +327,7 @@ export function calculateDisenchantComparison(
     ),
     craftProfitCopper: getDisenchantProfit(
       disenchant,
-      getExactCraftUnitCost(catalog, itemId, options),
+      getExactCraftUnitCost(catalog, itemId, options, new Set(), craftCostCache),
     ),
   }
 }

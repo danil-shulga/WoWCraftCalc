@@ -1,0 +1,185 @@
+{
+  "timestamp": "2026-10-17T21:37:37.663Z",
+  "revision": "5cc58047fb1ec94244bd1d3f00f3ae203845a121",
+  "environment": {
+    "node": "v22.17.0",
+    "platform": "win32",
+    "cpu": "AMD Ryzen 7 5700X 8-Core Processor             "
+  },
+  "iterations": 20,
+  "warmups": 3,
+  "compression": "Node gzip and Brotli defaults; network transfer not measured",
+  "results": [
+    {
+      "version": "forever",
+      "runtimeEquivalent": true,
+      "indexEquivalent": true,
+      "full": {
+        "file": "data-preparation/releases/forever/craftcalc-db.1.60.1.70338.json",
+        "sha256": "27e42f051164d0d77c6e6d3141e50820a4d1bc325643cb572a27ada1bf27a4f8",
+        "runtimeHash": "0647d9f92504e99c10fefa253eed9cb9fd60d0ba5dd9ef5ad94127a3dea58a10",
+        "bytes": 6597783,
+        "gzipBytes": 258797,
+        "brotliBytes": 138884,
+        "jsonParse": {
+          "medianMs": 18.41949999999997,
+          "p95Ms": 19.637499999999818,
+          "minMs": 17.634399999999914,
+          "maxMs": 22.42120000000068
+        },
+        "validate": {
+          "medianMs": 18.753999999999905,
+          "p95Ms": 23.169200000000274,
+          "minMs": 16.132700000000114,
+          "maxMs": 28.176100000000588
+        },
+        "index": {
+          "medianMs": 29.692800000000716,
+          "p95Ms": 33.72059999999965,
+          "minMs": 28.358499999999367,
+          "maxMs": 35.39190000000053
+        }
+      },
+      "browser": {
+        "file": "public/data/forever/craftcalc-db.1.60.1.70338.json",
+        "sha256": "74c8273320f2c5f9a6dc52417d965de102b40f73a9d2cfd1c4780c192fb56348",
+        "runtimeHash": "0647d9f92504e99c10fefa253eed9cb9fd60d0ba5dd9ef5ad94127a3dea58a10",
+        "bytes": 1714483,
+        "gzipBytes": 158104,
+        "brotliBytes": 98014,
+        "jsonParse": {
+          "medianMs": 7.668499999999767,
+          "p95Ms": 8.897899999999936,
+          "minMs": 7.414700000001176,
+          "maxMs": 9.174400000001697
+        },
+        "validate": {
+          "medianMs": 20.07469999999921,
+          "p95Ms": 21.874699999998484,
+          "minMs": 16.894400000001042,
+          "maxMs": 25.636200000000827
+        },
+        "index": {
+          "medianMs": 30.773300000000745,
+          "p95Ms": 34.12760000000162,
+          "minMs": 28.368899999999485,
+          "maxMs": 38.654200000000856
+        }
+      }
+    },
+    {
+      "version": "tbc",
+      "runtimeEquivalent": true,
+      "indexEquivalent": true,
+      "full": {
+        "file": "data-preparation/releases/tbc/craftcalc-db.2.5.6.69795.json",
+        "sha256": "04c56e82cc990e3b5fce96c8ef0457127b7d7a5da42f3ecde32b6e2f2bdcdbc1",
+        "runtimeHash": "6c6684f789410411344609a0bfd123394a90515c9bc9fd6bf0cb4dd05ff46180",
+        "bytes": 6563976,
+        "gzipBytes": 257005,
+        "brotliBytes": 138302,
+        "jsonParse": {
+          "medianMs": 17.674800000000687,
+          "p95Ms": 18.742599999997765,
+          "minMs": 17.065400000003137,
+          "maxMs": 20.64220000000205
+        },
+        "validate": {
+          "medianMs": 19.020000000000437,
+          "p95Ms": 22.070800000001327,
+          "minMs": 16.996399999999994,
+          "maxMs": 23.057800000002317
+        },
+        "index": {
+          "medianMs": 29.526499999999942,
+          "p95Ms": 35.42740000000049,
+          "minMs": 28.212400000000343,
+          "maxMs": 39.118500000000495
+        }
+      },
+      "browser": {
+        "file": "public/data/tbc/craftcalc-db.2.5.6.69795.json",
+        "sha256": "2413086b0cdd4623e0030993a0317137e368f9ceb69d827bbb4c9d68192d923b",
+        "runtimeHash": "6c6684f789410411344609a0bfd123394a90515c9bc9fd6bf0cb4dd05ff46180",
+        "bytes": 1706375,
+        "gzipBytes": 166039,
+        "brotliBytes": 100368,
+        "jsonParse": {
+          "medianMs": 7.630900000000111,
+          "p95Ms": 8.702000000001135,
+          "minMs": 7.381100000002334,
+          "maxMs": 8.896300000000338
+        },
+        "validate": {
+          "medianMs": 17.803899999998976,
+          "p95Ms": 19.54059999999663,
+          "minMs": 16.132400000002235,
+          "maxMs": 19.6974999999984
+        },
+        "index": {
+          "medianMs": 30.682199999999284,
+          "p95Ms": 39.383600000001024,
+          "minMs": 28.983899999999267,
+          "maxMs": 39.71059999999852
+        }
+      }
+    },
+    {
+      "version": "classic",
+      "runtimeEquivalent": true,
+      "indexEquivalent": true,
+      "full": {
+        "file": "data-preparation/releases/classic/craftcalc-db.1.14.4.51829.json",
+        "sha256": "ac0852423c7774de98e4249cb2f002b41b272719bb957a1c9e5174aae2390e0c",
+        "runtimeHash": "5f7bf59eb2b69f9dba73df16998ff57bf1f6f10397344f5dc13e63dfa3600b26",
+        "bytes": 3738951,
+        "gzipBytes": 154528,
+        "brotliBytes": 86347,
+        "jsonParse": {
+          "medianMs": 9.855200000001787,
+          "p95Ms": 11.95219999999972,
+          "minMs": 9.614799999999377,
+          "maxMs": 12.26929999999993
+        },
+        "validate": {
+          "medianMs": 10.031200000001263,
+          "p95Ms": 10.700600000000122,
+          "minMs": 9.238799999999173,
+          "maxMs": 10.74880000000121
+        },
+        "index": {
+          "medianMs": 16.331500000000233,
+          "p95Ms": 17.786599999999453,
+          "minMs": 15.925699999999779,
+          "maxMs": 18.013699999999517
+        }
+      },
+      "browser": {
+        "file": "public/data/classic/craftcalc-db.1.14.4.51829.json",
+        "sha256": "03cb54557922e5644de79b47e80f3cc41d95a5f9f87eb55d8dd790c66f062d59",
+        "runtimeHash": "5f7bf59eb2b69f9dba73df16998ff57bf1f6f10397344f5dc13e63dfa3600b26",
+        "bytes": 1015374,
+        "gzipBytes": 100272,
+        "brotliBytes": 63169,
+        "jsonParse": {
+          "medianMs": 4.469900000000052,
+          "p95Ms": 5.387800000000425,
+          "minMs": 4.332699999999022,
+          "maxMs": 6.606899999998859
+        },
+        "validate": {
+          "medianMs": 9.613400000002002,
+          "p95Ms": 11.22820000000138,
+          "minMs": 8.763899999998102,
+          "maxMs": 15.325099999998201
+        },
+        "index": {
+          "medianMs": 16.058499999999185,
+          "p95Ms": 17.517899999998917,
+          "minMs": 15.53399999999965,
+          "maxMs": 20.701099999998405
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,231 @@
+{
+  "timestamp": "2026-10-17T21:06:42.403Z",
+  "revision": "5cc58047fb1ec94244bd1d3f00f3ae203845a121",
+  "environment": {
+    "node": "v22.17.0",
+    "platform": "win32",
+    "cpu": "AMD Ryzen 7 5700X 8-Core Processor             "
+  },
+  "iterations": 20,
+  "warmups": 3,
+  "inputs": [
+    {
+      "version": "forever",
+      "file": "public/data/forever/craftcalc-db.1.60.1.70338.json",
+      "sourceSha256": "27e42f051164d0d77c6e6d3141e50820a4d1bc325643cb572a27ada1bf27a4f8",
+      "catalogHash": "4d17f72e58e484a334eea4809bccfe5579b3737a6163ad8ecc68582e5ab1b56b",
+      "queries": ["", "ткань", "essence", "  ГРЁЗ  ", "zz-no-match"],
+      "professions": [
+        "alchemy",
+        "blacksmithing",
+        "enchanting",
+        "engineering",
+        "herbalism",
+        "mining",
+        "skinning",
+        "leatherworking",
+        "tailoring",
+        "first-aid",
+        "cooking",
+        "fishing"
+      ]
+    },
+    {
+      "version": "tbc",
+      "file": "public/data/tbc/craftcalc-db.2.5.6.69795.json",
+      "sourceSha256": "04c56e82cc990e3b5fce96c8ef0457127b7d7a5da42f3ecde32b6e2f2bdcdbc1",
+      "catalogHash": "682b6a408834f32d71ca746fd4f97a178b0f969f086b2628513e7f107364b2dc",
+      "queries": ["", "ткань", "essence", "  ГРЁЗ  ", "zz-no-match"],
+      "professions": [
+        "alchemy",
+        "blacksmithing",
+        "enchanting",
+        "engineering",
+        "herbalism",
+        "mining",
+        "skinning",
+        "leatherworking",
+        "tailoring",
+        "first-aid",
+        "cooking",
+        "fishing",
+        "jewelcrafting"
+      ]
+    },
+    {
+      "version": "classic",
+      "file": "public/data/classic/craftcalc-db.1.14.4.51829.json",
+      "sourceSha256": "ac0852423c7774de98e4249cb2f002b41b272719bb957a1c9e5174aae2390e0c",
+      "catalogHash": "62a2388c5580608062ef9f16a7ef1813611347c3971599fdc41190d1414a1235",
+      "queries": ["", "ткань", "essence", "  ГРЁЗ  ", "zz-no-match"],
+      "professions": [
+        "alchemy",
+        "blacksmithing",
+        "enchanting",
+        "engineering",
+        "herbalism",
+        "mining",
+        "skinning",
+        "leatherworking",
+        "tailoring",
+        "first-aid",
+        "cooking",
+        "fishing"
+      ]
+    }
+  ],
+  "preparations": [
+    {
+      "version": "forever",
+      "buildStats": {
+        "medianMs": 15.301699999999983,
+        "p95Ms": 16.234699999999975,
+        "minMs": 14.455500000000029,
+        "maxMs": 16.569099999999935
+      },
+      "indexHeapBytes": 982376,
+      "catalogPrepareStats": {
+        "medianMs": 13.118199999999888,
+        "p95Ms": 13.533599999999979,
+        "minMs": 12.830999999999904,
+        "maxMs": 13.792599999999993
+      },
+      "catalogHeapBytes": 500384,
+      "sortedIdSlots": 0
+    },
+    {
+      "version": "tbc",
+      "buildStats": {
+        "medianMs": 15.322199999999611,
+        "p95Ms": 16.598799999999756,
+        "minMs": 14.445200000000114,
+        "maxMs": 16.875699999999597
+      },
+      "indexHeapBytes": 1034656,
+      "catalogPrepareStats": {
+        "medianMs": 13.315700000000106,
+        "p95Ms": 13.670100000000275,
+        "minMs": 12.912699999999859,
+        "maxMs": 13.721399999999448
+      },
+      "catalogHeapBytes": 505528,
+      "sortedIdSlots": 0
+    },
+    {
+      "version": "classic",
+      "buildStats": {
+        "medianMs": 8.46520000000055,
+        "p95Ms": 9.305599999999686,
+        "minMs": 8.376000000000204,
+        "maxMs": 9.331599999999526
+      },
+      "indexHeapBytes": 613008,
+      "catalogPrepareStats": {
+        "medianMs": 7.8233000000000175,
+        "p95Ms": 8.385000000000218,
+        "minMs": 7.721400000000358,
+        "maxMs": 8.603499999999258
+      },
+      "catalogHeapBytes": 292240,
+      "sortedIdSlots": 0
+    }
+  ],
+  "results": [
+    {
+      "name": "forever/reference-ru",
+      "medianMs": 57.99070000000029,
+      "p95Ms": 58.81809999999996,
+      "minMs": 57.192699999999604,
+      "maxMs": 60.71070000000009,
+      "resultHash": "3cda3d9454259480f636254cf675c96926fa972df96ae0ec2cd74c2b5f5386d7"
+    },
+    {
+      "name": "forever/reference-en",
+      "medianMs": 46.407500000000255,
+      "p95Ms": 48.07920000000013,
+      "minMs": 45.640899999999874,
+      "maxMs": 49.085299999999734,
+      "resultHash": "7b4b193264bc3a86f593af81df692af8474125b0baa2cbea3556a72e37935188"
+    },
+    {
+      "name": "forever/catalog-direct",
+      "medianMs": 72.85599999999977,
+      "p95Ms": 73.79069999999956,
+      "minMs": 72.0020999999997,
+      "maxMs": 73.89789999999994,
+      "resultHash": "4d9a0a61b0286f497b348227c22cfc9965922491f1c23ae6e503e36bd2ab96a6"
+    },
+    {
+      "name": "forever/catalog-prepared",
+      "medianMs": 0.8607999999994718,
+      "p95Ms": 0.9390999999995984,
+      "minMs": 0.8546999999998661,
+      "maxMs": 1.2182000000002517,
+      "resultHash": "4d9a0a61b0286f497b348227c22cfc9965922491f1c23ae6e503e36bd2ab96a6"
+    },
+    {
+      "name": "tbc/reference-ru",
+      "medianMs": 61.353399999999965,
+      "p95Ms": 63.128200000000106,
+      "minMs": 60.240600000000086,
+      "maxMs": 64.76609999999982,
+      "resultHash": "19f3a35f1e0894ec709a3cbeda3f44e6ecc7f1fc8fb06e02c0a6579c86c47d6e"
+    },
+    {
+      "name": "tbc/reference-en",
+      "medianMs": 48.742400000001,
+      "p95Ms": 50.051799999999275,
+      "minMs": 48.07510000000002,
+      "maxMs": 50.25720000000001,
+      "resultHash": "8777308c815fee35e3ba09003f15e370ee48fe015aeec14ccda1de6d61980dfd"
+    },
+    {
+      "name": "tbc/catalog-direct",
+      "medianMs": 74.2507000000005,
+      "p95Ms": 75.38769999999931,
+      "minMs": 73.28250000000116,
+      "maxMs": 75.47910000000047,
+      "resultHash": "a0759c8cc65a7345c7a193d16f2de4cd900a0045f4f0b6a5f36e53401d3852f1"
+    },
+    {
+      "name": "tbc/catalog-prepared",
+      "medianMs": 0.8942999999999302,
+      "p95Ms": 0.9400000000005093,
+      "minMs": 0.8852000000006228,
+      "maxMs": 1.1288999999997031,
+      "resultHash": "a0759c8cc65a7345c7a193d16f2de4cd900a0045f4f0b6a5f36e53401d3852f1"
+    },
+    {
+      "name": "classic/reference-ru",
+      "medianMs": 23.535799999999654,
+      "p95Ms": 24.367599999999584,
+      "minMs": 22.993800000000192,
+      "maxMs": 25.087499999999636,
+      "resultHash": "4799ca6a53e24490b645379d493acf0990dbd2f4d6d5069eb0bee3777d4eee9f"
+    },
+    {
+      "name": "classic/reference-en",
+      "medianMs": 16.96389999999883,
+      "p95Ms": 17.54780000000028,
+      "minMs": 16.14389999999912,
+      "maxMs": 18.536599999999453,
+      "resultHash": "8b07c3892667a144af59ea24b9b404f9031f3834e48ce84953c35b4da21875fc"
+    },
+    {
+      "name": "classic/catalog-direct",
+      "medianMs": 44.31760000000031,
+      "p95Ms": 45.03679999999986,
+      "minMs": 43.8125,
+      "maxMs": 49.09699999999975,
+      "resultHash": "4960e3eeef7224709caf0f0f50f4b89b1b2406887f0eb85c9c8c00ebdeb25afc"
+    },
+    {
+      "name": "classic/catalog-prepared",
+      "medianMs": 0.5583999999998923,
+      "p95Ms": 0.6023999999997613,
+      "minMs": 0.5434000000004744,
+      "maxMs": 0.820400000000518,
+      "resultHash": "4960e3eeef7224709caf0f0f50f4b89b1b2406887f0eb85c9c8c00ebdeb25afc"
+    }
+  ]
+}

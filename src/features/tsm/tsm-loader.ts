@@ -1,6 +1,7 @@
 import { tsmManifestSchema, tsmMarketKey, tsmSnapshotSchema } from '../../domain/tsm'
 import type { TsmMarket, TsmSnapshot } from '../../domain/tsm'
 import { z } from 'zod'
+import { notifyLocalStorageChanged } from '../../store/local-storage-events'
 
 const CACHE_PREFIX = 'craftcalc-tsm-v1-'
 const contentIds = new WeakMap<TsmSnapshot, string>()
@@ -9,6 +10,7 @@ const cacheSchema = z.object({
   contentId: z.string().regex(/^[a-f0-9]{64}$/),
 })
 export function pruneTsmCache(market: TsmMarket | null): string | null {
+  let removedLocal = false
   try {
     const selectedKey = market ? `${CACHE_PREFIX}${tsmMarketKey(market)}` : null
     for (const storage of [localStorage, sessionStorage]) {
@@ -17,13 +19,18 @@ export function pruneTsmCache(market: TsmMarket | null): string | null {
         if (
           key?.startsWith(CACHE_PREFIX) &&
           (storage === localStorage || key !== selectedKey)
-        )
+        ) {
           storage.removeItem(key)
+          if (storage === localStorage) removedLocal = true
+        }
       }
     }
     return null
   } catch {
     return 'Не удалось удалить прежний кэш TSM.'
+  } finally {
+    // One update for the batch, including successful removals before a failure.
+    if (removedLocal) notifyLocalStorageChanged()
   }
 }
 export function readTsmCache(market: TsmMarket): TsmSnapshot | null {
