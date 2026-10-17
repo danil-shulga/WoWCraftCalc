@@ -1,3 +1,4 @@
+import { getEssenceConversion, getItemRecipe } from './essence-conversion'
 import { getAutomaticAcquisitionMethod } from './calculations'
 import type { ItemCatalog, ItemId } from './item.types'
 import type {
@@ -43,8 +44,8 @@ function dependencyOrder(
       if (!item) throw new Error('Предмет плана или реагент отсутствует в каталоге')
       state.set(entry.id, 'visiting')
       stack.push({ id: entry.id, exit: true })
-      if (!item.recipe) continue
-      const recipe = item.recipe
+      const recipe = getItemRecipe(catalog, entry.id)
+      if (!recipe) continue
       if (!isPlannerQuantity(recipe.outputQuantity) || recipe.reagents.length === 0)
         throw new Error('Некорректный выход или пустой рецепт в плане')
       const ids = new Set<ItemId>()
@@ -56,7 +57,11 @@ function dependencyOrder(
         )
           throw new Error('Некорректный состав рецепта в плане')
         ids.add(line.itemId)
-        stack.push({ id: line.itemId, exit: false })
+        if (!catalog[line.itemId])
+          throw new Error('Предмет плана или реагент отсутствует в каталоге')
+        if (!getEssenceConversion(catalog, entry.id)) {
+          stack.push({ id: line.itemId, exit: false })
+        }
       }
     }
   }
@@ -107,7 +112,7 @@ export function calculateCraftPlan(
     for (const target of targets) {
       const item = catalog[target.itemId]
       if (!item) throw new Error('Цель отсутствует в каталоге')
-      const method = item.recipe ? 'craft' : 'buy'
+      const method = getItemRecipe(catalog, item.id) ? 'craft' : 'buy'
       result.targets.push({ ...target, method })
       add(method === 'craft' ? craft : additional, target.itemId, target.quantity)
       if (method === 'craft') {
@@ -128,8 +133,7 @@ export function calculateCraftPlan(
     for (const id of order) {
       const requiredQuantity = craft.get(id) ?? 0
       if (requiredQuantity === 0) continue
-      const item = catalog[id]
-      const recipe = item?.recipe
+      const recipe = getItemRecipe(catalog, id)
       if (!recipe) throw new Error('Для выбранного крафта отсутствует рецепт')
       const craftCount = safe(Math.ceil(requiredQuantity / recipe.outputQuantity))
       const producedQuantity = safe(craftCount * recipe.outputQuantity)

@@ -9,8 +9,10 @@
   "scripts": {
     "predev": "npm run tsm:refresh:dev",
     "dev": "vite",
+    "dev:agent": "vite --port 5174 --strictPort",
     "build": "npm run typecheck && vite build",
     "preview": "vite preview",
+    "preview:agent": "vite preview --port 5174 --strictPort",
     "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json",
     "lint": "eslint . --max-warnings 0",
     "lint:fix": "eslint . --fix",

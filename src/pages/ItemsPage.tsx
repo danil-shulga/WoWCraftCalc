@@ -1,3 +1,4 @@
+import { getItemRecipe } from '../domain/essence-conversion'
 import { Button } from '../components/ui/Button/Button'
 import { usePriceContext } from '../features/tsm/tsm-client'
 import { PriceModeSelector } from '../features/tsm/PriceModeSelector'
@@ -336,12 +337,12 @@ export function ItemsPage({ section }: ItemsPageProps) {
                               buyProfit: disenchant.buyProfit,
                               description: describeDisenchantEstimate(
                                 disenchant,
-                                item.recipe !== null,
+                                getItemRecipe(items, item.id) !== null,
                               ),
                               tooltip: (
                                 <DisenchantEstimateDetails
                                   calculation={disenchant}
-                                  hasRecipe={item.recipe !== null}
+                                  hasRecipe={getItemRecipe(items, item.id) !== null}
                                 />
                               ),
                             }
@@ -352,7 +353,7 @@ export function ItemsPage({ section }: ItemsPageProps) {
                         quantity: plannerTargets.find(
                           (target) => target.itemId === item.id,
                         )?.quantity,
-                        step: item.recipe?.outputQuantity ?? 1,
+                        step: getItemRecipe(items, item.id)?.outputQuantity ?? 1,
                         onChange: (quantity) => {
                           setPlannerQuantity(item.id, quantity)
                         },

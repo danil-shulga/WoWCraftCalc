@@ -46,6 +46,43 @@ function getBranch() {
 }
 
 describe('ItemTree', () => {
+  it('показывает преобразование эссенций и останавливает ветку на покупке исходного материала', () => {
+    const base = catalog.reagent
+    if (!base) throw new Error('Отсутствует тестовый реагент')
+    const essences: ItemCatalog = {
+      small: {
+        ...base,
+        id: 'small',
+        name: 'Малая эссенция',
+        source: { wowheadItemId: 10938 },
+      },
+      large: {
+        ...base,
+        id: 'large',
+        name: 'Большая эссенция',
+        source: { wowheadItemId: 10939 },
+      },
+    }
+    render(
+      <ItemTree
+        {...props}
+        rootItemId="large"
+        catalog={essences}
+        calculationSnapshot={createCatalogCalculationSnapshot(
+          essences,
+          new Set(),
+          new Set(),
+        )}
+        expandedPaths={new Set(['large', 'large/small', 'large/small/large'])}
+      />,
+    )
+    expect(screen.getAllByText('Большая эссенция')).toHaveLength(1)
+    expect(screen.getAllByText('Малая эссенция')).toHaveLength(1)
+    expect(screen.getByText('× 3')).toBeInTheDocument()
+    expect(screen.getByText('Покупка для преобразования')).toBeInTheDocument()
+    expect(screen.queryByRole('group', { name: 'Получать' })).not.toBeInTheDocument()
+  })
+
   it('сохраняет ветку до конца закрытия и сразу исключает её из навигации', () => {
     const { rerender } = render(<ItemTree {...props} expandedPaths={new Set()} />)
     expect(screen.queryByText('Реагент')).not.toBeInTheDocument()

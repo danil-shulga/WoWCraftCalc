@@ -1,3 +1,4 @@
+import { getEssenceConversion, getItemRecipe } from './essence-conversion'
 import type { AcquisitionMethod, ItemCatalog, ItemId } from './item.types'
 import type { Profession } from './professions'
 import { resolveItemPrice, usesTsmPrice } from './tsm'
@@ -42,11 +43,12 @@ function resolveAcquisitionMethod(
   }
 
   const item = catalog[itemId]
-  const recipeProfession = item?.recipe?.profession
+  const recipeProfession = getItemRecipe(catalog, itemId)?.profession
+  const isConversion = getEssenceConversion(catalog, itemId) !== null
   const hasProfessionRecipe = recipeProfession != null
 
   if (scenario === 'all-professions') {
-    return hasProfessionRecipe ? 'craft' : 'buy'
+    return hasProfessionRecipe || isConversion ? 'craft' : 'buy'
   }
 
   if (acquisition !== 'auto') {
@@ -55,7 +57,7 @@ function resolveAcquisitionMethod(
 
   const ownedProfessions = options.ownedProfessions ?? noProfessions
   const canCraftAutomatically =
-    recipeProfession != null && ownedProfessions.has(recipeProfession)
+    isConversion || (recipeProfession != null && ownedProfessions.has(recipeProfession))
 
   if (!canCraftAutomatically) {
     return 'buy'
@@ -137,14 +139,9 @@ export function getExactCraftUnitCost(
   path: ReadonlySet<ItemId> = new Set(),
   craftCostCache: Map<ItemId, number | null> = new Map<ItemId, number | null>(),
 ): number | null {
-  const item = catalog[itemId]
+  const recipe = getItemRecipe(catalog, itemId)
 
-  if (
-    item?.recipe === undefined ||
-    item.recipe === null ||
-    item.recipe.reagents.length === 0 ||
-    path.has(itemId)
-  ) {
+  if (recipe === null || recipe.reagents.length === 0 || path.has(itemId)) {
     return null
   }
 
@@ -156,16 +153,22 @@ export function getExactCraftUnitCost(
   nextPath.add(itemId)
 
   let batchCost = 0
+  const isConversion = getEssenceConversion(catalog, itemId) !== null
 
-  for (const line of item.recipe.reagents) {
-    const unitCost = getExactUnitCost(
-      catalog,
-      line.itemId,
-      line.acquisition,
-      options,
-      nextPath,
-      craftCostCache,
-    )
+  for (const line of recipe.reagents) {
+    const reagent = catalog[line.itemId]
+    const unitCost = isConversion
+      ? reagent
+        ? resolveItemPrice(reagent, 'purchasePriceCopper', options.prices)
+        : null
+      : getExactUnitCost(
+          catalog,
+          line.itemId,
+          line.acquisition,
+          options,
+          nextPath,
+          craftCostCache,
+        )
 
     if (unitCost === null) {
       craftCostCache.set(itemId, null)
@@ -175,7 +178,7 @@ export function getExactCraftUnitCost(
     batchCost += unitCost * line.quantity
   }
 
-  const unitCost = batchCost / item.recipe.outputQuantity
+  const unitCost = batchCost / recipe.outputQuantity
   craftCostCache.set(itemId, unitCost)
 
   return unitCost
@@ -198,6 +201,7 @@ function getProfitWithCache(
   craftCostCache: Map<ItemId, number | null>,
 ): number | null {
   const item = catalog[itemId]
+  const recipe = getItemRecipe(catalog, itemId)
   const salePrice = item
     ? resolveItemPrice(item, 'salePriceCopper', options.prices)
     : null
@@ -209,14 +213,14 @@ function getProfitWithCache(
     craftCostCache,
   )
 
-  if (item?.recipe === undefined || item.recipe === null || salePrice === null) {
+  if (recipe === null || salePrice === null) {
     return null
   }
 
   const batchCost =
-    unitCost === null ? null : Math.round(unitCost * item.recipe.outputQuantity)
+    unitCost === null ? null : Math.round(unitCost * recipe.outputQuantity)
 
-  return batchCost === null ? null : salePrice * item.recipe.outputQuantity - batchCost
+  return batchCost === null ? null : salePrice * recipe.outputQuantity - batchCost
 }
 
 export function getRecipeBatchCost(
@@ -224,14 +228,14 @@ export function getRecipeBatchCost(
   itemId: ItemId,
   options: CalculationOptions = {},
 ): number | null {
-  const item = catalog[itemId]
+  const recipe = getItemRecipe(catalog, itemId)
   const unitCost = getExactCraftUnitCost(catalog, itemId, options)
 
-  if (item?.recipe === undefined || item.recipe === null || unitCost === null) {
+  if (recipe === null || unitCost === null) {
     return null
   }
 
-  return Math.round(unitCost * item.recipe.outputQuantity)
+  return Math.round(unitCost * recipe.outputQuantity)
 }
 
 export function getProfitPerCraft(
@@ -240,21 +244,17 @@ export function getProfitPerCraft(
   options: CalculationOptions = {},
 ): number | null {
   const item = catalog[itemId]
+  const recipe = getItemRecipe(catalog, itemId)
   const batchCost = getRecipeBatchCost(catalog, itemId, options)
   const salePrice = item
     ? resolveItemPrice(item, 'salePriceCopper', options.prices)
     : null
 
-  if (
-    item?.recipe === undefined ||
-    item.recipe === null ||
-    salePrice === null ||
-    batchCost === null
-  ) {
+  if (recipe === null || salePrice === null || batchCost === null) {
     return null
   }
 
-  return salePrice * item.recipe.outputQuantity - batchCost
+  return salePrice * recipe.outputQuantity - batchCost
 }
 
 function getExactUnitAcquisitionProfit(

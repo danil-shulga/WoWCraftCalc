@@ -213,3 +213,40 @@ it('пересчитывает выход без изменения запрос
   expect(screen.getByRole('heading', { name: 'Дополнительные покупки' })).toBeVisible()
   expect(screen.getByRole('spinbutton')).toHaveValue(6)
 })
+
+it('добавляет встроенную разборку эссенции в производство и сохраняет только цель', async () => {
+  const user = userEvent.setup()
+  const base = catalog.ore
+  if (!base) throw new Error('Отсутствует тестовый реагент')
+  const essences: ItemCatalog = {
+    small: {
+      ...base,
+      id: 'small',
+      name: 'Малая эссенция',
+      source: { wowheadItemId: 10938 },
+    },
+    large: {
+      ...base,
+      id: 'large',
+      name: 'Большая эссенция',
+      source: { wowheadItemId: 10939 },
+    },
+  }
+  useCraftStore.getState().replaceData(testCraftData({ items: essences }))
+  render(<App />)
+  await user.click(screen.getByRole('button', { name: 'Планировщик' }))
+  await user.click(screen.getByRole('combobox', { name: 'Предмет для плана' }))
+  await user.click(screen.getByRole('option', { name: 'Малая эссенция' }))
+  await user.click(screen.getByRole('button', { name: 'Добавить в план' }))
+  expect(screen.getByRole('heading', { name: 'К изготовлению' })).toBeInTheDocument()
+  expect(screen.getByText(/Выход за крафт: 3/)).toHaveTextContent(
+    'Всего партий: 1; выход: 3; остаток: 0.',
+  )
+  const workspace = useCraftStore.getState().workspaces.forever
+  expect(workspace.planner?.targets).toEqual([{ itemId: 'small', quantity: 3 }])
+  expect(workspace.items.small?.recipe).toBeNull()
+  const restored = parseImportedData(createExportJson(useCraftStore.getState()))
+  expect(restored.success).toBe(true)
+  if (!restored.success) throw new Error(restored.error)
+  expect(restored.data.workspaces.forever.items.small?.recipe).toBeNull()
+})

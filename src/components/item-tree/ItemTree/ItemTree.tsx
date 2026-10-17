@@ -1,3 +1,4 @@
+import { getEssenceConversion, getItemRecipe } from '../../../domain/essence-conversion'
 import { useState } from 'react'
 import type { HTMLAttributes } from 'react'
 import type { CatalogCalculationSnapshot } from '../../../domain/calculations'
@@ -50,6 +51,7 @@ interface ItemTreeNodeProps extends ItemTreeProps {
   parentItemId: ItemId | null
   recipeLine: RecipeLine | null
   visited: ReadonlySet<ItemId>
+  purchaseOnly?: boolean
 }
 
 function ItemTreeNode({
@@ -72,6 +74,7 @@ function ItemTreeNode({
   onToggleFavorite,
   onSetAcquisition,
   visited,
+  purchaseOnly = false,
   rootItemId,
 }: ItemTreeNodeProps) {
   const isExpanded = expandedPaths.has(path)
@@ -95,7 +98,10 @@ function ItemTreeNode({
     return null
   }
 
-  const hasRecipe = item.recipe !== null
+  const recipe = purchaseOnly ? null : getItemRecipe(catalog, itemId)
+  const displayedItem = { ...item, recipe }
+  const isConversion = getEssenceConversion(catalog, itemId) !== null
+  const hasRecipe = recipe !== null
   const hasCycle = visited.has(itemId)
   const exactSelectedProfit =
     recipeLine === null
@@ -116,11 +122,11 @@ function ItemTreeNode({
           salePrice={calculation.salePrice}
           purchaseIsTsm={calculation.purchaseIsTsm}
           saleIsTsm={calculation.saleIsTsm}
-          item={item}
+          item={displayedItem}
           itemLanguage={itemLanguage}
           isExpanded={isExpanded}
-          hasCycle={hasCycle}
-          craftUnitCost={calculation.craftUnitCost}
+          hasCycle={!purchaseOnly && hasCycle}
+          craftUnitCost={purchaseOnly ? null : calculation.craftUnitCost}
           configuredProfit={calculation.configuredProfit}
           allProfessionsProfit={calculation.allProfessionsProfit}
           boughtReagentsProfit={calculation.boughtReagentsProfit}
@@ -135,14 +141,15 @@ function ItemTreeNode({
       ) : parentItemId === null ? null : (
         <ReagentItemRow
           purchasePrice={calculation.purchasePrice}
-          item={item}
+          item={displayedItem}
           itemLanguage={itemLanguage}
+          purchaseOnly={purchaseOnly}
           parentItemId={parentItemId}
           recipeLine={recipeLine}
           isExpanded={isExpanded}
           hasCycle={hasCycle}
-          craftUnitCost={calculation.craftUnitCost}
-          exactSelectedProfit={exactSelectedProfit}
+          craftUnitCost={purchaseOnly ? null : calculation.craftUnitCost}
+          exactSelectedProfit={purchaseOnly ? null : exactSelectedProfit}
           automaticMethod={calculation.automaticMethod}
           onToggleExpanded={() => {
             onToggleExpanded(path)
@@ -166,13 +173,14 @@ function ItemTreeNode({
           }}
         >
           <ul className="item-tree item-tree--nested">
-            {item.recipe?.reagents.map((line) => (
+            {recipe.reagents.map((line) => (
               <ItemTreeNode
                 key={line.itemId}
                 rootItemId={rootItemId}
                 itemLanguage={itemLanguage}
                 itemId={line.itemId}
                 path={`${path}/${line.itemId}`}
+                purchaseOnly={isConversion}
                 parentItemId={itemId}
                 recipeLine={line}
                 catalog={catalog}

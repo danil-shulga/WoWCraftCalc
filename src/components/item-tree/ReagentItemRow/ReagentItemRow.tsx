@@ -15,6 +15,7 @@ import { MoneyDisplay } from '../../ui/MoneyDisplay/MoneyDisplay'
 import './ReagentItemRow.css'
 
 interface ReagentItemRowProps {
+  purchaseOnly?: boolean
   purchasePrice: number | null
   item: Item
   itemLanguage: ItemLanguage
@@ -36,6 +37,7 @@ interface ReagentItemRowProps {
 }
 
 export function ReagentItemRow({
+  purchaseOnly = false,
   purchasePrice,
   item,
   itemLanguage,
@@ -127,17 +129,21 @@ export function ReagentItemRow({
         </div>
       </dl>
 
-      <AcquisitionMethodPicker
-        value={recipeLine.acquisition}
-        purchasePrice={purchasePrice}
-        craftPrice={craftUnitCost}
-        automaticMethod={automaticMethod}
-        canBuy={purchasePrice !== null}
-        canCraft={hasRecipe}
-        onChange={(acquisition) => {
-          onSetAcquisition(parentItemId, item.id, acquisition)
-        }}
-      />
+      {purchaseOnly ? (
+        <span>Покупка для преобразования</span>
+      ) : (
+        <AcquisitionMethodPicker
+          value={recipeLine.acquisition}
+          purchasePrice={purchasePrice}
+          craftPrice={craftUnitCost}
+          automaticMethod={automaticMethod}
+          canBuy={purchasePrice !== null}
+          canCraft={hasRecipe}
+          onChange={(acquisition) => {
+            onSetAcquisition(parentItemId, item.id, acquisition)
+          }}
+        />
+      )}
 
       <div className="item-row__actions">
         <IconButton

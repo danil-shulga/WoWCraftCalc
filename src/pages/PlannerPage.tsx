@@ -1,3 +1,4 @@
+import { getItemRecipe } from '../domain/essence-conversion'
 import { useState } from 'react'
 import { Button } from '../components/ui/Button/Button'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog/ConfirmDialog'
@@ -89,7 +90,10 @@ export function PlannerPage({ plan, catalog, itemLanguage }: ShoppingListProps) 
           disabled={!selected}
           onClick={() => {
             if (!selected) return
-            setQuantity(selected.id, selected.recipe?.outputQuantity ?? 1)
+            setQuantity(
+              selected.id,
+              getItemRecipe(catalog, selected.id)?.outputQuantity ?? 1,
+            )
             setSelectedId('')
           }}
         >
@@ -118,6 +122,7 @@ export function PlannerPage({ plan, catalog, itemLanguage }: ShoppingListProps) 
                   {targets.map((target) => {
                     const item = catalog[target.itemId]
                     if (!item) return null
+                    const recipe = getItemRecipe(catalog, item.id)
                     const step = plan.steps.find((entry) => entry.itemId === item.id)
                     const isRemoving = !plan.targets.some(
                       (entry) => entry.itemId === target.itemId,
@@ -148,7 +153,7 @@ export function PlannerPage({ plan, catalog, itemLanguage }: ShoppingListProps) 
                               buttonIcon="remove"
                               itemName={getItemName(item, itemLanguage)}
                               quantity={target.quantity}
-                              step={item.recipe?.outputQuantity ?? 1}
+                              step={recipe?.outputQuantity ?? 1}
                               onChange={(quantity) => {
                                 setQuantity(item.id, quantity)
                               }}
@@ -157,9 +162,9 @@ export function PlannerPage({ plan, catalog, itemLanguage }: ShoppingListProps) 
                               }}
                             />
                             <p className="planner-page__note">
-                              {item.recipe ? (
+                              {recipe ? (
                                 <>
-                                  Выход за крафт: {item.recipe.outputQuantity}.{' '}
+                                  Выход за крафт: {recipe.outputQuantity}.{' '}
                                   {step ? (
                                     <>
                                       Всего партий: {step.craftCount}; выход:{' '}
