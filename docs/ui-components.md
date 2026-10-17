@@ -17,6 +17,7 @@
 - `MoneyInput`, `InlineMoneyInput` — денежный ввод в форме и строке;
   `MoneyDisplay`, `CurrencyIcon` — суммы и монеты. Сохраняй различие `null` и нуля.
 - `ItemIdentity` — иконка и названия; `ItemIcon`, `ItemName` — составные части.
+  Обводка иконки соответствует `qualityId`; неизвестное качество — обычная рамка.
   `ItemQuantityList` — предметы с количеством в предпросмотрах импорта.
 - `AcquisitionMethodPicker` — авто/покупка/крафт;
   `GameVersionPicker` — версия игры.

@@ -6,7 +6,10 @@ import { ItemName } from '../ItemName/ItemName'
 import './ItemIdentity.css'
 
 interface ItemIdentityProps {
-  item: ComponentProps<typeof ItemName>['item'] & { iconUrl: string }
+  item: ComponentProps<typeof ItemName>['item'] & {
+    iconUrl: string
+    qualityId?: ComponentProps<typeof ItemIcon>['qualityId']
+  }
   language: ComponentProps<typeof ItemName>['language']
   iconSize?: ComponentProps<typeof ItemIcon>['size']
   favorite?: { selected: boolean; onToggle: () => void } | undefined
@@ -51,6 +54,7 @@ export function ItemIdentity({
       {showIcon ? (
         <ItemIcon
           iconUrl={item.iconUrl}
+          qualityId={item.qualityId}
           itemName={getItemName(item, language)}
           size={iconSize}
         />

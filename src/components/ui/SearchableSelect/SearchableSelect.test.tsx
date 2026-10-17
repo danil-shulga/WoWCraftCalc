@@ -13,6 +13,7 @@ const options = [
       name: 'Руда',
       names: { ru: 'Руда', en: 'Ore' },
       iconUrl: '/ore.jpg',
+      qualityId: 3,
     },
   },
 ]
@@ -116,11 +117,13 @@ describe('SearchableSelect', () => {
     const option = screen.getByRole('option', { name: 'Руда' })
     expect(screen.getByRole('listbox').parentElement).toBe(document.body)
     expect(within(option).getByTitle('Иконка: Руда')).toHaveAttribute('src', '/ore.jpg')
+    expect(within(option).getByTitle('Иконка: Руда')).toHaveAttribute('data-quality', '3')
     expect(option).toHaveTextContent('Ore')
     await user.keyboard('{Enter}')
     expect(field).toHaveValue('Руда')
     finishClosing(screen.getByRole('listbox', { hidden: true }))
     expect(screen.getByTitle('Иконка: Руда')).toHaveAttribute('src', '/ore.jpg')
+    expect(screen.getByTitle('Иконка: Руда')).toHaveAttribute('data-quality', '3')
     await user.type(field, ' другая')
     expect(screen.queryByTitle('Иконка: Руда')).not.toBeInTheDocument()
     await user.keyboard('{Escape}')

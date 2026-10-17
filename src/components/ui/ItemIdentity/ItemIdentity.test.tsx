@@ -5,6 +5,7 @@ const item = {
   name: 'Нефрит',
   names: { ru: 'Нефрит', en: 'Jade' },
   iconUrl: 'https://example.com/jade.jpg',
+  qualityId: 2,
 }
 
 describe('иконка и название предмета', () => {
@@ -84,8 +85,10 @@ describe('иконка и название предмета', () => {
     expect(screen.getByRole('heading')).toHaveTextContent('Нефрит')
     expect(screen.getByText('Jade')).toBeVisible()
     const icon = screen.getByTitle('Иконка: Нефрит')
+    expect(icon).toHaveAttribute('data-quality', '2')
     fireEvent.error(icon)
     expect(icon.getAttribute('src')).toMatch(/item-placeholder\.svg$/)
+    expect(icon).toHaveAttribute('data-quality', '2')
     rerender(<ItemIdentity item={item} language="en" nameAs="h3" />)
     expect(screen.getByRole('heading')).toHaveTextContent('Jade')
     expect(screen.getByText('Нефрит')).toBeVisible()
@@ -113,5 +116,6 @@ describe('иконка и название предмета', () => {
     expect(container.querySelector('img')?.getAttribute('src')).toMatch(
       /item-placeholder\.svg$/,
     )
+    expect(container.querySelector('img')).not.toHaveAttribute('data-quality')
   })
 })

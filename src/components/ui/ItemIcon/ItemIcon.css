@@ -8,6 +8,35 @@
   flex-shrink: 0;
 }
 
+.item-icon[data-quality='0'] {
+  border-color: var(--item-quality-poor);
+}
+
+.item-icon[data-quality='1'] {
+  border-color: var(--item-quality-common);
+}
+
+.item-icon[data-quality='2'] {
+  border-color: var(--item-quality-uncommon);
+}
+
+.item-icon[data-quality='3'] {
+  border-color: var(--item-quality-rare);
+}
+
+.item-icon[data-quality='4'] {
+  border-color: var(--item-quality-epic);
+}
+
+.item-icon[data-quality='5'] {
+  border-color: var(--item-quality-legendary);
+}
+
+.item-icon[data-quality='6'],
+.item-icon[data-quality='7'] {
+  border-color: var(--item-quality-artifact);
+}
+
 .item-icon--medium {
   width: 40px;
   height: 40px;

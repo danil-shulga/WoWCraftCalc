@@ -75,6 +75,7 @@ export function ReferenceReview({
                     name: String(reagent.itemId),
                     names: reagent.names,
                     iconUrl: reagent.iconUrl,
+                    qualityId: reagent.qualityId,
                   },
                 },
               ]

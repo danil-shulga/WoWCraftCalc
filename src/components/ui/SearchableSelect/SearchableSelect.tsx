@@ -197,7 +197,12 @@ export function SearchableSelect({
       >
         {selectedItem ? (
           <span className="searchable-select__icon">
-            <ItemIcon iconUrl={selectedItem.iconUrl} itemName={inputValue} size="small" />
+            <ItemIcon
+              iconUrl={selectedItem.iconUrl}
+              qualityId={selectedItem.qualityId}
+              itemName={inputValue}
+              size="small"
+            />
           </span>
         ) : null}
         <input
