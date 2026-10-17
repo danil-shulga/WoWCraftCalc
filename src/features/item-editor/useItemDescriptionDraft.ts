@@ -11,6 +11,8 @@ export interface ItemDescriptionDraft {
   salePriceSource?: PriceSource | undefined
   nameRu: string
   nameEn: string
+  wowheadItemId: string
+  wowheadVersion?: NonNullable<Item['source']>['wowheadVersion']
   iconUrl: string
   sections: ItemSection[]
   purchasePriceCopper: number | null
@@ -25,6 +27,8 @@ export function useItemDescriptionDraft(
     nameRu:
       initialItem?.names?.ru ?? (initialItem?.names?.en ? '' : (initialItem?.name ?? '')),
     nameEn: initialItem?.names?.en ?? '',
+    wowheadItemId: initialItem?.source?.wowheadItemId.toString() ?? '',
+    wowheadVersion: initialItem?.source?.wowheadVersion,
     iconUrl: initialItem?.iconUrl ?? '',
     sections: initialItem?.sections ?? [defaultSection],
     purchasePriceCopper: initialItem?.purchasePriceCopper ?? null,
@@ -47,12 +51,27 @@ export function validateItemDescription(
     return { success: false, error: 'Выберите хотя бы один раздел' }
   if (iconUrl === null)
     return { success: false, error: 'Введите корректный URL или короткое имя иконки' }
+  const id = draft.wowheadItemId.trim()
+  if (
+    id !== '' &&
+    (!/^\d+$/.test(id) || !Number.isSafeInteger(Number(id)) || Number(id) <= 0)
+  )
+    return { success: false, error: 'ID предмета должен быть положительным целым числом' }
   return {
     success: true,
     input: {
       name,
       names,
       iconUrl,
+      source:
+        id === ''
+          ? undefined
+          : {
+              wowheadItemId: Number(id),
+              ...(draft.wowheadVersion === undefined
+                ? {}
+                : { wowheadVersion: draft.wowheadVersion }),
+            },
       sections: draft.sections,
       purchasePriceCopper: draft.purchasePriceCopper,
       salePriceCopper: draft.salePriceCopper,

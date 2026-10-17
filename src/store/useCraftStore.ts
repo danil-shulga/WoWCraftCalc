@@ -528,11 +528,13 @@ export const useCraftStore = create<CraftStore>()(
           if (target !== undefined) {
             if (targetItem === undefined)
               return { success: false, error: 'Предмет не найден' }
+            const targetSource =
+              'source' in target.input ? target.input.source : targetItem.source
             if (
-              targetItem.source !== undefined &&
-              (targetItem.source.wowheadItemId !== data.product.wowheadItemId ||
-                (targetItem.source.wowheadVersion !== undefined &&
-                  targetItem.source.wowheadVersion !==
+              targetSource !== undefined &&
+              (targetSource.wowheadItemId !== data.product.wowheadItemId ||
+                (targetSource.wowheadVersion !== undefined &&
+                  targetSource.wowheadVersion !==
                     GAME_VERSION_REGISTRY[getState().activeVersion].wowheadVersion))
             )
               return {

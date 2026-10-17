@@ -56,6 +56,10 @@ export function ItemEditModal({
 }: ItemEditModalProps) {
   const [tab, setTab] = useState<EditTab>('description')
   const { draft, setDraft } = useItemDescriptionDraft(item, defaultSection)
+  const draftDescription = validateItemDescription(draft)
+  const draftItem = draftDescription.success
+    ? { ...item, source: draftDescription.input.source }
+    : item
   const [recipeDraft, setRecipeDraft] = useState(item.recipe)
   const [error, setError] = useState<string | null>(null)
   const nameInputRef = useRef<HTMLInputElement>(null)
@@ -128,7 +132,7 @@ export function ItemEditModal({
           catalog={catalog}
           isActive={tab === 'recipe'}
           initialMethod={item.recipe === null ? 'database' : 'manual'}
-          targetItem={item}
+          targetItem={draftItem}
           onImport={(data) => {
             const result = description()
             if (!result.success) return { success: false, error: result.error }

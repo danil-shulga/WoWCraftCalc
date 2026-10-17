@@ -48,6 +48,44 @@ async function openEditor(user: ReturnType<typeof userEvent.setup>) {
 }
 
 describe('объединённый редактор', () => {
+  it.each(['34113', ''])(
+    'сохраняет изменение игрового ID на «%s» вместе с рецептом',
+    async (id) => {
+      const source = { wowheadItemId: 99, wowheadVersion: 'forever' as const }
+      setTestCraftState({
+        items: { product: { ...product, source, recipe }, cloth: reagent },
+      })
+      const user = userEvent.setup()
+      await openEditor(user)
+      expect(screen.getByRole('group', { name: 'Название' })).toContainElement(
+        screen.getByPlaceholderText('Название RU'),
+      )
+      const input = screen.getByLabelText('ID предмета')
+      expect(input).toHaveValue('99')
+      await user.clear(input)
+      if (id) await user.type(input, id)
+      expect(catalog().product?.source).toEqual(source)
+      await user.click(screen.getByRole('button', { name: 'Рецепт' }))
+      await user.click(screen.getByRole('button', { name: 'Описание' }))
+      expect(input).toHaveValue(id)
+      await user.click(screen.getByRole('button', { name: 'Сохранить' }))
+      expect(catalog().product?.source).toEqual(
+        id ? { ...source, wowheadItemId: Number(id) } : undefined,
+      )
+      expect(catalog().product?.id).toBe('product')
+      expect(catalog().product?.recipe).toEqual(recipe)
+    },
+  )
+
+  it('отмена игрового ID сохраняет каталог без изменений', async () => {
+    const user = userEvent.setup()
+    const before = useCraftStore.getState()
+    await openEditor(user)
+    await user.type(screen.getByLabelText('ID предмета'), '34113')
+    await user.click(screen.getByRole('button', { name: 'Отмена' }))
+    expect(useCraftStore.getState()).toBe(before)
+  })
+
   beforeEach(() => {
     useCraftStore.getState().setActiveVersion('forever')
     setTestCraftState({ items: { product, cloth: reagent }, itemLanguage: 'ru' })

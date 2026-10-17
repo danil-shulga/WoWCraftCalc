@@ -4,7 +4,10 @@ import { Checkbox } from '../../components/ui/Checkbox/Checkbox'
 import { ItemPriceField } from './ItemPriceField'
 import type { Item, ItemSection } from '../../domain/item.types'
 import type { PriceContext } from '../../domain/tsm'
-import type { ItemDescriptionDraft } from './useItemDescriptionDraft'
+import {
+  validateItemDescription,
+  type ItemDescriptionDraft,
+} from './useItemDescriptionDraft'
 import './ItemForm.css'
 
 interface ItemDescriptionFieldsProps {
@@ -22,6 +25,8 @@ export function ItemDescriptionFields({
   item = {},
   prices,
 }: ItemDescriptionFieldsProps) {
+  const description = validateItemDescription(draft)
+  const priceItem = description.success ? { source: description.input.source } : item
   const toggleSection = (section: ItemSection, enabled: boolean) => {
     onChange({
       ...draft,
@@ -33,27 +38,41 @@ export function ItemDescriptionFields({
 
   return (
     <>
-      <label>
-        <span>Название RU</span>
-        <input
-          ref={nameInputRef}
-          autoFocus
-          value={draft.nameRu}
-          onChange={(event) => {
-            onChange({ ...draft, nameRu: event.target.value })
-          }}
-        />
-      </label>
-
-      <label>
-        <span>Название EN</span>
-        <input
-          value={draft.nameEn}
-          onChange={(event) => {
-            onChange({ ...draft, nameEn: event.target.value })
-          }}
-        />
-      </label>
+      <div className="item-description-identity">
+        <fieldset className="item-name-fields">
+          <legend>Название</legend>
+          <input
+            aria-label="Название RU"
+            placeholder="Название RU"
+            ref={nameInputRef}
+            autoFocus
+            value={draft.nameRu}
+            onChange={(event) => {
+              onChange({ ...draft, nameRu: event.target.value })
+            }}
+          />
+          <input
+            aria-label="Название EN"
+            placeholder="Название EN"
+            value={draft.nameEn}
+            onChange={(event) => {
+              onChange({ ...draft, nameEn: event.target.value })
+            }}
+          />
+        </fieldset>
+        <label className="item-id-field">
+          <span>ID предмета</span>
+          <input
+            type="text"
+            inputMode="numeric"
+            placeholder="ID предмета"
+            value={draft.wowheadItemId}
+            onChange={(event) => {
+              onChange({ ...draft, wowheadItemId: event.target.value })
+            }}
+          />
+        </label>
+      </div>
       <small>
         Достаточно одного названия. Если перевода нет, используется заполненное.
       </small>
@@ -103,7 +122,7 @@ export function ItemDescriptionFields({
 
       <div className="price-grid">
         <ItemPriceField
-          item={item}
+          item={priceItem}
           prices={prices}
           source={draft.purchasePriceSource ?? 'manual'}
           onSourceChange={(source) => {
@@ -116,7 +135,7 @@ export function ItemDescriptionFields({
           }}
         />
         <ItemPriceField
-          item={item}
+          item={priceItem}
           prices={prices}
           source={draft.salePriceSource ?? 'manual'}
           onSourceChange={(source) => {

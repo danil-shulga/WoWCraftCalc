@@ -15,6 +15,28 @@ const item: Item = {
 }
 
 describe('ItemForm', () => {
+  it.each(['0', '-1', '1.5', '1e3', 'abc', '9007199254740992'])(
+    'отклоняет некорректный игровой ID %s',
+    async (id) => {
+      const user = userEvent.setup()
+      const onSave = vi.fn()
+      render(
+        <ItemForm
+          initialItem={item}
+          defaultSection="reagents"
+          onSave={onSave}
+          onCancel={vi.fn()}
+        />,
+      )
+      await user.type(screen.getByLabelText('ID предмета'), id)
+      await user.click(screen.getByRole('button', { name: 'Сохранить' }))
+      expect(onSave).not.toHaveBeenCalled()
+      expect(
+        screen.getByText('ID предмета должен быть положительным целым числом'),
+      ).toBeVisible()
+    },
+  )
+
   it('позволяет показывать предмет только в распылении', async () => {
     const user = userEvent.setup()
     const onSave = vi.fn()
@@ -76,6 +98,7 @@ describe('ItemForm', () => {
       name: item.name,
       names: { ru: item.name, en: null },
       iconUrl: '',
+      source: undefined,
       sections: ['reagents'],
       purchasePriceCopper: null,
       salePriceCopper: null,

@@ -35,6 +35,21 @@ const imported = {
 }
 
 describe('общее редактирование предмета', () => {
+  it('импорт учитывает исправленный ID в черновике описания', () => {
+    setTestCraftState({
+      items: { product: { ...product, source: { wowheadItemId: 99 } }, reagent },
+    })
+    expect(
+      useCraftStore.getState().importRecipe(imported, undefined, {
+        itemId: product.id,
+        input: { ...product, source: { wowheadItemId: 1 } },
+      }),
+    ).toMatchObject({ success: true, productItemId: product.id })
+    expect(
+      selectActiveItems(useCraftStore.getState()).product?.source?.wowheadItemId,
+    ).toBe(1)
+  })
+
   beforeEach(() => {
     useCraftStore.getState().setActiveVersion('forever')
     setTestCraftState({ items: { product, reagent } })

@@ -44,7 +44,8 @@ Props и особенности: [общие контролы](ui-features.md#о
 Путь: `src/features/<feature>`.
 
 - `item-editor`: `ItemDescriptionFields`, `ItemPriceField`, `ItemForm`,
-  `useItemDescriptionDraft` — описание и цены; `useBulkPriceDraft` — черновики
+  `useItemDescriptionDraft` — описание, игровой ID и цены; названия RU/EN объединены
+  в блок «Название», ID расположен справа; `useBulkPriceDraft` — черновики
   массовых цен и защита несохранённых изменений; `ItemSourceForm` — источник;
   `ItemAddModal`, `ItemEditModal` — добавление и объединённое редактирование.
 - `recipe-editor/RecipeEditor.tsx` — ручной состав рецепта и анимации реагентов.
