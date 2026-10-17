@@ -17,11 +17,11 @@ export function PriceModeSelector({
   if (gameVersion !== 'tbc') return null
   return (
     <fieldset className="price-mode-selector">
-      <legend>Цены для расчётов</legend>
+      <legend>Приоритетные цены</legend>
       {(
         [
-          { value: 'individual', label: 'Выбранные' },
-          { value: 'tsm', label: 'По TSM' },
+          { value: 'individual', label: 'Заданные' },
+          { value: 'tsm', label: 'TSM' },
         ] as const
       ).map((mode) => (
         <Checkbox

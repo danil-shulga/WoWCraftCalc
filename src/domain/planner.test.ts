@@ -151,19 +151,56 @@ describe('расчёт плана', () => {
       calculateCraftPlan(data, target, new Set(['tailoring'])).purchases[0]?.itemId,
     ).toBe('bar')
   })
-  it('применяет контекст TSM и не подменяет отсутствующий снимок ручной ценой', () => {
+  it('подставляет ручные цены без снимка TSM и сохраняет расчёты вложенных партий', () => {
     const prices: PriceContext = {
       version: 'tbc',
       settings: { ...DEFAULT_TSM_SETTINGS, priceMode: 'tsm' },
       snapshot: null,
     }
     expect(calculateCraftPlan(catalog, targets, new Set(), prices)).toMatchObject({
-      budget: null,
-      revenue: null,
+      budget: 30,
+      revenue: 200,
+      profit: 170,
     })
     expect(
       calculateCraftPlan(catalog, targets, new Set(), prices).purchases[0]?.priceSource,
-    ).toBe('tsm')
+    ).toBe('manual')
+  })
+  it('подставляет TSM в закупку и выручку, сохраняя неизвестные цены без обоих источников', () => {
+    const market = { region: 'eu', realm: 'thunderstrike', faction: 'alliance' } as const
+    const prices: PriceContext = {
+      version: 'tbc',
+      settings: { ...DEFAULT_TSM_SETTINGS, market },
+      snapshot: {
+        schemaVersion: 1,
+        market,
+        scannedAt: '2026-01-01T00:00:00Z',
+        items: {
+          '1': { recent: 4, marketValue: null },
+          '2': { recent: 90, marketValue: null },
+        },
+      },
+    }
+    const data = {
+      ...catalog,
+      ore: { ...item('ore'), source: { wowheadItemId: 1 }, purchasePriceCopper: null },
+      a: {
+        ...item('a', [line('bar')]),
+        source: { wowheadItemId: 2 },
+        salePriceCopper: null,
+      },
+    }
+    const result = calculateCraftPlan(data, targets, new Set(), prices)
+    expect(result).toMatchObject({
+      budget: 12,
+      revenue: 190,
+      profit: 178,
+      missingPrices: 0,
+    })
+    expect(result.purchases[0]).toMatchObject({ unitPrice: 4, priceSource: 'tsm' })
+    expect(
+      calculateCraftPlan(data, targets, new Set(), { ...prices, snapshot: null }),
+    ).toMatchObject({ budget: null, revenue: null, profit: null, missingPrices: 1 })
   })
   it.each([0, -1, 1.5, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1])(
     'отклоняет неверный запрос %s',

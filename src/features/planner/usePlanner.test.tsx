@@ -75,7 +75,7 @@ it('пересчитывается при смене профессии, individ
   act(() => {
     store.setTbcPricing({ ...data.tbcPricing, priceMode: 'tsm' })
   })
-  expect(screen.getByLabelText('Бюджет')).toHaveTextContent('неизвестно')
+  expect(screen.getByLabelText('Бюджет')).toHaveTextContent('10')
   const snapshot = {
     schemaVersion: 1 as const,
     market,
@@ -107,5 +107,6 @@ it('пересчитывается при смене профессии, individ
       market: { ...market, faction: 'horde' },
     })
   })
-  expect(screen.getByLabelText('Бюджет')).toHaveTextContent('неизвестно')
+  expect(screen.getByLabelText('Покупки')).toHaveTextContent('ore:1')
+  expect(screen.getByLabelText('Бюджет')).toHaveTextContent('10')
 })

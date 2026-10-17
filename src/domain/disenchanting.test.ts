@@ -576,15 +576,15 @@ describe('сравнения покупки и крафта с дизенчан�
     expect(result.craftProfitCopper).toBeNull()
   })
 
-  it('передаёт текущий PriceContext существующим расчётам', () => {
+  it('передаёт PriceContext и использует ручные цены при недоступном TSM', () => {
     const items = catalog()
     if (items.ore) items.ore.purchasePriceSource = 'tsm'
     if (items.boots) items.boots.purchasePriceSource = 'tsm'
     const result = calculateDisenchantComparison(items, 'boots', 'tbc', salePrices, {
       prices: { version: 'tbc', settings: DEFAULT_TSM_SETTINGS, snapshot: null },
     })
-    expect(result.buyProfitCopper).toBeNull()
-    expect(result.craftProfitCopper).toBeNull()
+    expect(result.buyProfitCopper).toBe(-9)
+    expect(result.craftProfitCopper).toBe(1)
   })
 
   it('сохраняет null для отсутствующего предмета, неизвестных материалов и неподдерживаемой версии', () => {

@@ -60,7 +60,8 @@ Props и особенности: [общие контролы](ui-features.md#о
 - `planner`: `PlanQuantityControl` — тележка и количество;
   `ShoppingList`, `ShoppingListPanel` — покупки;
   `usePlanner` — единое подключение расчёта в App.
-- `tsm`: `PriceModeSelector` — используемые цены;
+- `tsm`: `PriceModeSelector` — «Приоритетные цены»: «Заданные / TSM»,
+  при отсутствии приоритетной суммы используется второй источник;
   `TsmSettingsSection` — рынок, показатель и обновление снимка.
 - `disenchanting`: `DisenchantEstimateDetails` — материалы и оценка;
   `disenchanting-presentation.ts` — подписи статусов.

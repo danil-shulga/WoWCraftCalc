@@ -4,6 +4,7 @@ import { App } from '../../app/App'
 import { ItemsPage } from '../../pages/ItemsPage'
 import { PlannerPage } from '../../pages/PlannerPage'
 import { usePlanner } from '../planner/usePlanner'
+import { ShoppingList } from '../planner/ShoppingList'
 import { useCraftStore } from '../../store/useCraftStore'
 import { createEmptyCraftData } from '../../store/persistence'
 import { useTsmStore } from './tsm-client'
@@ -81,7 +82,7 @@ it('отмена сохраняет источники и суммы, сохра
 it('все по TSM охватывает покупку/продажу, массовое редактирование меняет ручную сумму', async () => {
   const user = userEvent.setup()
   render(<ItemsPage section="reagents" />)
-  await user.click(screen.getByRole('radio', { name: 'По TSM' }))
+  await user.click(screen.getByRole('radio', { name: 'TSM' }))
   const before = useCraftStore.getState().workspaces.tbc.items.cloth
   expect(before).toEqual(item)
   const row = screen.getByText('Ткань').closest('article')
@@ -97,7 +98,7 @@ it('все по TSM охватывает покупку/продажу, масс
     purchasePriceCopper: 99,
     salePriceCopper: 77,
   })
-  await user.click(screen.getByRole('radio', { name: 'Выбранные' }))
+  await user.click(screen.getByRole('radio', { name: 'Заданные' }))
   expect(within(row).getByText('99')).toBeVisible()
 })
 it('без ID объясняет недоступность, чужой рынок не показывает цену', async () => {
@@ -115,6 +116,84 @@ it('без ID объясняет недоступность, чужой рыно
       name: 'Использовать цену TSM: Цена покупки за единицу',
     }),
   ).toBeDisabled()
+})
+
+it('показывает ручную подстановку без пометки TSM в каталоге и закупке', async () => {
+  const user = userEvent.setup()
+  useTsmStore.setState({ snapshot: null })
+  useCraftStore.getState().setPlannerQuantity('cloth', 1)
+  const view = render(<ItemsPage section="reagents" />)
+  expect(screen.getByRole('group', { name: 'Приоритетные цены' })).toBeVisible()
+  await user.click(screen.getByRole('radio', { name: 'TSM' }))
+  expect(screen.getByText('55')).toBeVisible()
+  expect(screen.getByText('77')).toBeVisible()
+  expect(screen.queryByTitle('Цена TSM')).not.toBeInTheDocument()
+  await user.click(screen.getByRole('button', { name: 'Редактировать цены' }))
+  fireEvent.change(screen.getByLabelText('Цена покупки: Ткань, медь'), {
+    target: { value: '99' },
+  })
+  expect(screen.queryByText('Используется TSM:')).not.toBeInTheDocument()
+  expect(useCraftStore.getState().workspaces.tbc.items.cloth).toEqual(item)
+  await user.click(screen.getByRole('button', { name: 'Сохранить все' }))
+  expect(screen.getByText('99')).toBeVisible()
+  function Purchases() {
+    return (
+      <ShoppingList plan={usePlanner()} catalog={{ cloth: item }} itemLanguage="ru" />
+    )
+  }
+  view.rerender(<Purchases />)
+  expect(screen.getByText('За штуку')).toBeVisible()
+  expect(screen.queryByText('За штуку · TSM')).not.toBeInTheDocument()
+  expect(screen.getAllByText('99').length).toBeGreaterThanOrEqual(2)
+})
+
+it('показывает подстановку TSM, отменяет ручной черновик и пересчитывает после сохранения', async () => {
+  const user = userEvent.setup()
+  const missing = { ...item, purchasePriceCopper: null }
+  useCraftStore.getState().updateItem(item.id, missing)
+  useCraftStore.getState().setPlannerQuantity('cloth', 1)
+  const view = render(<ItemsPage section="reagents" />)
+  expect(screen.getByRole('radio', { name: 'Заданные' })).toBeChecked()
+  expect(screen.getByTitle('Цена TSM')).toBeVisible()
+  await user.click(screen.getByRole('button', { name: 'Редактировать цены' }))
+  const copper = screen.getByLabelText('Ручная цена покупки: Ткань, медь')
+  fireEvent.change(copper, { target: { value: '99' } })
+  expect(screen.getByText('Используется TSM:')).toBeVisible()
+  expect(useCraftStore.getState().workspaces.tbc.items.cloth).toEqual(missing)
+  await user.click(screen.getByRole('button', { name: 'Отмена' }))
+  expect(useCraftStore.getState().workspaces.tbc.items.cloth).toEqual(missing)
+  function Purchases() {
+    return (
+      <ShoppingList plan={usePlanner()} catalog={{ cloth: missing }} itemLanguage="ru" />
+    )
+  }
+  view.rerender(<Purchases />)
+  expect(screen.getByText('За штуку · TSM')).toBeVisible()
+  view.rerender(<ItemsPage section="reagents" />)
+  await user.click(screen.getByRole('button', { name: 'Редактировать цены' }))
+  fireEvent.change(screen.getByLabelText('Ручная цена покупки: Ткань, медь'), {
+    target: { value: '1' },
+  })
+  fireEvent.change(screen.getByLabelText('Ручная цена покупки: Ткань, медь'), {
+    target: { value: '0' },
+  })
+  await user.click(screen.getByRole('button', { name: 'Сохранить все' }))
+  expect(screen.queryByTitle('Цена TSM')).not.toBeInTheDocument()
+  expect(useCraftStore.getState().workspaces.tbc.items.cloth?.purchasePriceCopper).toBe(0)
+  view.rerender(<Purchases />)
+  expect(screen.getByText('За штуку')).toBeVisible()
+  expect(screen.queryByText('За штуку · TSM')).not.toBeInTheDocument()
+})
+
+it('переключает приоритет клавиатурой без изменения каталога', async () => {
+  const user = userEvent.setup()
+  render(<ItemsPage section="reagents" />)
+  screen.getByRole('radio', { name: 'Заданные' }).focus()
+  await user.keyboard('{ArrowRight}')
+  expect(screen.getByRole('radio', { name: 'TSM' })).toBeChecked()
+  await user.keyboard('{ArrowLeft}')
+  expect(screen.getByRole('radio', { name: 'Заданные' })).toBeChecked()
+  expect(useCraftStore.getState().workspaces.tbc.items.cloth).toEqual(item)
 })
 it('настройки ищут мир, сохраняют общий показатель, Tab/Escape работают с порталом и возвращают фокус', async () => {
   const user = userEvent.setup()
@@ -179,13 +258,13 @@ it('переключает цены бюджета в Планировщике �
   const budget = screen.getByText('Бюджет').closest('div')
   if (!budget) throw new Error('Нет бюджета')
   expect(within(budget).getByText('55')).toBeVisible()
-  await user.click(screen.getByRole('radio', { name: 'По TSM' }))
+  await user.click(screen.getByRole('radio', { name: 'TSM' }))
   expect(within(budget).getByText('23')).toBeVisible()
   expect(within(budget).getByText('22')).toBeVisible()
   expect(useCraftStore.getState().workspaces.tbc.items.cloth).toEqual(item)
   view.rerender(<ItemsPage section="reagents" />)
-  expect(screen.getByRole('radio', { name: 'По TSM' })).toBeChecked()
-  await user.click(screen.getByRole('radio', { name: 'Выбранные' }))
+  expect(screen.getByRole('radio', { name: 'TSM' })).toBeChecked()
+  await user.click(screen.getByRole('radio', { name: 'Заданные' }))
   view.rerender(<Planner />)
   const restoredBudget = screen.getByText('Бюджет').closest('div')
   if (!restoredBudget) throw new Error('Нет бюджета')

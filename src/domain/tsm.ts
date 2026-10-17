@@ -107,8 +107,7 @@ export function resolveItemPrice(
   field: ItemPriceField,
   context?: PriceContext,
 ): number | null {
-  if (usesTsmPrice(item, field, context) && context) return getTsmPrice(item, context)
-  return item[field]
+  return resolvePrice(item, field, context).value
 }
 
 export function usesTsmPrice(
@@ -116,10 +115,24 @@ export function usesTsmPrice(
   field: ItemPriceField,
   context?: PriceContext,
 ): boolean {
+  return resolvePrice(item, field, context).source === 'tsm'
+}
+
+function resolvePrice(
+  item: Item,
+  field: ItemPriceField,
+  context?: PriceContext,
+): { value: number | null; source: PriceSource | null } {
+  const manual = item[field]
+  if (context?.version !== 'tbc') {
+    return { value: manual, source: manual === null ? null : 'manual' }
+  }
   const source =
     field === 'purchasePriceCopper' ? item.purchasePriceSource : item.salePriceSource
-  return (
-    context?.version === 'tbc' &&
-    (context.settings.priceMode === 'tsm' || source === 'tsm')
-  )
+  const tsm = getTsmPrice(item, context)
+  const preferTsm = context.settings.priceMode === 'tsm' || source === 'tsm'
+  if (tsm !== null && (preferTsm || manual === null)) {
+    return { value: tsm, source: 'tsm' }
+  }
+  return { value: manual, source: manual === null ? null : 'manual' }
 }

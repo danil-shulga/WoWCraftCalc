@@ -171,7 +171,7 @@ describe('распыление предметов каталога', () => {
     })
   })
 
-  it('использует текущий TSM и не подставляет ручную цену при отсутствии снимка', () => {
+  it('использует текущий TSM и подставляет ручную цену при отсутствии снимка', () => {
     const dust = catalog.dust
     if (!dust) throw new Error('Нет материала')
     const items = { ...catalog, dust: { ...dust, salePriceSource: 'tsm' as const } }
@@ -194,7 +194,46 @@ describe('распыление предметов каталога', () => {
         ...context,
         snapshot: null,
       }).salePrices.get(22445),
-    ).toBeNull()
+    ).toBe(100)
+  })
+
+  it('подставляет TSM для материалов и ручную покупку при приоритете TSM', () => {
+    const market = { region: 'eu', realm: 'thunderstrike', faction: 'alliance' } as const
+    const dust = catalog.dust
+    if (!dust) throw new Error('Нет материала')
+    const items = { ...catalog, dust: { ...dust, salePriceCopper: null } }
+    const prices = {
+      version: 'tbc' as const,
+      settings: { ...DEFAULT_TSM_SETTINGS, market },
+      snapshot: {
+        schemaVersion: 1 as const,
+        market,
+        scannedAt: '2026-01-01T00:00:00Z',
+        items: { '22445': { recent: 100, marketValue: null } },
+      },
+    }
+    for (const priceMode of ['individual', 'tsm'] as const) {
+      const result = createCatalogDisenchantSnapshot(items, 'tbc', ['boots'], new Set(), {
+        ...prices,
+        settings: { ...prices.settings, priceMode },
+      }).boots
+      expect(result).toMatchObject({
+        configuredProfit: 298,
+        buyProfit: 199,
+        materialIssues: [],
+      })
+      expect(result?.result.expectedValueCopper).toBe(299)
+    }
+    const unknown = createCatalogDisenchantSnapshot(items, 'tbc', ['boots'], new Set(), {
+      ...prices,
+      snapshot: null,
+    }).boots
+    expect(unknown?.buyProfit).toBeNull()
+    expect(unknown?.materialIssues).toContainEqual({
+      itemId: 22445,
+      kind: 'missing-price',
+      candidates: ['dust'],
+    })
   })
 
   it('сохраняет неподдерживаемый статус вместо нулей', () => {
