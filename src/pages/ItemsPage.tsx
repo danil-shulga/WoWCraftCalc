@@ -67,7 +67,7 @@ export function ItemsPage({ section }: ItemsPageProps) {
   const setPlannerQuantity = useCraftStore((state) => state.setPlannerQuantity)
   const removePlannerTarget = useCraftStore((state) => state.removePlannerTarget)
   const prices = usePriceContext()
-  const setTbcPricing = useCraftStore((state) => state.setTbcPricing)
+  const setPricing = useCraftStore((state) => state.setPricing)
   const gameVersion = useCraftStore((state) => state.activeVersion)
   const [request] = useState(() => ({
     version: useCraftStore.getState().activeVersion,
@@ -405,7 +405,7 @@ export function ItemsPage({ section }: ItemsPageProps) {
       <PriceModeSelector
         gameVersion={gameVersion}
         settings={prices.settings}
-        onChange={setTbcPricing}
+        onChange={setPricing}
       />
       {isCreating && section !== 'favorites' ? (
         <ItemAddModal

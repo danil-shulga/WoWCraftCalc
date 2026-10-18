@@ -1,8 +1,9 @@
 import { create } from 'zustand'
 import { useMemo } from 'react'
 import { useCraftStore } from '../../store/useCraftStore'
-import { tsmMarketKey } from '../../domain/tsm'
-import type { PriceContext, TsmSnapshot } from '../../domain/tsm'
+import { supportsTsm, tsmMarketKey } from '../../domain/tsm'
+import { selectActivePricing } from '../../store/craft.selectors'
+import type { PriceContext, TsmMarket, TsmSnapshot } from '../../domain/tsm'
 import { loadTsmSnapshot, pruneTsmCache, readTsmCache, writeTsmCache } from './tsm-loader'
 
 export const TSM_CHECK_INTERVAL = 15 * 60 * 1000
@@ -24,17 +25,23 @@ export const useTsmStore = create<TsmState>(() => ({
 }))
 function currentScope(): string | null {
   const state = useCraftStore.getState()
-  const market = state.tbcPricing.market
-  return state.activeVersion === 'tbc' && market
+  const market = selectActivePricing(state).market
+  return supportsTsm(state.activeVersion) && market
     ? `${String(state.workspaceRevision)}:${tsmMarketKey(market)}`
     : null
+}
+function configuredMarkets(): TsmMarket[] {
+  const state = useCraftStore.getState()
+  return [state.tbcPricing.market, state.classicPricing.market].filter(
+    (market): market is TsmMarket => market !== null,
+  )
 }
 let activeRequest: AbortController | null = null
 let lastCheck = 0
 export async function checkTsmUpdate(): Promise<void> {
   const scope = currentScope()
-  const market = useCraftStore.getState().tbcPricing.market
-  const cacheError = pruneTsmCache(market)
+  const market = selectActivePricing(useCraftStore.getState()).market
+  const cacheError = pruneTsmCache(market, configuredMarkets())
   if (!scope || !market) return
   activeRequest?.abort()
   const controller = new AbortController()
@@ -67,7 +74,7 @@ export async function checkTsmUpdate(): Promise<void> {
       snapshot: loaded ?? snapshot,
       status: loaded ? 'ready' : 'unavailable',
       loadedAt: Date.now(),
-      cacheError: loaded ? writeTsmCache(loaded) : cacheError,
+      cacheError: loaded ? writeTsmCache(loaded, configuredMarkets()) : cacheError,
     })
   } catch (error) {
     if (isCurrent())
@@ -85,11 +92,12 @@ export function startTsmClient(): () => void {
   let scope: string | null | undefined
   let marketKey: string | null | undefined
   const sync = () => {
-    const market = useCraftStore.getState().tbcPricing.market
-    const nextMarketKey = market ? tsmMarketKey(market) : null
+    const market = selectActivePricing(useCraftStore.getState()).market
+    const markets = configuredMarkets()
+    const nextMarketKey = markets.map(tsmMarketKey).join(':')
     if (marketKey !== nextMarketKey) {
       marketKey = nextMarketKey
-      useTsmStore.setState({ cacheError: pruneTsmCache(market) })
+      useTsmStore.setState({ cacheError: pruneTsmCache(market, markets) })
     }
     const next = currentScope()
     if (scope === next) return
@@ -131,11 +139,11 @@ export function startTsmClient(): () => void {
 export function usePriceContext(): PriceContext {
   const version = useCraftStore((state) => state.activeVersion)
   const revision = useCraftStore((state) => state.workspaceRevision)
-  const settings = useCraftStore((state) => state.tbcPricing)
+  const settings = useCraftStore(selectActivePricing)
   const snapshot = useTsmStore((state) => state.snapshot)
   const scope = useTsmStore((state) => state.scope)
   const expected =
-    version === 'tbc' && settings.market
+    supportsTsm(version) && settings.market
       ? `${String(revision)}:${tsmMarketKey(settings.market)}`
       : null
   return useMemo(

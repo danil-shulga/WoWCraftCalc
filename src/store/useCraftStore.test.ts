@@ -257,6 +257,7 @@ describe('целостность CraftStore', () => {
           currencyDisplay: before.currencyDisplay,
           itemLanguage: before.itemLanguage,
           tbcPricing: before.tbcPricing,
+          classicPricing: before.classicPricing,
         },
         version: 1,
       })

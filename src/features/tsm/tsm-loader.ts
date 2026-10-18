@@ -9,16 +9,23 @@ const cacheSchema = z.object({
   snapshot: tsmSnapshotSchema,
   contentId: z.string().regex(/^[a-f0-9]{64}$/),
 })
-export function pruneTsmCache(market: TsmMarket | null): string | null {
+export function pruneTsmCache(
+  market: TsmMarket | null,
+  retainedMarkets: readonly TsmMarket[] = [],
+): string | null {
   let removedLocal = false
   try {
-    const selectedKey = market ? `${CACHE_PREFIX}${tsmMarketKey(market)}` : null
+    const selectedKeys = new Set(
+      [...(market ? [market] : []), ...retainedMarkets].map(
+        (value) => `${CACHE_PREFIX}${tsmMarketKey(value)}`,
+      ),
+    )
     for (const storage of [localStorage, sessionStorage]) {
       for (let index = storage.length - 1; index >= 0; index--) {
         const key = storage.key(index)
         if (
           key?.startsWith(CACHE_PREFIX) &&
-          (storage === localStorage || key !== selectedKey)
+          (storage === localStorage || !selectedKeys.has(key))
         ) {
           storage.removeItem(key)
           if (storage === localStorage) removedLocal = true
@@ -49,8 +56,11 @@ export function readTsmCache(market: TsmMarket): TsmSnapshot | null {
     return null
   }
 }
-export function writeTsmCache(snapshot: TsmSnapshot): string | null {
-  const error = pruneTsmCache(snapshot.market)
+export function writeTsmCache(
+  snapshot: TsmSnapshot,
+  retainedMarkets: readonly TsmMarket[] = [],
+): string | null {
+  const error = pruneTsmCache(snapshot.market, retainedMarkets)
   if (error) return error
   try {
     sessionStorage.setItem(

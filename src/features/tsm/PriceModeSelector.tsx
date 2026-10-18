@@ -1,6 +1,7 @@
 import { Checkbox } from '../../components/ui/Checkbox/Checkbox'
 import type { GameVersion } from '../../domain/game-version'
 import type { TsmSettings } from '../../domain/tsm'
+import { supportsTsm } from '../../domain/tsm'
 import './PriceModeSelector.css'
 
 interface PriceModeSelectorProps {
@@ -14,7 +15,7 @@ export function PriceModeSelector({
   settings,
   onChange,
 }: PriceModeSelectorProps) {
-  if (gameVersion !== 'tbc') return null
+  if (!supportsTsm(gameVersion)) return null
   return (
     <fieldset className="price-mode-selector">
       <legend>Приоритетные цены</legend>

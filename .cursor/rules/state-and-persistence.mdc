@@ -33,9 +33,12 @@ alwaysApply: false
   аргумент раздела (по умолчанию `reagents`). Повторный импорт сохраняет видимость.
   Версии localStorage и JSON backup остаются 1; старые данные без раздела читаются.
 - В persistence/экспорт входят `activeVersion`, три `workspaces` (`items`,
-  `ownedProfessions`, необязательные `rootItemOrder` и `planner`), общие `currencyDisplay`, `itemLanguage` и `tbcPricing`.
+  `ownedProfessions`, необязательные `rootItemOrder` и `planner`), общие `currencyDisplay`, `itemLanguage`, `tbcPricing` и `classicPricing`.
   Вкладки, раскрытые пути дерева, модальные окна и черновики остаются в React.
-- `tbcPricing` хранит рынок, единый показатель и режим цен TBC. Индивидуальные
+- `tbcPricing` и `classicPricing` независимо хранят рынок, показатель и режим цен
+  соответствующей версии; выбор активных настроек — `selectActivePricing`.
+  Отсутствующий `classicPricing` получает defaults без смены persistence/backup v1.
+  Индивидуальные
   источники покупки/продажи сохраняются с предметами; отсутствие поля означает
   ручной источник. Кэш снимков TSM отделён от persistence и резервных копий.
 - Ключ хранилища — `craft-calc-versioned-data`, persistence v1. Полный экспорт —

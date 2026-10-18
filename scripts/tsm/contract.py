@@ -8,14 +8,22 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 REALMS = json.loads((Path(__file__).resolve().parents[2] / "src/domain/tsm-markets.json").read_text())
-MARKETS = [dict(region=realm["region"], realm=realm["realm"], faction=faction)
+MARKETS = [dict(**({"version": "classic"} if realm["version"] == "classic" else {}), region=realm["region"], realm=realm["realm"], faction=faction)
            for realm in REALMS for faction in ("alliance", "horde")]
 MAX_SAFE_INTEGER = 9007199254740991
 
 def market_key(market):
-    if market not in MARKETS:
-        raise ValueError("Unsupported TBC market")
-    return f'tbc-{market["region"]}-{market["realm"]}-{market["faction"]}'
+    # TBC snapshots published before Classic support have no version field.
+    normalized = {key: value for key, value in market.items() if not (key == "version" and value == "tbc")}
+    if normalized not in MARKETS:
+        raise ValueError("Unsupported TSM market")
+    return f'{market.get("version", "tbc")}-{market["region"]}-{market["realm"]}-{market["faction"]}'
+
+
+def market_url(market):
+    market_key(market)
+    region = market["region"] + ("-fresh" if market.get("version", "tbc") == "tbc" else "")
+    return f'https://public-data.tradeskillmaster.com/classic/{region}/realm/{market["realm"]}-{market["faction"]}/items.csv'
 
 def validate_timestamp(value):
     if not re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z", value):

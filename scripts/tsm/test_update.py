@@ -12,14 +12,14 @@ class UpdateTests(unittest.TestCase):
     def test_local_refresh_bootstraps_and_retains_snapshots_when_offline(self):
         with tempfile.TemporaryDirectory() as folder:
             _, failures, count = prepare(folder, fetch=lambda _: (HEADER + ROW).encode(), keep_existing=True)
-            self.assertEqual((failures, count), ([], 10))
+            self.assertEqual((failures, count), ([], len(MARKETS)))
             original = (Path(folder) / "manifest.json").read_bytes()
             def offline(url):
                 if url.startswith("file:"):
                     return download(url)
                 raise OSError("TSM unavailable")
             changed, failures, count = prepare(folder, fetch=offline, keep_existing=True)
-            self.assertEqual((changed, len(failures), count), (False, 10, 10))
+            self.assertEqual((changed, len(failures), count), (False, len(MARKETS), len(MARKETS)))
             self.assertEqual((Path(folder) / "manifest.json").read_bytes(), original)
 
     def previous(self):
@@ -33,10 +33,10 @@ class UpdateTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             changed, failures, count = prepare(folder, fetch=lambda _: (HEADER + ROW).encode())
             self.assertTrue(changed)
-            self.assertEqual((failures, count), ([], 10))
+            self.assertEqual((failures, count), ([], len(MARKETS)))
             manifest = json.loads((Path(folder) / "manifest.json").read_text())
-            self.assertEqual(len(list(Path(folder).glob("*.json"))), 11)
-            self.assertEqual(len(manifest["markets"]), 10)
+            self.assertEqual(len(list(Path(folder).glob("*.json"))), len(MARKETS) + 1)
+            self.assertEqual(len(manifest["markets"]), len(MARKETS))
 
     def test_failed_markets_keep_previous_and_unchanged_skips_deploy(self):
         raw, entry, manifest = self.previous()
@@ -49,7 +49,7 @@ class UpdateTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             changed, failures, count = prepare(folder, "https://example.test/project", fetch)
             self.assertFalse(changed)
-            self.assertEqual((len(failures), count), (10, 1))
+            self.assertEqual((len(failures), count), (len(MARKETS), 1))
             self.assertEqual((Path(folder) / entry["path"]).read_bytes(), raw)
             self.assertEqual(json.loads((Path(folder) / "manifest.json").read_text()), manifest)
 

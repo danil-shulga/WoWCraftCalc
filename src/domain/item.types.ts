@@ -76,6 +76,7 @@ export interface VersionWorkspace {
 }
 
 export interface PersistedCraftData {
+  classicPricing: TsmSettings
   tbcPricing: TsmSettings
   activeVersion: GameVersion
   workspaces: Record<GameVersion, VersionWorkspace>

@@ -4,6 +4,9 @@ import type { GameVersion } from './game-version'
 import type { Item, ItemPriceField } from './item.types'
 
 export const TSM_REALMS = realms
+export function supportsTsm(version: GameVersion): version is 'tbc' | 'classic' {
+  return version === 'tbc' || version === 'classic'
+}
 export const TSM_METRIC_LABELS = {
   recent: 'Текущая оценка',
   marketValue: 'Рыночная цена',
@@ -11,6 +14,8 @@ export const TSM_METRIC_LABELS = {
 export type PriceSource = 'manual' | 'tsm'
 export const tsmMarketSchema = z
   .object({
+    // Missing version identifies existing TBC settings and published snapshots.
+    version: z.enum(['tbc', 'classic']).optional(),
     region: z.enum(['eu', 'us']),
     realm: z.string(),
     faction: z.enum(['alliance', 'horde']),
@@ -18,7 +23,10 @@ export const tsmMarketSchema = z
   .refine(
     (market) =>
       realms.some(
-        (realm) => realm.region === market.region && realm.realm === market.realm,
+        (realm) =>
+          realm.version === (market.version ?? 'tbc') &&
+          realm.region === market.region &&
+          realm.realm === market.realm,
       ),
     'Неподдерживаемый рынок TSM',
   )
@@ -29,13 +37,19 @@ export const tsmSettingsSchema = z.object({
   priceMode: z.enum(['individual', 'tsm']).default('individual'),
 })
 export type TsmSettings = z.output<typeof tsmSettingsSchema>
+export function tsmSettingsSchemaFor(version: 'tbc' | 'classic') {
+  return tsmSettingsSchema.refine(
+    (settings) => !settings.market || (settings.market.version ?? 'tbc') === version,
+    'Рынок TSM относится к другой версии игры',
+  )
+}
 export const DEFAULT_TSM_SETTINGS: TsmSettings = {
   market: null,
   metric: 'recent',
   priceMode: 'individual',
 }
 export function tsmMarketKey(market: TsmMarket): string {
-  return `tbc-${market.region}-${market.realm}-${market.faction}`
+  return `${market.version ?? 'tbc'}-${market.region}-${market.realm}-${market.faction}`
 }
 const timestamp = z.iso.datetime()
 const tsmPrice = z.number().int().positive().nullable()
@@ -59,7 +73,7 @@ export const tsmManifestEntrySchema = z
     market: tsmMarketSchema,
     scannedAt: timestamp,
     contentId: z.string().regex(/^[a-f0-9]{64}$/),
-    path: z.string().regex(/^tbc-[a-z0-9-]+\.[a-f0-9]{64}\.json$/),
+    path: z.string().regex(/^(?:tbc|classic)-[a-z0-9-]+\.[a-f0-9]{64}\.json$/),
   })
   .refine(
     (entry) => entry.path === `${tsmMarketKey(entry.market)}.${entry.contentId}.json`,
@@ -83,9 +97,9 @@ export interface PriceContext {
 }
 export function canUseTsm(item: Pick<Item, 'source'>, version: GameVersion): boolean {
   return (
-    version === 'tbc' &&
+    supportsTsm(version) &&
     item.source !== undefined &&
-    (item.source.wowheadVersion === undefined || item.source.wowheadVersion === 'tbc')
+    (item.source.wowheadVersion === undefined || item.source.wowheadVersion === version)
   )
 }
 export function getTsmPrice(
@@ -96,6 +110,7 @@ export function getTsmPrice(
   if (
     !canUseTsm(item, context.version) ||
     !settings.market ||
+    (settings.market.version ?? 'tbc') !== context.version ||
     !snapshot ||
     tsmMarketKey(settings.market) !== tsmMarketKey(snapshot.market)
   )
@@ -124,7 +139,7 @@ function resolvePrice(
   context?: PriceContext,
 ): { value: number | null; source: PriceSource | null } {
   const manual = item[field]
-  if (context?.version !== 'tbc') {
+  if (!context || !supportsTsm(context.version)) {
     return { value: manual, source: manual === null ? null : 'manual' }
   }
   const source =

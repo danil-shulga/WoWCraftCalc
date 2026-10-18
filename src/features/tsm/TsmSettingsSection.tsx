@@ -10,11 +10,13 @@ import './TsmSettingsSection.css'
 import '../EditorForm.css'
 
 export interface TsmSettingsSectionProps {
+  gameVersion?: 'tbc' | 'classic'
   settings: TsmSettings
   onChange: (settings: TsmSettings) => void
   onCheck: () => void
 }
 export function TsmSettingsSection({
+  gameVersion = 'tbc',
   settings,
   onChange,
   onCheck,
@@ -43,8 +45,8 @@ export function TsmSettingsSection({
     <fieldset className="user-settings__section tsm-settings">
       <legend>Цены аукциона · TSM</legend>
       <p>
-        Выберите рынок TBC Anniversary. Один показатель используется для покупки и
-        продажи.
+        Выберите рынок {gameVersion === 'classic' ? 'Classic Era' : 'TBC Anniversary'}.
+        Один показатель используется для покупки и продажи.
       </p>
       <div className="tsm-settings__market editor-fields">
         <SearchableSelect
@@ -64,19 +66,26 @@ export function TsmSettingsSection({
         <SearchableSelect
           key={selectedRegion}
           label="Игровой мир TSM"
-          options={TSM_REALMS.filter((realm) => realm.region === selectedRegion).map(
-            (realm) => ({
-              value: realm.realm,
-              label: realm.name,
-            }),
-          )}
+          options={TSM_REALMS.filter(
+            (realm) => realm.version === gameVersion && realm.region === selectedRegion,
+          ).map((realm) => ({
+            value: realm.realm,
+            label: realm.name,
+            secondaryLabel: realm.aliases.join(', '),
+            searchNames: [realm.name, ...realm.aliases],
+          }))}
           value={settings.market?.realm ?? ''}
           placeholder="Выберите игровой мир…"
           onChange={(realm) => {
             onChange({
               ...settings,
               market: realm
-                ? { region: selectedRegion, realm, faction: selectedFaction }
+                ? {
+                    ...(gameVersion === 'classic' ? { version: 'classic' as const } : {}),
+                    region: selectedRegion,
+                    realm,
+                    faction: selectedFaction,
+                  }
                 : null,
             })
           }}

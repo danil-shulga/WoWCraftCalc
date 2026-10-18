@@ -61,9 +61,10 @@ Props и особенности: [общие контролы](ui-features.md#о
 - `planner`: `PlanQuantityControl` — тележка и количество;
   `ShoppingList`, `ShoppingListPanel` — покупки;
   `usePlanner` — единое подключение расчёта в App.
-- `tsm`: `PriceModeSelector` — «Приоритетные цены»: «Заданные / TSM»,
+- `tsm`: общая интеграция TBC и Classic Era; `PriceModeSelector` — «Приоритетные цены»: «Заданные / TSM»,
   при отсутствии приоритетной суммы используется второй источник;
-  `TsmSettingsSection` — рынок, показатель и обновление снимка;
+  `TsmSettingsSection` — рынок активной версии, показатель и обновление снимка;
+  поиск находит объединённые миры по дополнительным названиям;
   подписывается на статусы TSM только пока блок смонтирован.
 - `disenchanting`: `DisenchantEstimateDetails` — материалы и оценка;
   `disenchanting-presentation.ts` — подписи статусов.

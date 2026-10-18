@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 import { PROFESSION_IDS } from './professions'
 import { GAME_VERSIONS } from './game-version'
-import { DEFAULT_TSM_SETTINGS, tsmSettingsSchema } from './tsm'
+import { DEFAULT_TSM_SETTINGS, tsmSettingsSchemaFor } from './tsm'
 import { CURRENCY_DISPLAY_MODES, ITEM_LANGUAGES, WOWHEAD_VERSIONS } from './user-settings'
 
 export const itemNamesSchema = z.object({
@@ -78,7 +78,8 @@ export const versionWorkspaceSchema = z.object({
 })
 
 export const persistedCraftDataSchema = z.object({
-  tbcPricing: tsmSettingsSchema.default(DEFAULT_TSM_SETTINGS),
+  tbcPricing: tsmSettingsSchemaFor('tbc').default(DEFAULT_TSM_SETTINGS),
+  classicPricing: tsmSettingsSchemaFor('classic').default(DEFAULT_TSM_SETTINGS),
   activeVersion: z.enum(GAME_VERSIONS),
   workspaces: z.object({
     forever: versionWorkspaceSchema,

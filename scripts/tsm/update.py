@@ -10,7 +10,7 @@ from pathlib import Path
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
-from contract import MARKETS, encode_snapshot, market_key, parse_csv, validate_snapshot, validate_timestamp
+from contract import MARKETS, encode_snapshot, market_key, market_url, parse_csv, validate_snapshot, validate_timestamp
 
 def download(url):
     with urlopen(Request(url, headers={"User-Agent": "CraftCalc-TSM/1", "Cache-Control": "no-cache"}), timeout=45) as response:
@@ -58,7 +58,7 @@ def prepare(output, previous_url=None, fetch=download, keep_existing=False):
     for market in MARKETS:
         key = market_key(market)
         try:
-            url = f'https://public-data.tradeskillmaster.com/classic/{market["region"]}-fresh/realm/{market["realm"]}-{market["faction"]}/items.csv'
+            url = market_url(market)
             snapshot = parse_csv(fetch(url).decode("utf-8"), market)
             previous = entries.get(key)
             if previous and datetime.fromisoformat(snapshot["scannedAt"].replace("Z", "+00:00")) < datetime.fromisoformat(previous[0]["scannedAt"].replace("Z", "+00:00")):

@@ -8,7 +8,7 @@ import type {
   ReferenceImportEntry,
 } from '../domain/recipe-import.types'
 import { create } from 'zustand'
-import { tsmSettingsSchema } from '../domain/tsm'
+import { supportsTsm, tsmSettingsSchemaFor } from '../domain/tsm'
 import type { TsmSettings } from '../domain/tsm'
 import { persist } from 'zustand/middleware'
 import { z } from 'zod'
@@ -90,6 +90,7 @@ interface CraftStore extends PersistedCraftData {
     position: 'before' | 'after',
   ) => void
   setTbcPricing: (settings: TsmSettings) => void
+  setPricing: (settings: TsmSettings) => void
   workspaceRevision: number
   setActiveVersion: (version: GameVersion) => void
   createItem: (input: ItemInput) => ItemId
@@ -254,8 +255,16 @@ export const useCraftStore = create<CraftStore>()(
           set({ rootItemOrder: { ...workspace.rootItemOrder, [section]: nextOrder } })
         },
         setTbcPricing: (settings) => {
-          const parsed = tsmSettingsSchema.parse(settings)
+          const parsed = tsmSettingsSchemaFor('tbc').parse(settings)
           setState({ tbcPricing: parsed })
+        },
+        setPricing: (settings) => {
+          const version = getState().activeVersion
+          if (!supportsTsm(version)) return
+          const parsed = tsmSettingsSchemaFor(version).parse(settings)
+          setState(
+            version === 'classic' ? { classicPricing: parsed } : { tbcPricing: parsed },
+          )
         },
         setActiveVersion: (activeVersion) => {
           if (activeVersion !== getState().activeVersion)
@@ -801,6 +810,7 @@ export const useCraftStore = create<CraftStore>()(
       version: storageVersion,
       partialize: (state) => ({
         tbcPricing: state.tbcPricing,
+        classicPricing: state.classicPricing,
         activeVersion: state.activeVersion,
         workspaces: state.workspaces,
         currencyDisplay: state.currencyDisplay,

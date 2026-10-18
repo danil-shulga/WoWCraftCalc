@@ -10,11 +10,46 @@ import { useCraftStore } from './useCraftStore'
 it('читает текущие данные без новых полей с defaults без смены версии', () => {
   const legacy: Partial<ReturnType<typeof createEmptyCraftData>> = createEmptyCraftData()
   delete legacy.tbcPricing
+  delete legacy.classicPricing
   expect(parseCurrentPersistedData(legacy).tbcPricing).toEqual({
     market: null,
     metric: 'recent',
     priceMode: 'individual',
   })
+  expect(parseCurrentPersistedData(legacy).classicPricing).toEqual({
+    market: null,
+    metric: 'recent',
+    priceMode: 'individual',
+  })
+})
+
+it('сохраняет независимые настройки Classic и отклоняет рынок другой версии', () => {
+  const data = createEmptyCraftData()
+  data.activeVersion = 'classic'
+  useCraftStore.getState().replaceData(data)
+  const settings = {
+    market: { version: 'classic', region: 'eu', realm: 'firemaw', faction: 'horde' },
+    metric: 'marketValue',
+    priceMode: 'tsm',
+  } as const
+  useCraftStore.getState().setPricing(settings)
+  expect(useCraftStore.getState().tbcPricing).toEqual(data.tbcPricing)
+  expect(parseImportedData(createExportJson(useCraftStore.getState()))).toMatchObject({
+    success: true,
+    data: { classicPricing: settings, tbcPricing: data.tbcPricing },
+  })
+  expect(
+    JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null') as unknown,
+  ).toMatchObject({ state: { classicPricing: settings } })
+  expect(() => {
+    useCraftStore.getState().setTbcPricing(settings)
+  }).toThrow()
+  expect(() => {
+    useCraftStore.getState().setPricing({
+      ...settings,
+      market: { region: 'eu', realm: 'thunderstrike', faction: 'alliance' },
+    })
+  }).toThrow()
 })
 it('восстанавливает TBC-настройки и оба источника через storage и полный backup', async () => {
   const data = createEmptyCraftData()

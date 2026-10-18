@@ -1,7 +1,7 @@
 import { Checkbox } from '../../components/ui/Checkbox/Checkbox'
 import { MoneyDisplay } from '../../components/ui/MoneyDisplay/MoneyDisplay'
 import { MoneyInput } from '../../components/ui/MoneyInput/MoneyInput'
-import { canUseTsm, getTsmPrice, TSM_METRIC_LABELS } from '../../domain/tsm'
+import { canUseTsm, getTsmPrice, supportsTsm, TSM_METRIC_LABELS } from '../../domain/tsm'
 import type { PriceContext, PriceSource } from '../../domain/tsm'
 import type { Item } from '../../domain/item.types'
 
@@ -24,15 +24,16 @@ export function ItemPriceField({
   onSourceChange,
 }: ItemPriceFieldProps) {
   const available = prices && canUseTsm(item, prices.version)
+  const enabled = prices && supportsTsm(prices.version)
   return (
     <div className="item-price-field">
       <MoneyInput
         label={label}
         value={value}
         onChange={onChange}
-        disabled={prices?.version === 'tbc' && source === 'tsm'}
+        disabled={Boolean(enabled && source === 'tsm')}
       />
-      {prices?.version === 'tbc' ? (
+      {enabled ? (
         <>
           <Checkbox
             label="Использовать цену TSM"
@@ -51,7 +52,7 @@ export function ItemPriceField({
                 {!prices.settings.market ? ' · выберите рынок в настройках' : ''}
               </>
             ) : (
-              'TSM недоступен: у предмета нет игрового ID TBC.'
+              `TSM недоступен: у предмета нет игрового ID ${prices.version === 'classic' ? 'Classic' : 'TBC'}.`
             )}
           </small>
         </>

@@ -16,6 +16,7 @@ export const EXPORT_VERSION = 1
 export function createEmptyCraftData(): PersistedCraftData {
   return {
     tbcPricing: { ...DEFAULT_TSM_SETTINGS },
+    classicPricing: { ...DEFAULT_TSM_SETTINGS },
     activeVersion: 'forever',
     workspaces: {
       forever: { items: {}, ownedProfessions: [] },

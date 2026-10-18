@@ -1,10 +1,21 @@
 import unittest
-from contract import MARKETS, encode_snapshot, parse_csv, validate_snapshot
+from contract import MARKETS, encode_snapshot, market_key, market_url, parse_csv, validate_snapshot
 
 HEADER = "itemId,name,marketValue,minBuyout,recent,historical,updatedAt\n"
 ROW = '21877,"Netherweave, Cloth",1708,0,2322,0,2026-01-01T00:00:00Z\n'
 
 class ContractTests(unittest.TestCase):
+    def test_classic_and_tbc_are_separate_markets(self):
+        classic = next(market for market in MARKETS if market.get("version") == "classic")
+        tbc = MARKETS[0]
+        self.assertTrue(market_key(classic).startswith("classic-"))
+        self.assertIn(f'/classic/{classic["region"]}/', market_url(classic))
+        self.assertIn(f'/classic/{tbc["region"]}-fresh/', market_url(tbc))
+        snapshot = parse_csv(HEADER + ROW, classic)
+        self.assertEqual(validate_snapshot(snapshot, classic), snapshot)
+        with self.assertRaises(ValueError):
+            validate_snapshot(snapshot, tbc)
+
     def test_prices_and_quoted_names(self):
         snapshot = parse_csv(HEADER + ROW, MARKETS[0])
         self.assertEqual(snapshot["items"]["21877"], dict(recent=2322, marketValue=1708))

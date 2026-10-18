@@ -142,6 +142,8 @@ npm run dev:agent
   Происхождение и пересборка описаны в [документации баз](versioned-databases.md).
 - Старый `public/data/craftcalc-db.1.60.1.70338.json` нужен скриптам сравнения
   и тестам. Отсутствие импорта в приложении не делает его ненужным.
+- Настройки TSM хранятся независимо в `tbcPricing` и `classicPricing`;
+  `selectActivePricing` выбирает настройки активной версии.
 - Кэш TSM хранится отдельно в `sessionStorage` и не входит в JSON backup.
   Снимки сайта готовятся Python-скриптами; браузер читает опубликованные JSON.
 - Индикатор localStorage использует общий снимок в `src/app/useLocalStorageUsage.ts`,

@@ -58,6 +58,55 @@ const sword: Item = {
 }
 const catalog: ItemCatalog = { ore, bar, sword }
 
+it('разделяет цены Classic и TBC при одинаковом игровом ID', () => {
+  if (!context.snapshot) throw new Error('Нет тестового снимка')
+  const classicItem: Item = {
+    ...bar,
+    source: { wowheadItemId: 2, wowheadVersion: 'classic' },
+  }
+  const classicMarket = {
+    version: 'classic',
+    region: 'eu',
+    realm: 'firemaw',
+    faction: 'alliance',
+  } as const
+  const prices: PriceContext = {
+    ...context,
+    version: 'classic',
+    settings: { ...context.settings, market: classicMarket },
+    snapshot: { ...context.snapshot, market: classicMarket },
+  }
+  expect(resolveItemPrice(classicItem, 'purchasePriceCopper', prices)).toBe(10)
+  expect(usesTsmPrice(classicItem, 'purchasePriceCopper', prices)).toBe(true)
+  expect(
+    resolveItemPrice(
+      { ...bar, source: { wowheadItemId: 2, wowheadVersion: 'tbc' } },
+      'purchasePriceCopper',
+      prices,
+    ),
+  ).toBe(20)
+  expect(resolveItemPrice(classicItem, 'purchasePriceCopper', context)).toBe(20)
+  expect(
+    resolveItemPrice(classicItem, 'purchasePriceCopper', {
+      ...prices,
+      snapshot: context.snapshot,
+    }),
+  ).toBe(20)
+  expect(
+    resolveItemPrice(classicItem, 'purchasePriceCopper', {
+      ...prices,
+      settings: context.settings,
+    }),
+  ).toBe(20)
+  expect(
+    resolveItemPrice(
+      { ...classicItem, source: { wowheadItemId: 2 } },
+      'purchasePriceCopper',
+      prices,
+    ),
+  ).toBe(10)
+})
+
 describe.each(['individual', 'tsm'] as const)('приоритет %s', (priceMode) => {
   describe.each(['manual', 'tsm', undefined] as const)('источник %s', (source) => {
     it.each(['purchasePriceCopper', 'salePriceCopper'] as const)(

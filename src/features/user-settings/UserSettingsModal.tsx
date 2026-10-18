@@ -13,6 +13,7 @@ import type { CurrencyDisplayMode, ItemLanguage } from '../../domain/user-settin
 import './UserSettingsModal.css'
 import { TsmSettingsSection } from '../tsm/TsmSettingsSection'
 import type { TsmSettingsSectionProps } from '../tsm/TsmSettingsSection'
+import { supportsTsm } from '../../domain/tsm'
 
 interface UserSettingsModalProps {
   dataTransfer?: ReactNode
@@ -138,7 +139,9 @@ export function UserSettingsModal({
           </div>
         </fieldset>
 
-        {gameVersion === 'tbc' && tsm ? <TsmSettingsSection {...tsm} /> : null}
+        {supportsTsm(gameVersion) && tsm ? (
+          <TsmSettingsSection key={gameVersion} {...tsm} gameVersion={gameVersion} />
+        ) : null}
         <fieldset className="user-settings__professions">
           <legend>Профессии в наличии</legend>
           <p>Отметьте профессии, которыми владеют ваши персонажи.</p>

@@ -20,7 +20,7 @@ import './PlannerPage.css'
 
 export function PlannerPage({ plan, catalog, itemLanguage }: ShoppingListProps) {
   const prices = usePriceContext()
-  const setTbcPricing = useCraftStore((state) => state.setTbcPricing)
+  const setPricing = useCraftStore((state) => state.setPricing)
   const setQuantity = useCraftStore((state) => state.setPlannerQuantity)
   const removeTarget = useCraftStore((state) => state.removePlannerTarget)
   const clearPlanner = useCraftStore((state) => state.clearPlanner)
@@ -274,7 +274,7 @@ export function PlannerPage({ plan, catalog, itemLanguage }: ShoppingListProps) 
       <PriceModeSelector
         gameVersion={prices.version}
         settings={prices.settings}
-        onChange={setTbcPricing}
+        onChange={setPricing}
       />
       {confirmClear ? (
         <ConfirmDialog

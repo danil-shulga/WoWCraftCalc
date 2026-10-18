@@ -1,7 +1,262 @@
 [
-  { "region": "eu", "realm": "thunderstrike", "name": "Thunderstrike" },
-  { "region": "eu", "realm": "spineshatter", "name": "Spineshatter" },
-  { "region": "us", "realm": "dreamscythe", "name": "Dreamscythe" },
-  { "region": "us", "realm": "nightslayer", "name": "Nightslayer" },
-  { "region": "us", "realm": "maladath-au", "name": "Maladath (AU)" }
+  {
+    "version": "tbc",
+    "region": "eu",
+    "realm": "thunderstrike",
+    "name": "Thunderstrike",
+    "aliases": []
+  },
+  {
+    "version": "tbc",
+    "region": "eu",
+    "realm": "spineshatter",
+    "name": "Spineshatter",
+    "aliases": []
+  },
+  {
+    "version": "tbc",
+    "region": "us",
+    "realm": "dreamscythe",
+    "name": "Dreamscythe",
+    "aliases": []
+  },
+  {
+    "version": "tbc",
+    "region": "us",
+    "realm": "nightslayer",
+    "name": "Nightslayer",
+    "aliases": []
+  },
+  {
+    "version": "tbc",
+    "region": "us",
+    "realm": "maladath-au",
+    "name": "Maladath (AU)",
+    "aliases": []
+  },
+  {
+    "version": "classic",
+    "region": "eu",
+    "realm": "transcendence",
+    "name": "Transcendence",
+    "aliases": ["Patchwerk", "Lucifron"]
+  },
+  {
+    "version": "classic",
+    "region": "eu",
+    "realm": "firemaw",
+    "name": "Firemaw",
+    "aliases": [
+      "Skullflame",
+      "Ashbringer",
+      "Noggenfogger",
+      "Gandling",
+      "Mograine",
+      "Dragonfang",
+      "Earthshaker",
+      "Golemagg",
+      "Bloodfang"
+    ]
+  },
+  {
+    "version": "classic",
+    "region": "eu",
+    "realm": "auberdine",
+    "name": "Auberdine",
+    "aliases": []
+  },
+  {
+    "version": "classic",
+    "region": "eu",
+    "realm": "everlook",
+    "name": "Everlook",
+    "aliases": ["Lakeshire"]
+  },
+  {
+    "version": "classic",
+    "region": "eu",
+    "realm": "mandokir",
+    "name": "Mandokir",
+    "aliases": []
+  },
+  {
+    "version": "classic",
+    "region": "eu",
+    "realm": "celebras",
+    "name": "Celebras",
+    "aliases": []
+  },
+  {
+    "version": "classic",
+    "region": "eu",
+    "realm": "venoxis",
+    "name": "Venoxis",
+    "aliases": ["Heartstriker", "Dragon's Call"]
+  },
+  {
+    "version": "classic",
+    "region": "eu",
+    "realm": "gehennas",
+    "name": "Gehennas",
+    "aliases": [
+      "Dreadmist",
+      "Flamelash",
+      "Judgement",
+      "Ten Storms",
+      "Stonespine",
+      "Razorgore",
+      "Shazzrah"
+    ]
+  },
+  {
+    "version": "classic",
+    "region": "eu",
+    "realm": "razorfen",
+    "name": "Razorfen",
+    "aliases": []
+  },
+  {
+    "version": "classic",
+    "region": "eu",
+    "realm": "pyrewood-village",
+    "name": "Pyrewood Village",
+    "aliases": ["Nethergarde Keep", "Mirage Raceway"]
+  },
+  {
+    "version": "classic",
+    "region": "eu",
+    "realm": "chromie-ru",
+    "name": "Chromie (RU)",
+    "aliases": []
+  },
+  {
+    "version": "classic",
+    "region": "us",
+    "realm": "remulos",
+    "name": "Remulos",
+    "aliases": []
+  },
+  {
+    "version": "classic",
+    "region": "us",
+    "realm": "whitemane",
+    "name": "Whitemane",
+    "aliases": [
+      "Arcanite Reaper",
+      "Anathema",
+      "Thunderfury",
+      "Smolderweb",
+      "Rattlegore",
+      "Kurinnaxx",
+      "Bigglesworth",
+      "Blaumeux",
+      "Fairbanks"
+    ]
+  },
+  {
+    "version": "classic",
+    "region": "us",
+    "realm": "arugal",
+    "name": "Arugal",
+    "aliases": ["Felstriker", "Yojamba"]
+  },
+  {
+    "version": "classic",
+    "region": "eu",
+    "realm": "zandalar-tribe",
+    "name": "Zandalar Tribe",
+    "aliases": []
+  },
+  {
+    "version": "classic",
+    "region": "eu",
+    "realm": "sulfuron",
+    "name": "Sulfuron",
+    "aliases": ["Finkle", "Amnennar"]
+  },
+  {
+    "version": "classic",
+    "region": "eu",
+    "realm": "flamegor-ru",
+    "name": "Flamegor (RU)",
+    "aliases": ["Harbinger of Doom (RU)", "Wyrmthalak (RU)", "Rhok'delar (RU)"]
+  },
+  {
+    "version": "classic",
+    "region": "us",
+    "realm": "atiesh",
+    "name": "Atiesh",
+    "aliases": ["Azuresong", "Old Blanchy", "Myzrael"]
+  },
+  {
+    "version": "classic",
+    "region": "us",
+    "realm": "sulthraze",
+    "name": "Sul'thraze",
+    "aliases": []
+  },
+  {
+    "version": "classic",
+    "region": "us",
+    "realm": "sulfuras",
+    "name": "Sulfuras",
+    "aliases": [
+      "Herod",
+      "Kirtonos",
+      "Kromcrush",
+      "Skeram",
+      "Stalagg",
+      "Thalnos",
+      "Earthfury"
+    ]
+  },
+  {
+    "version": "classic",
+    "region": "us",
+    "realm": "faerlina",
+    "name": "Faerlina",
+    "aliases": ["Heartseeker", "Netherwind", "Benediction", "Incendius"]
+  },
+  {
+    "version": "classic",
+    "region": "us",
+    "realm": "mankrik",
+    "name": "Mankrik",
+    "aliases": ["Westfall", "Ashkandi", "Windseeker", "Pagle"]
+  },
+  {
+    "version": "classic",
+    "region": "us",
+    "realm": "grobbulus",
+    "name": "Grobbulus",
+    "aliases": []
+  },
+  {
+    "version": "classic",
+    "region": "us",
+    "realm": "loatheb",
+    "name": "Loatheb",
+    "aliases": []
+  },
+  {
+    "version": "classic",
+    "region": "us",
+    "realm": "bloodsail-buccaneers",
+    "name": "Bloodsail Buccaneers",
+    "aliases": []
+  },
+  {
+    "version": "classic",
+    "region": "us",
+    "realm": "deviate-delight",
+    "name": "Deviate Delight",
+    "aliases": []
+  },
+  {
+    "version": "classic",
+    "region": "eu",
+    "realm": "hydraxian-waterlords",
+    "name": "Hydraxian Waterlords",
+    "aliases": []
+  }
 ]

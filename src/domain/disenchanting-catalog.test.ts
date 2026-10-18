@@ -44,6 +44,39 @@ const catalog: ItemCatalog = {
 }
 
 describe('распыление предметов каталога', () => {
+  it('оценивает материалы Classic по TSM своего рынка', () => {
+    const market = {
+      version: 'classic',
+      region: 'eu',
+      realm: 'firemaw',
+      faction: 'alliance',
+    } as const
+    const items = {
+      dust: item('dust', {
+        source: { wowheadItemId: 10940, wowheadVersion: 'classic' },
+        salePriceCopper: null,
+      }),
+    }
+    const prices = {
+      version: 'classic' as const,
+      settings: { ...DEFAULT_TSM_SETTINGS, market },
+      snapshot: {
+        schemaVersion: 1 as const,
+        market,
+        scannedAt: '2026-01-01T00:00:00Z',
+        items: { '10940': { recent: 125, marketValue: null } },
+      },
+    }
+    expect(
+      resolveDisenchantMaterialPrices(items, 'classic', prices).salePrices.get(10940),
+    ).toBe(125)
+    expect(
+      resolveDisenchantMaterialPrices(items, 'classic', {
+        ...prices,
+        snapshot: null,
+      }).salePrices.get(10940),
+    ).toBeNull()
+  })
   it.each([null, 0, 1, 100])(
     'изолирует сценарии и порядок обхода общих реагентов при цене %s',
     (purchasePriceCopper) => {

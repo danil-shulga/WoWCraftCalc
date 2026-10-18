@@ -3,6 +3,14 @@ import { getItemName } from '../domain/item-names'
 import type { ItemLanguage } from '../domain/user-settings'
 import type { PersistedCraftData } from '../domain/item.types'
 import type { PlannerTarget } from '../domain/planner.types'
+import { DEFAULT_TSM_SETTINGS } from '../domain/tsm'
+
+export function selectActivePricing(
+  state: Pick<PersistedCraftData, 'activeVersion' | 'tbcPricing' | 'classicPricing'>,
+) {
+  if (state.activeVersion === 'classic') return state.classicPricing
+  return state.activeVersion === 'tbc' ? state.tbcPricing : DEFAULT_TSM_SETTINGS
+}
 
 const emptyPlannerTargets: PlannerTarget[] = []
 
