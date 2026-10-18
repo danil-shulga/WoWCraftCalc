@@ -53,57 +53,78 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
-it('переключает TBC и Classic, сохраняет по одному рынку и очищает снятый выбор', async () => {
-  vi.useFakeTimers()
-  const classicMarket: TsmMarket = {
-    version: 'classic',
-    region: 'eu',
-    realm: 'firemaw',
-    faction: 'alliance',
-  }
-  const tbc = fixture()
-  const classic = fixture(classicMarket)
-  const data = createEmptyCraftData()
-  data.activeVersion = 'tbc'
-  data.tbcPricing.market = market
-  data.classicPricing.market = classicMarket
-  useCraftStore.getState().replaceData(data)
-  const fetcher = vi
-    .fn()
-    .mockImplementation((url: string) =>
-      Promise.resolve(
-        url.endsWith('manifest.json')
-          ? jsonResponse({ ...tbc.manifest, markets: [tbc.entry, classic.entry] })
-          : new Response(url.endsWith(classic.entry.path) ? classic.raw : tbc.raw),
-      ),
-    )
-  vi.stubGlobal('fetch', fetcher)
-  const stop = startTsmClient()
-  try {
-    await vi.advanceTimersByTimeAsync(1)
-    expect(useTsmStore.getState().snapshot?.market).toEqual(market)
-    useCraftStore.getState().setActiveVersion('classic')
-    expect(useTsmStore.getState().snapshot).toBeNull()
-    await vi.advanceTimersByTimeAsync(1)
-    expect(useTsmStore.getState().snapshot?.market).toEqual(classicMarket)
-    expect(readTsmCache(market)).not.toBeNull()
-    expect(readTsmCache(classicMarket)).not.toBeNull()
-    useCraftStore.getState().setActiveVersion('forever')
-    expect(useTsmStore.getState().snapshot).toBeNull()
-    const calls = fetcher.mock.calls.length
-    await vi.advanceTimersByTimeAsync(TSM_CHECK_INTERVAL)
-    expect(fetcher).toHaveBeenCalledTimes(calls)
-    expect(readTsmCache(classicMarket)).not.toBeNull()
-    useCraftStore.getState().setActiveVersion('classic')
-    await vi.advanceTimersByTimeAsync(1)
-    useCraftStore.getState().setPricing({ ...data.classicPricing, market: null })
-    expect(readTsmCache(classicMarket)).toBeNull()
-    expect(readTsmCache(market)).not.toBeNull()
-    expect(useTsmStore.getState().snapshot).toBeNull()
-  } finally {
-    stop()
-  }
-})
+it.each([0, 25])(
+  'переключает TBC и Classic, сохраняет по одному рынку и очищает снятый выбор (задержка SHA-256: %i мс)',
+  async (digestDelay) => {
+    vi.useFakeTimers()
+    if (digestDelay > 0) {
+      const digest = webcrypto.subtle.digest.bind(webcrypto.subtle)
+      vi.spyOn(webcrypto.subtle, 'digest').mockImplementation(async (...args) => {
+        await new Promise<void>((resolve) => setTimeout(resolve, digestDelay))
+        return digest(...args)
+      })
+    }
+    const classicMarket: TsmMarket = {
+      version: 'classic',
+      region: 'eu',
+      realm: 'firemaw',
+      faction: 'alliance',
+    }
+    const tbc = fixture()
+    const classic = fixture(classicMarket)
+    const data = createEmptyCraftData()
+    data.activeVersion = 'tbc'
+    data.tbcPricing.market = market
+    data.classicPricing.market = classicMarket
+    useCraftStore.getState().replaceData(data)
+    const fetcher = vi
+      .fn()
+      .mockImplementation((url: string) =>
+        Promise.resolve(
+          url.endsWith('manifest.json')
+            ? jsonResponse({ ...tbc.manifest, markets: [tbc.entry, classic.entry] })
+            : new Response(url.endsWith(classic.entry.path) ? classic.raw : tbc.raw),
+        ),
+      )
+    vi.stubGlobal('fetch', fetcher)
+    const stop = startTsmClient()
+    try {
+      // Native WebCrypto completion is independent of the fake timer clock.
+      await vi.waitFor(() => {
+        expect(useTsmStore.getState()).toMatchObject({
+          status: 'ready',
+          snapshot: tbc.snapshot,
+        })
+      })
+      useCraftStore.getState().setActiveVersion('classic')
+      expect(useTsmStore.getState().snapshot).toBeNull()
+      await vi.waitFor(() => {
+        expect(useTsmStore.getState()).toMatchObject({
+          status: 'ready',
+          snapshot: classic.snapshot,
+        })
+      })
+      expect(readTsmCache(market)).not.toBeNull()
+      expect(readTsmCache(classicMarket)).not.toBeNull()
+      useCraftStore.getState().setActiveVersion('forever')
+      expect(useTsmStore.getState().snapshot).toBeNull()
+      const calls = fetcher.mock.calls.length
+      await vi.advanceTimersByTimeAsync(TSM_CHECK_INTERVAL)
+      expect(fetcher).toHaveBeenCalledTimes(calls)
+      expect(readTsmCache(classicMarket)).not.toBeNull()
+      useCraftStore.getState().setActiveVersion('classic')
+      await vi.waitFor(() => {
+        expect(useTsmStore.getState().status).toBe('ready')
+      })
+      useCraftStore.getState().setPricing({ ...data.classicPricing, market: null })
+      expect(readTsmCache(classicMarket)).toBeNull()
+      expect(readTsmCache(market)).not.toBeNull()
+      expect(useTsmStore.getState().snapshot).toBeNull()
+    } finally {
+      stop()
+    }
+  },
+)
 
 it('удаляет старые цены из localStorage и оставляет в сессии только выбранный рынок', async () => {
   vi.useFakeTimers()
