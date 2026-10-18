@@ -1,0 +1,154 @@
+{
+  "date": "2026-10-18",
+  "production": true,
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+  "viewport": { "width": 886, "height": 967 },
+  "samples": 20,
+  "warmups": 3,
+  "input": "synthetic pointerdown/pointerup/click; first RAF delay and 250 ms RAF observation after first frame",
+  "reactProfiling": false,
+  "storageUnchanged": true,
+  "units": "ms; aggregate values rounded to 0.1 ms",
+  "results": [
+    {
+      "roots": 100,
+      "section": "reagents",
+      "depth": 3,
+      "width": 3,
+      "medianEventMs": 2.3,
+      "p95EventMs": 3.8,
+      "medianRenderMs": null,
+      "p95FirstFrameMs": 27.6,
+      "p95MaxFrameMs": 27.6,
+      "p95FrameMs": 8.5,
+      "opening": {
+        "samples": 10,
+        "medianEventMs": 3.6,
+        "p95EventMs": 3.9,
+        "medianFirstFrameMs": 25.5,
+        "p95FirstFrameMs": 27.7,
+        "p95FrameMs": 8.4
+      },
+      "closing": {
+        "samples": 10,
+        "medianEventMs": 2.1,
+        "p95EventMs": 2.3,
+        "medianFirstFrameMs": 13.6,
+        "p95FirstFrameMs": 14.3,
+        "p95FrameMs": 8.5
+      }
+    },
+    {
+      "roots": 1000,
+      "section": "reagents",
+      "depth": 3,
+      "width": 3,
+      "medianEventMs": 3.7,
+      "p95EventMs": 4.8,
+      "medianRenderMs": null,
+      "p95FirstFrameMs": 97.5,
+      "p95MaxFrameMs": 120.5,
+      "p95FrameMs": 62,
+      "opening": {
+        "samples": 10,
+        "medianEventMs": 4.4,
+        "p95EventMs": 5.1,
+        "medianFirstFrameMs": 92.6,
+        "p95FirstFrameMs": 100.3,
+        "p95FrameMs": 90
+      },
+      "closing": {
+        "samples": 10,
+        "medianEventMs": 2.9,
+        "p95EventMs": 3.7,
+        "medianFirstFrameMs": 46.1,
+        "p95FirstFrameMs": 50.9,
+        "p95FrameMs": 55.4
+      }
+    },
+    {
+      "roots": 1000,
+      "section": "favorites",
+      "depth": 3,
+      "width": 3,
+      "medianEventMs": 3.3,
+      "p95EventMs": 4.6,
+      "medianRenderMs": null,
+      "p95FirstFrameMs": 107.2,
+      "p95MaxFrameMs": 118.1,
+      "p95FrameMs": 60.2,
+      "opening": {
+        "samples": 10,
+        "medianEventMs": 4.3,
+        "p95EventMs": 5,
+        "medianFirstFrameMs": 93.5,
+        "p95FirstFrameMs": 163.7,
+        "p95FrameMs": 91.4
+      },
+      "closing": {
+        "samples": 10,
+        "medianEventMs": 3,
+        "p95EventMs": 3.3,
+        "medianFirstFrameMs": 48,
+        "p95FirstFrameMs": 54.1,
+        "p95FrameMs": 58.9
+      }
+    },
+    {
+      "roots": 1000,
+      "section": "reagents",
+      "depth": 12,
+      "width": 3,
+      "medianEventMs": 7.3,
+      "p95EventMs": 13.2,
+      "medianRenderMs": null,
+      "p95FirstFrameMs": 157.6,
+      "p95MaxFrameMs": 157.6,
+      "p95FrameMs": 77.3,
+      "opening": {
+        "samples": 10,
+        "medianEventMs": 12.2,
+        "p95EventMs": 14,
+        "medianFirstFrameMs": 150,
+        "p95FirstFrameMs": 210.6,
+        "p95FrameMs": 54.5
+      },
+      "closing": {
+        "samples": 10,
+        "medianEventMs": 6.8,
+        "p95EventMs": 7.3,
+        "medianFirstFrameMs": 73.1,
+        "p95FirstFrameMs": 77.3,
+        "p95FrameMs": 77.3
+      }
+    },
+    {
+      "roots": 1000,
+      "section": "reagents",
+      "depth": 1,
+      "width": 40,
+      "medianEventMs": 7.5,
+      "p95EventMs": 9.3,
+      "medianRenderMs": null,
+      "p95FirstFrameMs": 130.3,
+      "p95MaxFrameMs": 130.3,
+      "p95FrameMs": 68.7,
+      "opening": {
+        "samples": 10,
+        "medianEventMs": 8.4,
+        "p95EventMs": 33.3,
+        "medianFirstFrameMs": 122,
+        "p95FirstFrameMs": 175.4,
+        "p95FrameMs": 70.5
+      },
+      "closing": {
+        "samples": 10,
+        "medianEventMs": 5.2,
+        "p95EventMs": 7.5,
+        "medianFirstFrameMs": 63,
+        "p95FirstFrameMs": 74.9,
+        "p95FrameMs": 68.7
+      }
+    }
+  ]
+}

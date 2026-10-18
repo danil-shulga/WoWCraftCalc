@@ -1,0 +1,159 @@
+{
+  "date": "2026-10-18",
+  "baselineRef": "e9aae5c41dc9fce825f0e7858c345b92508a97fa",
+  "production": true,
+  "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36",
+  "viewport": {
+    "width": 886,
+    "height": 967
+  },
+  "samples": 20,
+  "warmups": 3,
+  "input": "synthetic pointerdown/pointerup/click; first RAF delay and 250 ms RAF observation after first frame",
+  "reactProfiling": false,
+  "storageUnchanged": true,
+  "units": "ms; aggregate values rounded to 0.1 ms",
+  "results": [
+    {
+      "roots": 100,
+      "section": "reagents",
+      "depth": 3,
+      "width": 3,
+      "medianEventMs": 44.5,
+      "p95EventMs": 48.9,
+      "medianRenderMs": null,
+      "p95FirstFrameMs": 125.5,
+      "p95MaxFrameMs": 125.5,
+      "p95FrameMs": 54.2,
+      "opening": {
+        "samples": 10,
+        "medianEventMs": 47.9,
+        "p95EventMs": 49.1,
+        "medianFirstFrameMs": 120,
+        "p95FirstFrameMs": 149.6,
+        "p95FrameMs": 118.7
+      },
+      "closing": {
+        "samples": 10,
+        "medianEventMs": 42.6,
+        "p95EventMs": 44.5,
+        "medianFirstFrameMs": 98.8,
+        "p95FirstFrameMs": 104.1,
+        "p95FrameMs": 40.7
+      }
+    },
+    {
+      "roots": 1000,
+      "section": "reagents",
+      "depth": 3,
+      "width": 3,
+      "medianEventMs": 379.8,
+      "p95EventMs": 547.5,
+      "medianRenderMs": null,
+      "p95FirstFrameMs": 1461.2,
+      "p95MaxFrameMs": 1461.2,
+      "p95FrameMs": 1355.5,
+      "opening": {
+        "samples": 10,
+        "medianEventMs": 392.3,
+        "p95EventMs": 547.5,
+        "medianFirstFrameMs": 1315.4,
+        "p95FirstFrameMs": 1464.8,
+        "p95FrameMs": 1395.8
+      },
+      "closing": {
+        "samples": 10,
+        "medianEventMs": 378.2,
+        "p95EventMs": 552.8,
+        "medianFirstFrameMs": 1179.3,
+        "p95FirstFrameMs": 1371,
+        "p95FrameMs": 1332.5
+      }
+    },
+    {
+      "roots": 1000,
+      "section": "favorites",
+      "depth": 3,
+      "width": 3,
+      "medianEventMs": 414.8,
+      "p95EventMs": 508.2,
+      "medianRenderMs": null,
+      "p95FirstFrameMs": 1561.6,
+      "p95MaxFrameMs": 1561.6,
+      "p95FrameMs": 1394,
+      "opening": {
+        "samples": 10,
+        "medianEventMs": 417.2,
+        "p95EventMs": 508.2,
+        "medianFirstFrameMs": 1372.2,
+        "p95FirstFrameMs": 1761.4,
+        "p95FrameMs": 1544.6
+      },
+      "closing": {
+        "samples": 10,
+        "medianEventMs": 412.8,
+        "p95EventMs": 605.2,
+        "medianFirstFrameMs": 1263.5,
+        "p95FirstFrameMs": 1528.6,
+        "p95FrameMs": 1288
+      }
+    },
+    {
+      "roots": 1000,
+      "section": "reagents",
+      "depth": 12,
+      "width": 3,
+      "medianEventMs": 1065.1,
+      "p95EventMs": 1174.1,
+      "medianRenderMs": null,
+      "p95FirstFrameMs": 3486.5,
+      "p95MaxFrameMs": 3486.5,
+      "p95FrameMs": 3449.2,
+      "opening": {
+        "samples": 10,
+        "medianEventMs": 1006.6,
+        "p95EventMs": 1065.1,
+        "medianFirstFrameMs": 3428.1,
+        "p95FirstFrameMs": 3486.5,
+        "p95FrameMs": 3471.8
+      },
+      "closing": {
+        "samples": 10,
+        "medianEventMs": 1150.8,
+        "p95EventMs": 1259.1,
+        "medianFirstFrameMs": 3259,
+        "p95FirstFrameMs": 3510.2,
+        "p95FrameMs": 3291.8
+      }
+    },
+    {
+      "roots": 1000,
+      "section": "reagents",
+      "depth": 1,
+      "width": 40,
+      "medianEventMs": 878.2,
+      "p95EventMs": 1088.9,
+      "medianRenderMs": null,
+      "p95FirstFrameMs": 3178.5,
+      "p95MaxFrameMs": 3178.5,
+      "p95FrameMs": 3089.6,
+      "opening": {
+        "samples": 10,
+        "medianEventMs": 889.5,
+        "p95EventMs": 1102.6,
+        "medianFirstFrameMs": 3087.3,
+        "p95FirstFrameMs": 3220.2,
+        "p95FrameMs": 3095.3
+      },
+      "closing": {
+        "samples": 10,
+        "medianEventMs": 875.6,
+        "p95EventMs": 1088.9,
+        "medianFirstFrameMs": 2949.7,
+        "p95FirstFrameMs": 3048.1,
+        "p95FrameMs": 3006.2
+      }
+    }
+  ],
+  "phaseAssignment": "First measured toggle opens the root; then alternating opening/closing, 10 samples each. The opening marker was added to the harness after this run without changing the measured sequence."
+}

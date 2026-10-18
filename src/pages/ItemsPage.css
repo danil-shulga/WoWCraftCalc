@@ -27,6 +27,21 @@
   overflow-anchor: none;
 }
 
+.item-list > .item-tree {
+  content-visibility: auto;
+  contain-intrinsic-block-size: auto 73px;
+}
+
+/* Interactive roots allow tooltips and shadows outside their bounds. Drag
+   geometry uses every real height, including roots not yet visited on screen. */
+.item-list > .item-tree:hover,
+.item-list > .item-tree:focus-within,
+.item-list > .item-tree--entering,
+.item-list > .item-tree--removing,
+.item-list[data-drag-layout] > .item-tree {
+  content-visibility: visible;
+}
+
 .item-list__drop-gap {
   position: absolute;
   right: 0;

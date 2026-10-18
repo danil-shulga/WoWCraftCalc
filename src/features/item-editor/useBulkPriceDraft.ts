@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 
 import { useDraftGuard } from '../../app/draft-guard'
 import type { Item, ItemCatalog, ItemId, ItemPriceField } from '../../domain/item.types'
@@ -33,11 +33,11 @@ export function useBulkPriceDraft(
     setPriceDrafts(drafts)
   }
 
-  const changePriceDraft = (itemId: ItemId, value: number | null) => {
+  const changePriceDraft = useCallback((itemId: ItemId, value: number | null) => {
     setPriceDrafts((current) =>
       current === null ? null : { ...current, [itemId]: value },
     )
-  }
+  }, [])
 
   const cancelPriceEditing = () => {
     setPriceDrafts(null)

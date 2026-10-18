@@ -117,10 +117,12 @@ describe('ItemsPage: drag', () => {
     }
     pointerAt('pointerDown', source, 200)
     pointerAt('pointerMove', document, 115)
+    expect(list).toHaveAttribute('data-drag-layout')
     pointerAt('pointerUp', document, 115)
     act(() => {
       vi.advanceTimersByTime(200)
     })
+    expect(list).not.toHaveAttribute('data-drag-layout')
     expect(rootNames()[0]).toBe('Редактировать Шерстяная сумка')
     expect(screen.getAllByRole('spinbutton')).toEqual([inputs[1], inputs[0]])
     expect(
@@ -214,11 +216,45 @@ describe('ItemsPage: drag', () => {
     const list = mockListLayout()
     const source = screen.getByText('Лечебное зелье').closest('article')
     if (!source) throw new Error('Нет строки')
+    const geometry = Array.from(list.querySelectorAll(':scope > .item-tree')).map(
+      (tree) => vi.spyOn(tree, 'getBoundingClientRect'),
+    )
+    const listGeometry = vi.spyOn(list, 'getBoundingClientRect')
     pointerAt('pointerDown', source, 130)
     pointerAt('pointerMove', document, 132)
     pointerAt('pointerUp', document, 132)
+    for (const measure of [...geometry, listGeometry])
+      expect(measure).not.toHaveBeenCalled()
     expect(list).not.toHaveClass('item-list--dragging')
     expect(list.querySelector('.item-list__drop-gap')).not.toBeInTheDocument()
+  })
+
+  it('измеряет актуальную геометрию только после порога движения, учитывая прокрутку', () => {
+    vi.useFakeTimers()
+    render(<ItemsPage section="crafts" />)
+    const list = mockListLayout()
+    const source = screen.getByText('Шерстяная сумка').closest('article')
+    if (!source) throw new Error('Нет строки')
+    const trees = list.querySelectorAll(':scope > .item-tree')
+    const first = trees[0]
+    const second = trees[1]
+    if (!first || !second) throw new Error('Нет деревьев')
+    const firstGeometry = vi.spyOn(first, 'getBoundingClientRect')
+    const secondGeometry = vi.spyOn(second, 'getBoundingClientRect')
+    pointerAt('pointerDown', source, 200)
+    expect(firstGeometry).not.toHaveBeenCalled()
+    expect(secondGeometry).not.toHaveBeenCalled()
+    vi.spyOn(window, 'scrollY', 'get').mockReturnValue(40)
+    firstGeometry.mockReturnValue(new DOMRect(0, 60, 1000, 60))
+    secondGeometry.mockReturnValue(new DOMRect(0, 130, 1000, 60))
+    pointerAt('pointerMove', document, 115)
+    expect(firstGeometry).toHaveBeenCalledOnce()
+    expect(secondGeometry).toHaveBeenCalledOnce()
+    expect(second).toHaveStyle({ transform: 'translateY(-45px)' })
+    pointerAt('pointerCancel', document, 115)
+    act(() => {
+      vi.advanceTimersByTime(200)
+    })
   })
 
   it.each([235, 305, 400])(

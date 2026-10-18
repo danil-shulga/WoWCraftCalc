@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { MouseEvent, PointerEvent } from 'react'
 import type { ItemId } from '../domain/item.types'
 
@@ -10,6 +10,7 @@ interface TreePosition {
 }
 
 interface DragSession {
+  sourceId: ItemId
   pointerId: number
   sourceIndex: number
   destination: number
@@ -39,6 +40,7 @@ export function useRootItemDrag(
 
   useEffect(() => {
     const clearStyles = (drag: DragSession) => {
+      listRef.current?.removeAttribute('data-drag-layout')
       for (const { element } of drag.trees) {
         element.style.removeProperty('transform')
         element.classList.remove('item-tree--moving', 'item-tree--settling')
@@ -173,6 +175,36 @@ export function useRootItemDrag(
       drag.y = event.clientY
       if (!drag.active) {
         if (Math.hypot(drag.x - drag.startX, drag.y - drag.startY) < 5) return
+        const list = listRef.current
+        const elements = list?.querySelectorAll<HTMLElement>(
+          ':scope > .item-tree:not([data-removing])',
+        )
+        if (!elements || !list) {
+          settle(false)
+          return
+        }
+        list.setAttribute('data-drag-layout', '')
+        // Plain clicks never need list geometry. Read it once when the gesture
+        // becomes a drag, before painting any transforms.
+        drag.trees = Array.from(elements).flatMap((element, index): TreePosition[] => {
+          const item = items[index]
+          if (!item) return []
+          const bounds = element.getBoundingClientRect()
+          return [
+            {
+              element,
+              id: item.id,
+              top: bounds.top + window.scrollY,
+              height: bounds.height,
+            },
+          ]
+        })
+        drag.sourceIndex = drag.trees.findIndex((tree) => tree.id === drag.sourceId)
+        if (drag.sourceIndex === -1) {
+          settle(false)
+          return
+        }
+        drag.destination = drag.sourceIndex
         drag.active = true
         lastTime = null
         const source = drag.trees[drag.sourceIndex]
@@ -189,7 +221,11 @@ export function useRootItemDrag(
       if (drag?.pointerId !== event.pointerId || drag.settling) return
       drag.x = event.clientX
       drag.y = event.clientY
-      if (drag.active) paint(drag)
+      if (!drag.active) {
+        settle(false)
+        return
+      }
+      paint(drag)
       const bounds = listRef.current?.getBoundingClientRect()
       settle(!!bounds && drag.x >= bounds.left && drag.x <= bounds.right)
     }
@@ -221,63 +257,41 @@ export function useRootItemDrag(
     }
   }, [items, onMove])
 
-  return {
-    listRef,
-    draggingId,
-    dropTarget,
-    onPointerDown: (id: ItemId, event: PointerEvent<HTMLElement>) => {
-      if (
-        session.current ||
-        event.button !== 0 ||
-        !(event.target instanceof Element) ||
-        event.target.closest(
-          'button, input, select, textarea, a, label, fieldset, [contenteditable="true"]',
-        )
+  const onPointerDown = useCallback((id: ItemId, event: PointerEvent<HTMLElement>) => {
+    if (
+      session.current ||
+      event.button !== 0 ||
+      !(event.target instanceof Element) ||
+      event.target.closest(
+        'button, input, select, textarea, a, label, fieldset, [contenteditable="true"]',
       )
-        return
-      const elements = listRef.current?.querySelectorAll<HTMLElement>(
-        ':scope > .item-tree:not([data-removing])',
-      )
-      if (!elements) return
-      const trees = Array.from(elements).flatMap((element, index): TreePosition[] => {
-        const item = items[index]
-        if (!item) return []
-        const bounds = element.getBoundingClientRect()
-        return [
-          {
-            element,
-            id: item.id,
-            top: bounds.top + window.scrollY,
-            height: bounds.height,
-          },
-        ]
-      })
-      const sourceIndex = trees.findIndex((tree) => tree.id === id)
-      if (sourceIndex === -1) return
-      session.current = {
-        pointerId: event.pointerId,
-        sourceIndex,
-        destination: sourceIndex,
-        trees,
-        startX: event.clientX,
-        startY: event.clientY,
-        startScrollY: window.scrollY,
-        x: event.clientX,
-        y: event.clientY,
-        active: false,
-        settling: false,
-        capture: event.currentTarget,
-        frame: 0,
-        timer: null,
-      }
-      if (typeof event.currentTarget.setPointerCapture === 'function')
-        event.currentTarget.setPointerCapture(event.pointerId)
-    },
-    onClickCapture: (event: MouseEvent<HTMLElement>) => {
-      if (session.current?.active) {
-        event.preventDefault()
-        event.stopPropagation()
-      }
-    },
-  }
+    )
+      return
+    session.current = {
+      sourceId: id,
+      pointerId: event.pointerId,
+      sourceIndex: -1,
+      destination: -1,
+      trees: [],
+      startX: event.clientX,
+      startY: event.clientY,
+      startScrollY: window.scrollY,
+      x: event.clientX,
+      y: event.clientY,
+      active: false,
+      settling: false,
+      capture: event.currentTarget,
+      frame: 0,
+      timer: null,
+    }
+    if (typeof event.currentTarget.setPointerCapture === 'function')
+      event.currentTarget.setPointerCapture(event.pointerId)
+  }, [])
+  const onClickCapture = useCallback((event: MouseEvent<HTMLElement>) => {
+    if (session.current?.active) {
+      event.preventDefault()
+      event.stopPropagation()
+    }
+  }, [])
+  return { listRef, draggingId, dropTarget, onPointerDown, onClickCapture }
 }

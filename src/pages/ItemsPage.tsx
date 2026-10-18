@@ -1,4 +1,3 @@
-import { getItemRecipe } from '../domain/essence-conversion'
 import { Button } from '../components/ui/Button/Button'
 import { usePriceContext } from '../features/tsm/tsm-client'
 import { PriceModeSelector } from '../features/tsm/PriceModeSelector'
@@ -8,16 +7,14 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import { selectActiveWorkspace } from '../store/craft.selectors'
 import { useRootItemDrag } from './useRootItemDrag'
 
-import { ItemTree } from '../components/item-tree/ItemTree/ItemTree'
+import { ItemsPageTree } from './ItemsPageTree'
 import { ConfirmDialog } from '../components/ui/ConfirmDialog/ConfirmDialog'
 import { ItemIdentity } from '../components/ui/ItemIdentity/ItemIdentity'
 import { SearchField } from '../components/ui/SearchField/SearchField'
 import { Toast } from '../components/ui/Toast/Toast'
 import { createCatalogCalculationSnapshot } from '../domain/calculations'
 import { createCatalogDisenchantSnapshot } from '../domain/disenchanting-catalog'
-import { describeDisenchantEstimate } from '../features/disenchanting/disenchanting-presentation'
-import { DisenchantEstimateDetails } from '../features/disenchanting/DisenchantEstimateDetails'
-import { getItemName, getItemSearchNames, normalizeItemName } from '../domain/item-names'
+import { getItemSearchNames, normalizeItemName } from '../domain/item-names'
 import type { ItemId, ItemPriceField, ItemSection } from '../domain/item.types'
 import { ItemAddModal } from '../features/item-editor/ItemAddModal'
 import { ItemEditModal } from '../features/item-editor/ItemEditModal'
@@ -30,6 +27,8 @@ import { selectPlannerTargets } from '../store/craft.selectors'
 interface ItemsPageProps {
   section: ItemSection | 'favorites'
 }
+
+const emptyExpandedPaths: ReadonlySet<string> = new Set()
 
 const pageContent: Record<
   ItemSection | 'favorites',
@@ -102,7 +101,9 @@ export function ItemsPage({ section }: ItemsPageProps) {
   const [deletingItemId, setDeletingItemId] = useState<ItemId | null>(null)
   const [removingFavoriteId, setRemovingFavoriteId] = useState<ItemId | null>(null)
   const favoriteTriggerRef = useRef<HTMLElement | null>(null)
-  const [expandedPaths, setExpandedPaths] = useState<Set<string>>(new Set())
+  const [expandedByRoot, setExpandedByRoot] = useState<
+    ReadonlyMap<ItemId, ReadonlySet<string>>
+  >(() => new Map())
   const [searchQuery, setSearchQuery] = useState('')
   const normalizedQuery = useMemo(() => normalizeItemName(searchQuery), [searchQuery])
   const searchNamesById = useMemo(
@@ -216,22 +217,25 @@ export function ItemsPage({ section }: ItemsPageProps) {
   const removingFavorite =
     removingFavoriteId === null ? undefined : items[removingFavoriteId]
 
-  const toggleFavorite = (itemId: ItemId) => {
-    if (items[itemId]?.isFavorite) {
-      favoriteTriggerRef.current =
-        document.activeElement instanceof HTMLElement ? document.activeElement : null
-      setRemovingFavoriteId(itemId)
-    } else setItemFavorite(itemId, true)
-  }
+  const toggleFavorite = useCallback(
+    (itemId: ItemId) => {
+      if (items[itemId]?.isFavorite) {
+        favoriteTriggerRef.current =
+          document.activeElement instanceof HTMLElement ? document.activeElement : null
+        setRemovingFavoriteId(itemId)
+      } else setItemFavorite(itemId, true)
+    },
+    [items, setItemFavorite],
+  )
 
   const closeFavoriteConfirmation = () => {
     favoriteTriggerRef.current?.focus()
     setRemovingFavoriteId(null)
   }
 
-  const toggleExpanded = (path: string) => {
-    setExpandedPaths((current) => {
-      const next = new Set(current)
+  const toggleExpanded = useCallback((rootItemId: ItemId, path: string) => {
+    setExpandedByRoot((current) => {
+      const next = new Set(current.get(rootItemId))
 
       if (next.has(path)) {
         next.delete(path)
@@ -239,9 +243,31 @@ export function ItemsPage({ section }: ItemsPageProps) {
         next.add(path)
       }
 
+      const roots = new Map(current)
+      if (next.size === 0) roots.delete(rootItemId)
+      else roots.set(rootItemId, next)
+      return roots
+    })
+  }, [])
+
+  const finishRemoving = useCallback((itemId: ItemId) => {
+    setDisplayRows((rows) => rows.filter((row) => row.item.id !== itemId))
+    setExpandedByRoot((current) => {
+      if (!current.has(itemId)) return current
+      const next = new Map(current)
+      next.delete(itemId)
       return next
     })
-  }
+  }, [])
+
+  const moveRelative = useCallback(
+    (itemId: ItemId, position: 'before' | 'after') => {
+      const index = visibleItems.findIndex((item) => item.id === itemId)
+      const neighbor = visibleItems[index + (position === 'before' ? -1 : 1)]
+      if (index !== -1 && neighbor) moveRootItem(section, itemId, neighbor.id, position)
+    },
+    [visibleItems, moveRootItem, section],
+  )
 
   return (
     <section className="page">
@@ -338,117 +364,38 @@ export function ItemsPage({ section }: ItemsPageProps) {
                 />
               ) : null}
               {renderedRows.map(
-                ({ item, catalog, calculationSnapshot: rowCalculation, disenchant }) => {
-                  const removing = !liveRowIds.has(item.id)
-                  return (
-                    <ItemTree
-                      presence={{
-                        removing,
-                        onRemoved: () => {
-                          setDisplayRows((rows) =>
-                            rows.filter((row) => row.item.id !== item.id),
-                          )
-                        },
-                      }}
-                      valuation={
-                        disenchant
-                          ? {
-                              label: 'Распыление',
-                              value: disenchant.result.expectedValueCopper,
-                              profitLabel: 'Прибыль за распыление',
-                              profit: disenchant.configuredProfit,
-                              allProfessionsProfit: disenchant.allProfessionsProfit,
-                              boughtReagentsProfit: disenchant.boughtReagentsProfit,
-                              buyProfit: disenchant.buyProfit,
-                              description: describeDisenchantEstimate(
-                                disenchant,
-                                getItemRecipe(items, item.id) !== null,
-                              ),
-                              tooltip: (
-                                <DisenchantEstimateDetails
-                                  calculation={disenchant}
-                                  hasRecipe={getItemRecipe(items, item.id) !== null}
-                                />
-                              ),
-                            }
-                          : undefined
-                      }
-                      planner={{
-                        itemName: getItemName(item, itemLanguage),
-                        quantity: plannerTargetsById.get(item.id)?.quantity,
-                        step: getItemRecipe(items, item.id)?.outputQuantity ?? 1,
-                        onChange: (quantity) => {
-                          setPlannerQuantity(item.id, quantity)
-                        },
-                        onRemove: () => {
-                          removePlannerTarget(item.id)
-                        },
-                      }}
-                      key={item.id}
-                      rootDragAndDrop={{
-                        draggable: false,
-                        className: [
-                          'root-item-row--draggable',
-                          draggingId === item.id ? 'root-item-row--dragging' : '',
-                        ]
-                          .filter(Boolean)
-                          .join(' '),
-                        onPointerDown: (event) => {
-                          startPointerDrag(item.id, event)
-                        },
-                        onClickCapture: suppressDragClick,
-                        onDragStart: (event) => {
-                          event.preventDefault()
-                        },
-                        onKeyDown: (event) => {
-                          if (
-                            event.target !== event.currentTarget ||
-                            !event.altKey ||
-                            (event.key !== 'ArrowUp' && event.key !== 'ArrowDown')
-                          )
-                            return
-                          event.preventDefault()
-                          const neighbor =
-                            visibleItems[
-                              visibleItems.indexOf(item) +
-                                (event.key === 'ArrowUp' ? -1 : 1)
-                            ]
-                          if (neighbor)
-                            moveRootItem(
-                              section,
-                              item.id,
-                              neighbor.id,
-                              event.key === 'ArrowUp' ? 'before' : 'after',
-                            )
-                        },
-                      }}
-                      showPurchasePrice={
-                        section !== 'crafts' && section !== 'disenchanting'
-                      }
-                      rootItemId={item.id}
-                      itemLanguage={itemLanguage}
-                      catalog={catalog}
-                      calculationSnapshot={rowCalculation}
-                      {...(priceDrafts === null
-                        ? {}
-                        : {
-                            quickPriceEdit: {
-                              field: priceField,
-                              value: priceDrafts[item.id] ?? null,
-                              onChange: (value: number | null) => {
-                                changePriceDraft(item.id, value)
-                              },
-                            },
-                          })}
-                      expandedPaths={expandedPaths}
-                      onToggleExpanded={toggleExpanded}
-                      onEditItem={setEditingItemId}
-                      onDeleteItem={setDeletingItemId}
-                      onToggleFavorite={toggleFavorite}
-                      onSetAcquisition={setAcquisition}
-                    />
-                  )
-                },
+                ({ item, catalog, calculationSnapshot: rowCalculation, disenchant }) => (
+                  <ItemsPageTree
+                    key={item.id}
+                    item={item}
+                    catalog={catalog}
+                    calculationSnapshot={rowCalculation}
+                    disenchant={disenchant}
+                    itemLanguage={itemLanguage}
+                    removing={!liveRowIds.has(item.id)}
+                    dragging={draggingId === item.id}
+                    plannerQuantity={plannerTargetsById.get(item.id)?.quantity}
+                    isEditingPrices={priceDrafts !== null}
+                    priceField={priceField}
+                    priceDraft={priceDrafts?.[item.id] ?? null}
+                    showPurchasePrice={
+                      section !== 'crafts' && section !== 'disenchanting'
+                    }
+                    expandedPaths={expandedByRoot.get(item.id) ?? emptyExpandedPaths}
+                    onToggleExpanded={toggleExpanded}
+                    onRemoved={finishRemoving}
+                    onSetPlannerQuantity={setPlannerQuantity}
+                    onRemovePlannerTarget={removePlannerTarget}
+                    onChangePriceDraft={changePriceDraft}
+                    onStartPointerDrag={startPointerDrag}
+                    onSuppressDragClick={suppressDragClick}
+                    onMoveRelative={moveRelative}
+                    onEditItem={setEditingItemId}
+                    onDeleteItem={setDeletingItemId}
+                    onToggleFavorite={toggleFavorite}
+                    onSetAcquisition={setAcquisition}
+                  />
+                ),
               )}
             </div>
           ) : null}

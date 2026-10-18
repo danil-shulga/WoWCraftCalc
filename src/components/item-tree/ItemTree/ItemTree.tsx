@@ -99,7 +99,7 @@ function ItemTreeNode({
   }
 
   const recipe = purchaseOnly ? null : getItemRecipe(catalog, itemId)
-  const displayedItem = { ...item, recipe }
+  const displayedItem = item.recipe === recipe ? item : { ...item, recipe }
   const isConversion = getEssenceConversion(catalog, itemId) !== null
   const hasRecipe = recipe !== null
   const hasCycle = visited.has(itemId)

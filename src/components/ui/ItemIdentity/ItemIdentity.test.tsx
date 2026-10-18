@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import { ItemIdentity } from './ItemIdentity'
 
 const item = {
@@ -41,7 +41,7 @@ describe('иконка и название предмета', () => {
     expect(screen.queryByRole('img')).not.toBeInTheDocument()
   })
 
-  it('сжимает название до самой широкой видимой строки с учётом перевода', () => {
+  it('сжимает название до самой широкой видимой строки с учётом перевода', async () => {
     const createRange = document.createRange.bind(document)
     const spy = vi.spyOn(document, 'createRange').mockImplementation(() => {
       const range = createRange()
@@ -59,6 +59,7 @@ describe('иконка и название предмета', () => {
           <span>× 8</span>
         </ItemIdentity>,
       )
+      await act(() => Promise.resolve())
       expect(container.querySelector('.item-name')).toHaveStyle({ width: '180px' })
     } finally {
       spy.mockRestore()
