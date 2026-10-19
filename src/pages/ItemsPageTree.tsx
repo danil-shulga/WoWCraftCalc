@@ -23,6 +23,7 @@ interface ItemsPageTreeProps extends Pick<
   | 'onSetAcquisition'
 > {
   item: Item
+  animateEnter: boolean
   disenchant: CatalogDisenchantCalculation | undefined
   removing: boolean
   dragging: boolean
@@ -44,6 +45,7 @@ interface ItemsPageTreeProps extends Pick<
 // the same expansion set and scalar state, including when another root opens.
 export const ItemsPageTree = memo(function ItemsPageTree({
   item,
+  animateEnter,
   catalog,
   calculationSnapshot,
   itemLanguage,
@@ -86,6 +88,7 @@ export const ItemsPageTree = memo(function ItemsPageTree({
       onToggleFavorite={onToggleFavorite}
       onSetAcquisition={onSetAcquisition}
       presence={{
+        animateEnter,
         removing,
         onRemoved: () => {
           onRemoved(item.id)

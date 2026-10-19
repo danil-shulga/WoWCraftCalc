@@ -23,7 +23,8 @@ interface QuickPriceEdit {
 }
 
 interface ItemTreeProps {
-  presence?: { removing: boolean; onRemoved: () => void } | undefined
+  presence?:
+    { animateEnter: boolean; removing: boolean; onRemoved: () => void } | undefined
   valuation?: RootItemValuation | undefined
   planner?: PlanQuantityControlProps | undefined
   rootDragAndDrop?: HTMLAttributes<HTMLElement> | undefined
@@ -202,7 +203,7 @@ function ItemTreeNode({
 }
 
 export function ItemTree(props: ItemTreeProps) {
-  const [entering, setEntering] = useState(true)
+  const [entering, setEntering] = useState(props.presence?.animateEnter ?? false)
   const removing = props.presence?.removing ?? false
   return (
     <ul

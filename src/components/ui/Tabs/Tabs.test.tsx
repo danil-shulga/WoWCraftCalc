@@ -28,8 +28,16 @@ describe('Tabs', () => {
     render(<TabsHarness />)
 
     expect(screen.getByText('Содержимое первой')).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Первая' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
     await user.click(screen.getByRole('button', { name: 'Вторая' }))
     expect(screen.getByText('Содержимое второй')).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Вторая' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
     expect(screen.queryByText('Содержимое первой')).not.toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Первая' }))
     expect(screen.getByText('Содержимое первой')).toBeVisible()

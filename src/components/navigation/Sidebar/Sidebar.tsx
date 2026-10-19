@@ -22,7 +22,7 @@ const tabs: readonly { id: AppTab; label: string; available: boolean }[] = [
   { id: 'reagents', label: 'Реагенты', available: true },
   { id: 'crafts', label: 'Крафты', available: true },
   { id: 'disenchanting', label: 'Распыление', available: true },
-  { id: 'profitable', label: 'Выгодные', available: false },
+  { id: 'profitable', label: 'Выгодные', available: true },
   { id: 'favorites', label: 'Избранное', available: true },
   { id: 'planner', label: 'Планировщик', available: true },
 ]

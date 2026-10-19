@@ -1,0 +1,99 @@
+.profitable-list {
+  margin-top: 16px;
+}
+.profitable-list__cells {
+  display: grid;
+  grid-template-columns: minmax(300px, 1fr) repeat(3, 165px) 135px;
+  gap: 16px;
+  align-items: center;
+  padding: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.profitable-list__cells > div {
+  min-width: 0;
+}
+.profitable-list[data-mode='disenchant'] .profitable-list__cells {
+  grid-template-columns: minmax(300px, 1fr) repeat(4, 150px) 135px;
+}
+.profitable-list__amount {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+  font-variant-numeric: tabular-nums;
+}
+.profitable-list__gain[data-positive] {
+  color: var(--success);
+}
+.profitable-list__gain[data-negative] {
+  color: var(--danger);
+}
+.profitable-list__head {
+  padding-block: 12px;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+.profitable-list__head > div:not(:first-child) {
+  text-align: right;
+}
+.profitable-list__sort {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+.profitable-list__head > div:first-child .profitable-list__sort {
+  justify-content: flex-start;
+}
+.profitable-list__sort:hover,
+.profitable-list__head > [aria-sort] {
+  color: var(--text);
+}
+.profitable-list__animated {
+  display: grid;
+  grid-template-rows: 1fr;
+}
+.profitable-list__animated[data-entering] {
+  animation: profitable-enter 150ms ease-out;
+}
+.profitable-list__animated[data-removing] {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  animation: profitable-exit 150ms ease-out;
+}
+.profitable-list__clip {
+  min-height: 0;
+  overflow: hidden;
+}
+@keyframes profitable-enter {
+  from {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+  to {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+}
+@keyframes profitable-exit {
+  from {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+  to {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .profitable-list__animated {
+    animation-duration: 1ms;
+  }
+}

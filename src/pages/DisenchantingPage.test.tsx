@@ -370,6 +370,8 @@ describe('страница Распыление', () => {
 
   it('анимирует добавление и массовое удаление строк', () => {
     const view = render(<ItemsPage section="disenchanting" />)
+    const initialTree = root().closest('.item-tree')
+    expect(initialTree).not.toHaveClass('item-tree--entering')
     const boots = catalog.boots
     if (!boots) throw new Error('Нет предмета')
     act(() => {
@@ -378,7 +380,7 @@ describe('страница Распыление', () => {
     const trees = view.container.querySelectorAll('.item-list > .item-tree')
     expect(trees).toHaveLength(2)
     for (const tree of trees) {
-      expect(tree).toHaveClass('item-tree--entering')
+      if (tree !== initialTree) expect(tree).toHaveClass('item-tree--entering')
       fireEvent.animationEnd(tree)
     }
     act(() => {

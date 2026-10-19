@@ -7,6 +7,27 @@ import {
   createEmptyCraftData,
 } from './persistence'
 
+it('читает прежние параметры выгоды как устаревшее поле, сохраняя каталог и настройки', () => {
+  const data = testCraftData({ items: catalog, ownedProfessions: ['tailoring'] })
+  const legacy = {
+    ...data,
+    workspaces: {
+      ...data.workspaces,
+      forever: {
+        ...data.workspaces.forever,
+        profitableSettings: { craft: { feePercent: 90, minPercent: 500 } },
+      },
+    },
+  }
+  const current = parseCurrentPersistedData(legacy)
+  expect(current.workspaces.forever.items).toEqual(data.workspaces.forever.items)
+  expect(current.workspaces.forever.ownedProfessions).toEqual(['tailoring'])
+  expect(current.workspaces.forever).not.toHaveProperty('profitableSettings')
+  const restored = parseImportedData(createExportJson(legacy))
+  expect(restored.success).toBe(true)
+  if (restored.success) expect(restored.data).toEqual(current)
+})
+
 const catalog: ItemCatalog = {
   cloth: {
     id: 'cloth',

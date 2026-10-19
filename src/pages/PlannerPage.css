@@ -62,6 +62,9 @@
 .planner-page__animated-target {
   display: grid;
   grid-template-rows: 1fr;
+}
+
+.planner-page__animated-target[data-entering] {
   animation: planner-target-enter 150ms ease-out;
 }
 
@@ -94,7 +97,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .planner-page__animated-target {
+  .planner-page__animated-target[data-entering],
+  .planner-page__animated-target[data-removing] {
     animation-duration: 1ms;
   }
 }

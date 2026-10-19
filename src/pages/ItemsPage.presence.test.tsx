@@ -14,6 +14,23 @@ function tree(name: string) {
   return element
 }
 
+it('показывает исходные строки сразу, но анимирует добавленные после открытия', () => {
+  const potion = items.potion
+  if (!potion) throw new Error('Нет предмета')
+  setTestCraftState({ items: { potion } })
+  const view = render(<ItemsPage section="crafts" />)
+  expect(tree('Лечебное зелье')).not.toHaveClass('item-tree--entering')
+  act(() => {
+    setTestCraftState({ items })
+  })
+  expect(tree('Шерстяная сумка')).toHaveClass('item-tree--entering')
+  fireEvent.animationEnd(tree('Шерстяная сумка'))
+  expect(tree('Шерстяная сумка')).not.toHaveClass('item-tree--entering')
+  view.unmount()
+  render(<ItemsPage section="crafts" />)
+  expect(tree('Шерстяная сумка')).not.toHaveClass('item-tree--entering')
+})
+
 it('сохраняет список до собственного animationend последней уходящей строки', () => {
   const potion = items.potion
   if (!potion) throw new Error('Нет предмета')

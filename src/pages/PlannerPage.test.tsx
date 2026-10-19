@@ -63,6 +63,7 @@ it.each([
     const remove = screen.getByRole('button', { name: `Убрать из плана: ${name}` })
     const row = remove.closest('li')
     expect(row).toHaveClass('planner-page__animated-target')
+    expect(row).toHaveAttribute('data-entering')
     await user.click(remove)
     expect(useCraftStore.getState().workspaces.forever.planner?.targets).toEqual([])
     expect(row).toBeInTheDocument()
@@ -79,6 +80,19 @@ it.each([
     expect(screen.getByText('План пока пуст')).toBeVisible()
   },
 )
+
+it('показывает существующие цели без анимации при каждом открытии вкладки', async () => {
+  useCraftStore.getState().setPlannerQuantity('sword', 3)
+  const user = userEvent.setup()
+  render(<App />)
+  for (let visit = 0; visit < 2; visit += 1) {
+    await user.click(screen.getByRole('button', { name: 'Планировщик' }))
+    expect(
+      screen.getByRole('button', { name: 'Убрать из плана: Меч' }).closest('li'),
+    ).not.toHaveAttribute('data-entering')
+    await user.click(screen.getByRole('button', { name: 'Крафты' }))
+  }
+})
 
 it.each([
   { itemId: 'bar', name: 'Слиток' },

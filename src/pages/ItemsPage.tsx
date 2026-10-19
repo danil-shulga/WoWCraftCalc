@@ -193,7 +193,9 @@ export function ItemsPage({ section }: ItemsPageProps) {
     [sectionItems, searchNamesById, items, calculationSnapshot, disenchantSnapshot],
   )
   const [previousRows, setPreviousRows] = useState(liveRows)
-  const [displayRows, setDisplayRows] = useState(liveRows)
+  const [displayRows, setDisplayRows] = useState(() =>
+    liveRows.map((row) => ({ ...row, animateEnter: false })),
+  )
   const liveRowIds = useMemo(
     () => new Set(liveRows.map(({ item }) => item.id)),
     [liveRows],
@@ -201,7 +203,11 @@ export function ItemsPage({ section }: ItemsPageProps) {
   if (previousRows !== liveRows) {
     setPreviousRows(liveRows)
     setDisplayRows((rows) => {
-      const next = [...liveRows]
+      const byId = new Map(rows.map((row) => [row.item.id, row]))
+      const next = liveRows.map((row) => ({
+        ...row,
+        animateEnter: byId.get(row.item.id)?.animateEnter ?? true,
+      }))
       rows.forEach((row, index) => {
         if (!liveRowIds.has(row.item.id))
           next.splice(Math.min(index, next.length), 0, row)
@@ -364,10 +370,17 @@ export function ItemsPage({ section }: ItemsPageProps) {
                 />
               ) : null}
               {renderedRows.map(
-                ({ item, catalog, calculationSnapshot: rowCalculation, disenchant }) => (
+                ({
+                  item,
+                  catalog,
+                  calculationSnapshot: rowCalculation,
+                  disenchant,
+                  animateEnter,
+                }) => (
                   <ItemsPageTree
                     key={item.id}
                     item={item}
+                    animateEnter={animateEnter}
                     catalog={catalog}
                     calculationSnapshot={rowCalculation}
                     disenchant={disenchant}

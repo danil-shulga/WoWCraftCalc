@@ -16,7 +16,7 @@ import { Sidebar, type AppTab } from '../components/navigation/Sidebar/Sidebar'
 import { DataTransferControls } from '../features/data-transfer/DataTransferControls'
 import { UserSettingsModal } from '../features/user-settings/UserSettingsModal'
 import { ItemsPage } from '../pages/ItemsPage'
-import { PlaceholderPage } from '../pages/PlaceholderPage'
+import { ProfitablePage } from '../pages/ProfitablePage'
 import { useCraftStore, usePersistenceStatusStore } from '../store/useCraftStore'
 import { useLocalStorageUsage } from './useLocalStorageUsage'
 import './App.css'
@@ -39,7 +39,7 @@ function CurrentPage({
     case 'reagents':
       return <ItemsPage key="reagents" section="reagents" />
     case 'profitable':
-      return <PlaceholderPage title="Выгодные" />
+      return <ProfitablePage />
     case 'favorites':
       return <ItemsPage key="favorites" section="favorites" />
   }

@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Tooltip } from './Tooltip'
 
@@ -28,29 +28,34 @@ describe('Tooltip', () => {
   })
 
   it('остаётся открытой при переходе курсора в подсказку, закрывается после ухода и по Escape без фокуса', () => {
-    vi.useFakeTimers()
-    try {
-      const view = render(<Tooltip content="Материалы">Распыление</Tooltip>)
-      const trigger = screen.getByText('Распыление')
-      fireEvent.mouseEnter(trigger)
-      const tooltip = screen.getByRole('tooltip')
-      expect(view.container).not.toContainElement(tooltip)
-      fireEvent.mouseLeave(trigger)
-      fireEvent.mouseEnter(tooltip)
-      act(() => {
-        vi.advanceTimersByTime(100)
-      })
-      expect(tooltip).toBeInTheDocument()
-      fireEvent.mouseLeave(tooltip)
-      act(() => {
-        vi.advanceTimersByTime(100)
-      })
-      expect(screen.queryByRole('tooltip')).toBeNull()
-      fireEvent.mouseEnter(trigger)
-      fireEvent.keyDown(document, { key: 'Escape' })
-      expect(screen.queryByRole('tooltip')).toBeNull()
-    } finally {
-      vi.useRealTimers()
-    }
+    const view = render(<Tooltip content="Материалы">Распыление</Tooltip>)
+    const trigger = screen.getByText('Распыление')
+    fireEvent.mouseEnter(trigger)
+    const tooltip = screen.getByRole('tooltip')
+    expect(view.container).not.toContainElement(tooltip)
+    fireEvent.mouseLeave(trigger, { relatedTarget: tooltip })
+    fireEvent.mouseEnter(tooltip)
+    expect(tooltip).toBeInTheDocument()
+    fireEvent.mouseLeave(tooltip)
+    expect(screen.queryByRole('tooltip')).toBeNull()
+    fireEvent.mouseEnter(trigger)
+    fireEvent.keyDown(document, { key: 'Escape' })
+    expect(screen.queryByRole('tooltip')).toBeNull()
+  })
+
+  it('сразу скрывается после ухода с триггера и сохраняется при клавиатурном фокусе', async () => {
+    const user = userEvent.setup()
+    render(<Tooltip content="TSM">Цена</Tooltip>)
+    const trigger = screen.getByText('Цена')
+    fireEvent.mouseEnter(trigger)
+    expect(screen.getByRole('tooltip')).toBeInTheDocument()
+    fireEvent.mouseLeave(trigger)
+    expect(screen.queryByRole('tooltip')).toBeNull()
+    await user.tab()
+    fireEvent.mouseEnter(trigger)
+    fireEvent.mouseLeave(trigger)
+    expect(screen.getByRole('tooltip')).toBeInTheDocument()
+    fireEvent.blur(trigger)
+    expect(screen.queryByRole('tooltip')).toBeNull()
   })
 })

@@ -1,4 +1,11 @@
-import { useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import {
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type MouseEvent,
+  type ReactNode,
+} from 'react'
 import { createPortal } from 'react-dom'
 import './Tooltip.css'
 
@@ -11,29 +18,20 @@ export function Tooltip({ children, content }: TooltipProps) {
   const id = useId()
   const triggerRef = useRef<HTMLSpanElement>(null)
   const panelRef = useRef<HTMLDivElement>(null)
-  const closeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const [open, setOpen] = useState(false)
 
-  const cancelClose = () => {
-    clearTimeout(closeTimer.current)
-  }
   const show = () => {
-    cancelClose()
     setOpen(true)
   }
-  const hide = () => {
-    cancelClose()
-    closeTimer.current = setTimeout(() => {
-      if (!triggerRef.current?.matches(':focus')) setOpen(false)
-    }, 100)
+  const hide = (event: MouseEvent<HTMLElement>) => {
+    const next = event.relatedTarget
+    if (
+      next instanceof Node &&
+      (triggerRef.current?.contains(next) || panelRef.current?.contains(next))
+    )
+      return
+    if (!triggerRef.current?.matches(':focus')) setOpen(false)
   }
-
-  useLayoutEffect(
-    () => () => {
-      clearTimeout(closeTimer.current)
-    },
-    [],
-  )
 
   useLayoutEffect(() => {
     if (!open) return
@@ -42,7 +40,8 @@ export function Tooltip({ children, content }: TooltipProps) {
     if (!trigger || !panel) return
     const position = () => {
       const rect = trigger.getBoundingClientRect()
-      const gap = 8
+      // Без зазора курсор переходит в панель без таймера отложенного скрытия.
+      const gap = 0
       const padding = 12
       const below = window.innerHeight - rect.bottom - gap - padding
       const above = rect.top - gap - padding
@@ -61,7 +60,6 @@ export function Tooltip({ children, content }: TooltipProps) {
     const onEscape = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return
       event.stopPropagation()
-      clearTimeout(closeTimer.current)
       setOpen(false)
     }
     document.addEventListener('keydown', onEscape, true)
@@ -83,7 +81,6 @@ export function Tooltip({ children, content }: TooltipProps) {
       onMouseLeave={hide}
       onFocus={show}
       onBlur={() => {
-        cancelClose()
         setOpen(false)
       }}
     >
@@ -95,7 +92,7 @@ export function Tooltip({ children, content }: TooltipProps) {
               id={id}
               role="tooltip"
               className="tooltip-panel"
-              onMouseEnter={cancelClose}
+              onMouseEnter={show}
               onMouseLeave={hide}
               onClick={(event) => {
                 event.stopPropagation()

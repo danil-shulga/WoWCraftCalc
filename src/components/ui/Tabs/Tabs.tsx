@@ -16,6 +16,7 @@ export function Tabs<Value extends string>({ tabs, value, onChange }: TabsProps<
           key={tab.value}
           className={`tabs__button${tab.value === value ? ' tabs__button--active' : ''}`}
           type="button"
+          aria-pressed={tab.value === value}
           onClick={() => {
             onChange(tab.value)
           }}

@@ -27,16 +27,19 @@ export function PlannerPage({ plan, catalog, itemLanguage }: ShoppingListProps) 
   const [selectedId, setSelectedId] = useState('')
   const [confirmClear, setConfirmClear] = useState(false)
   const [previousTargets, setPreviousTargets] = useState(plan.targets)
-  const [targetRows, setTargetRows] = useState(plan.targets)
+  const [targetRows, setTargetRows] = useState(() =>
+    plan.targets.map((target) => ({ ...target, entering: false })),
+  )
   if (previousTargets !== plan.targets) {
     setPreviousTargets(plan.targets)
     setTargetRows((rows) => [
-      ...rows.map(
-        (row) => plan.targets.find((target) => target.itemId === row.itemId) ?? row,
-      ),
-      ...plan.targets.filter(
-        (target) => !rows.some((row) => row.itemId === target.itemId),
-      ),
+      ...rows.map((row) => ({
+        ...(plan.targets.find((target) => target.itemId === row.itemId) ?? row),
+        entering: row.entering,
+      })),
+      ...plan.targets
+        .filter((target) => !rows.some((row) => row.itemId === target.itemId))
+        .map((target) => ({ ...target, entering: true })),
     ])
   }
   const available = Object.values(catalog)
@@ -131,15 +134,21 @@ export function PlannerPage({ plan, catalog, itemLanguage }: ShoppingListProps) 
                       <li
                         key={item.id}
                         className="planner-page__animated-target"
+                        data-entering={(!isRemoving && target.entering) || undefined}
                         data-removing={isRemoving || undefined}
                         aria-hidden={isRemoving}
                         inert={isRemoving}
                         onAnimationEnd={(event) => {
-                          if (event.target === event.currentTarget && isRemoving) {
-                            setTargetRows((rows) =>
-                              rows.filter((row) => row.itemId !== item.id),
-                            )
-                          }
+                          if (event.target !== event.currentTarget) return
+                          setTargetRows((rows) =>
+                            isRemoving
+                              ? rows.filter((row) => row.itemId !== item.id)
+                              : rows.map((row) =>
+                                  row.itemId === item.id
+                                    ? { ...row, entering: false }
+                                    : row,
+                                ),
+                          )
                         }}
                       >
                         <div className="planner-page__target-clip">
