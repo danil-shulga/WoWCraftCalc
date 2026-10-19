@@ -61,7 +61,8 @@ def prepare(output, previous_url=None, fetch=download, keep_existing=False):
             url = market_url(market)
             snapshot = parse_csv(fetch(url).decode("utf-8"), market)
             previous = entries.get(key)
-            if previous and datetime.fromisoformat(snapshot["scannedAt"].replace("Z", "+00:00")) < datetime.fromisoformat(previous[0]["scannedAt"].replace("Z", "+00:00")):
+            # Unknown Era scan times cannot be ordered; content hashes still detect changes.
+            if previous and snapshot["scannedAt"] is not None and previous[0]["scannedAt"] is not None and datetime.fromisoformat(snapshot["scannedAt"].replace("Z", "+00:00")) < datetime.fromisoformat(previous[0]["scannedAt"].replace("Z", "+00:00")):
                 raise ValueError("Upstream snapshot is older than published data")
             raw, content_id = encode_snapshot(snapshot)
             entry = dict(market=market, scannedAt=snapshot["scannedAt"], contentId=content_id, path=f"{key}.{content_id}.json")

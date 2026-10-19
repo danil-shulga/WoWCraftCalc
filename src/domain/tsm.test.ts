@@ -4,6 +4,7 @@ import {
   DEFAULT_TSM_SETTINGS,
   resolveItemPrice,
   tsmManifestSchema,
+  tsmSnapshotSchema,
   usesTsmPrice,
 } from './tsm'
 import type { PriceContext } from './tsm'
@@ -57,6 +58,32 @@ const sword: Item = {
   },
 }
 const catalog: ItemCatalog = { ore, bar, sword }
+
+it.each(['classic', 'tbc'] as const)(
+  'допускает неизвестную дату только для Era: %s',
+  (version) => {
+    const selected =
+      version === 'classic'
+        ? ({ version, region: 'eu', realm: 'firemaw', faction: 'alliance' } as const)
+        : market
+    const snapshot = { ...context.snapshot, market: selected, scannedAt: null }
+    expect(tsmSnapshotSchema.safeParse(snapshot).success).toBe(version === 'classic')
+    expect(
+      tsmManifestSchema.safeParse({
+        schemaVersion: 1,
+        generatedAt: '2026-01-01T00:00:00Z',
+        markets: [
+          {
+            market: selected,
+            scannedAt: null,
+            contentId: 'a'.repeat(64),
+            path: `${version}-eu-${selected.realm}-alliance.${'a'.repeat(64)}.json`,
+          },
+        ],
+      }).success,
+    ).toBe(version === 'classic')
+  },
+)
 
 it('разделяет цены Classic и TBC при одинаковом игровом ID', () => {
   if (!context.snapshot) throw new Error('Нет тестового снимка')

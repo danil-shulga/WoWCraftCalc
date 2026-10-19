@@ -5,10 +5,30 @@ from pathlib import Path
 from urllib.error import HTTPError
 
 from contract import MARKETS, encode_snapshot, market_key, parse_csv
-from test_contract import HEADER, ROW
+from test_contract import ERA_ROW, HEADER, ROW
 from update import download, prepare, restore
 
 class UpdateTests(unittest.TestCase):
+    def test_era_unknown_scan_time_is_published_restored_and_refreshed(self):
+        def fetch(url):
+            if url.startswith('file:'):
+                return download(url)
+            return (HEADER + (ROW if '-fresh/realm/' in url else ERA_ROW)).encode()
+        with tempfile.TemporaryDirectory() as folder:
+            changed, failures, count = prepare(folder, fetch=fetch, keep_existing=True)
+            self.assertEqual((changed, failures, count), (True, [], len(MARKETS)))
+            manifest = json.loads((Path(folder) / 'manifest.json').read_text())
+            for entry in manifest['markets']:
+                if entry['market'].get('version') == 'classic':
+                    self.assertIsNone(entry['scannedAt'])
+                    self.assertIsNone(json.loads((Path(folder) / entry['path']).read_bytes())['scannedAt'])
+                else:
+                    self.assertIsNotNone(entry['scannedAt'])
+            self.assertEqual(prepare(folder, fetch=fetch, keep_existing=True), (False, [], len(MARKETS)))
+            def updated(url):
+                return fetch(url).replace(b'946620', b'946621') if not url.startswith('file:') else fetch(url)
+            self.assertEqual(prepare(folder, fetch=updated, keep_existing=True), (True, [], len(MARKETS)))
+
     def test_local_refresh_bootstraps_and_retains_snapshots_when_offline(self):
         with tempfile.TemporaryDirectory() as folder:
             _, failures, count = prepare(folder, fetch=lambda _: (HEADER + ROW).encode(), keep_existing=True)

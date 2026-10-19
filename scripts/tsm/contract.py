@@ -26,7 +26,7 @@ def market_url(market):
     return f'https://public-data.tradeskillmaster.com/classic/{region}/realm/{market["realm"]}-{market["faction"]}/items.csv'
 
 def validate_timestamp(value):
-    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z", value):
+    if not isinstance(value, str) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z", value):
         raise ValueError("Invalid scan timestamp")
     parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
     if parsed > datetime.now(timezone.utc):
@@ -61,8 +61,9 @@ def parse_csv(raw, market):
         item_id, _, market_value, min_buyout, recent, historical, updated_at = row
         if not re.fullmatch(r"[1-9]\d*", item_id) or int(item_id) > MAX_SAFE_INTEGER or item_id in items:
             raise ValueError("Invalid or duplicate item ID")
-        validate_timestamp(updated_at)
-        if scanned_at is not None and updated_at != scanned_at:
+        # Era exports can omit every scan time. Keep it unknown, not the download time.
+        updated_at = None if updated_at == "" and market.get("version") == "classic" else validate_timestamp(updated_at)
+        if items and updated_at != scanned_at:
             raise ValueError("Mixed scan timestamps")
         scanned_at = updated_at
         price(min_buyout)
@@ -79,7 +80,8 @@ def encode_snapshot(snapshot):
 def validate_snapshot(snapshot, market):
     if snapshot.get("schemaVersion") != 1 or snapshot.get("market") != market:
         raise ValueError("Snapshot market/version mismatch")
-    validate_timestamp(snapshot["scannedAt"])
+    if snapshot["scannedAt"] is not None or market.get("version") != "classic":
+        validate_timestamp(snapshot["scannedAt"])
     if not isinstance(snapshot["items"], dict) or not snapshot["items"]:
         raise ValueError("Empty snapshot")
     for item_id, values in snapshot["items"].items():

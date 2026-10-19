@@ -8,6 +8,7 @@ import { ShoppingList } from '../planner/ShoppingList'
 import { useCraftStore } from '../../store/useCraftStore'
 import { createEmptyCraftData } from '../../store/persistence'
 import { useTsmStore } from './tsm-client'
+import { TsmSettingsSection } from './TsmSettingsSection'
 import type { Item } from '../../domain/item.types'
 
 describe.each(['tbc', 'classic'] as const)('TSM в %s', (gameVersion) => {
@@ -43,7 +44,7 @@ describe.each(['tbc', 'classic'] as const)('TSM в %s', (gameVersion) => {
       snapshot: {
         schemaVersion: 1,
         market,
-        scannedAt: '2026-01-01T00:00:00Z',
+        scannedAt: gameVersion === 'classic' ? null : '2026-01-01T00:00:00Z',
         items: { '21877': { recent: 2322, marketValue: 1708 } },
       },
       status: 'ready',
@@ -54,6 +55,25 @@ describe.each(['tbc', 'classic'] as const)('TSM в %s', (gameVersion) => {
     vi.restoreAllMocks()
     vi.unstubAllGlobals()
   })
+
+  if (gameVersion === 'classic') {
+    it('показывает неизвестную свежесть Era без выдуманной даты', () => {
+      render(
+        <TsmSettingsSection
+          gameVersion="classic"
+          settings={useCraftStore.getState().classicPricing}
+          onChange={vi.fn()}
+          onCheck={vi.fn()}
+        />,
+      )
+      expect(screen.getByText('Последний опубликованный снимок загружен.')).toBeVisible()
+      expect(
+        screen.getByText(/время сканирования неизвестно; свежесть цен не подтверждена/),
+      ).toBeVisible()
+      expect(screen.queryByText(/устарел/)).not.toBeInTheDocument()
+      expect(document.querySelector('time')).toBeNull()
+    })
+  }
 
   it('отмена сохраняет источники и суммы, сохранение применяет независимые источники и возвращает фокус', async () => {
     const user = userEvent.setup()

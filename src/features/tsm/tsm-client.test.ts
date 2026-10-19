@@ -12,11 +12,14 @@ import {
 import { loadTsmSnapshot, readTsmCache } from './tsm-loader'
 
 const market: TsmMarket = { region: 'eu', realm: 'thunderstrike', faction: 'alliance' }
-function fixture(selected = market) {
+function fixture(
+  selected = market,
+  scannedAt: TsmSnapshot['scannedAt'] = '2026-01-01T00:00:00Z',
+) {
   const snapshot: TsmSnapshot = {
     schemaVersion: 1,
     market: selected,
-    scannedAt: '2026-01-01T00:00:00Z',
+    scannedAt,
     items: { '21877': { recent: 2322, marketValue: 1708 } },
   }
   const raw = JSON.stringify(snapshot)
@@ -242,6 +245,34 @@ it('сообщает о повреждении настоящего JSON manifes
     status: 'error',
     error: 'Файл списка рынков TSM повреждён.',
   })
+})
+
+it('загружает и кэширует цены Era с неизвестным временем сканирования', async () => {
+  const market: TsmMarket = {
+    version: 'classic',
+    region: 'eu',
+    realm: 'firemaw',
+    faction: 'alliance',
+  }
+  useCraftStore.getState().setActiveVersion('classic')
+  useCraftStore.getState().setPricing({ market, metric: 'recent', priceMode: 'tsm' })
+  const data = fixture(market, null)
+  const fetcher = vi
+    .fn()
+    .mockResolvedValueOnce(jsonResponse(data.manifest))
+    .mockResolvedValueOnce(new Response(data.raw))
+    .mockResolvedValueOnce(jsonResponse(data.manifest))
+  vi.stubGlobal('fetch', fetcher)
+  await checkTsmUpdate()
+  expect(useTsmStore.getState()).toMatchObject({
+    status: 'ready',
+    snapshot: data.snapshot,
+    error: null,
+  })
+  expect(readTsmCache(market)).toEqual(data.snapshot)
+  await checkTsmUpdate()
+  expect(fetcher).toHaveBeenCalledTimes(3)
+  expect(useTsmStore.getState().snapshot?.scannedAt).toBeNull()
 })
 
 it('проверяет manifest, контрольную сумму, выбранный рынок и использует кэш при неизменном содержимом', async () => {

@@ -40,7 +40,8 @@ export function TsmSettingsSection({
       clearInterval(timer)
     }
   }, [])
-  const stale = snapshot && now - Date.parse(snapshot.scannedAt) > 6 * 60 * 60 * 1000
+  const stale =
+    snapshot?.scannedAt && now - Date.parse(snapshot.scannedAt) > 6 * 60 * 60 * 1000
   return (
     <fieldset className="user-settings__section tsm-settings">
       <legend>Цены аукциона · TSM</legend>
@@ -138,9 +139,13 @@ export function TsmSettingsSection({
         {snapshot ? (
           <span>
             Снимок TSM:{' '}
-            <time dateTime={snapshot.scannedAt}>
-              {new Date(snapshot.scannedAt).toLocaleString('ru-RU')}
-            </time>
+            {snapshot.scannedAt === null ? (
+              'время сканирования неизвестно; свежесть цен не подтверждена'
+            ) : (
+              <time dateTime={snapshot.scannedAt}>
+                {new Date(snapshot.scannedAt).toLocaleString('ru-RU')}
+              </time>
+            )}
             {stale ? ' · устарел (старше 6 часов)' : ''}
           </span>
         ) : null}

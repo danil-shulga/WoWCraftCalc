@@ -47,7 +47,8 @@ export function readTsmCache(market: TsmMarket): TsmSnapshot | null {
     if (
       !parsed.success ||
       tsmMarketKey(parsed.data.snapshot.market) !== tsmMarketKey(market) ||
-      Date.parse(parsed.data.snapshot.scannedAt) > Date.now()
+      (parsed.data.snapshot.scannedAt !== null &&
+        Date.parse(parsed.data.snapshot.scannedAt) > Date.now())
     )
       return null
     contentIds.set(parsed.data.snapshot, parsed.data.contentId)
@@ -144,10 +145,12 @@ export async function loadTsmSnapshot(
     snapshot.scannedAt !== entry.scannedAt
   )
     throw new Error('Снимок TSM относится к другому рынку или дате.')
-  if (Date.parse(snapshot.scannedAt) > Date.now())
+  if (snapshot.scannedAt !== null && Date.parse(snapshot.scannedAt) > Date.now())
     throw new Error('Дата снимка TSM находится в будущем.')
   contentIds.set(snapshot, contentId)
-  return previous && Date.parse(previous.scannedAt) > Date.parse(snapshot.scannedAt)
+  return previous?.scannedAt &&
+    snapshot.scannedAt &&
+    Date.parse(previous.scannedAt) > Date.parse(snapshot.scannedAt)
     ? previous
     : snapshot
 }

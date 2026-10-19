@@ -53,31 +53,36 @@ export function tsmMarketKey(market: TsmMarket): string {
 }
 const timestamp = z.iso.datetime()
 const tsmPrice = z.number().int().positive().nullable()
-export const tsmSnapshotSchema = z.object({
-  schemaVersion: z.literal(1),
-  market: tsmMarketSchema,
-  scannedAt: timestamp,
-  items: z
-    .record(
-      z
-        .string()
-        .regex(/^[1-9]\d*$/)
-        .refine((value) => Number.isSafeInteger(Number(value))),
-      z.object({ recent: tsmPrice, marketValue: tsmPrice }),
-    )
-    .refine((items) => Object.keys(items).length > 0),
-})
+export const tsmSnapshotSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    market: tsmMarketSchema,
+    scannedAt: timestamp.nullable(),
+    items: z
+      .record(
+        z
+          .string()
+          .regex(/^[1-9]\d*$/)
+          .refine((value) => Number.isSafeInteger(Number(value))),
+        z.object({ recent: tsmPrice, marketValue: tsmPrice }),
+      )
+      .refine((items) => Object.keys(items).length > 0),
+  })
+  .refine(
+    (snapshot) => snapshot.scannedAt !== null || snapshot.market.version === 'classic',
+  )
 export type TsmSnapshot = z.output<typeof tsmSnapshotSchema>
 export const tsmManifestEntrySchema = z
   .object({
     market: tsmMarketSchema,
-    scannedAt: timestamp,
+    scannedAt: timestamp.nullable(),
     contentId: z.string().regex(/^[a-f0-9]{64}$/),
     path: z.string().regex(/^(?:tbc|classic)-[a-z0-9-]+\.[a-f0-9]{64}\.json$/),
   })
   .refine(
     (entry) => entry.path === `${tsmMarketKey(entry.market)}.${entry.contentId}.json`,
   )
+  .refine((entry) => entry.scannedAt !== null || entry.market.version === 'classic')
 export const tsmManifestSchema = z
   .object({
     schemaVersion: z.literal(1),
